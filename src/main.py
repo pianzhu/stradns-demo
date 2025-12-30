@@ -85,7 +85,7 @@ async def main():
     # 配置模型
     anthropic_model = anthropic.AnthropicModel(
         client_args={
-            "api_key": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJHcm91cE5hbWUiOiLkuKrkuroiLCJVc2VyTmFtZSI6IuS4quS6uiIsIkFjY291bnQiOiIiLCJTdWJqZWN0SUQiOiIxOTgxNjM3NTgyODgyMDg2OTgzIiwiUGhvbmUiOiIxNTM3MTI4OTMzOCIsIkdyb3VwSUQiOiIxOTgxNjM3NTgyODczNjk4Mzc1IiwiUGFnZU5hbWUiOiIiLCJNYWlsIjoiIiwiQ3JlYXRlVGltZSI6IjIwMjUtMTItMDkgMTI6Mzg6NDQiLCJUb2tlblR5cGUiOjQsImlzcyI6Im1pbmltYXgifQ.nfDqrf7uI4d5LX6BV5zjSP1KWlH2NCj4g5dp3hKpzxfzcF5TyVJy2HlaeAHg2DWLosRCDjO2_sWX5F5ybBUl65KKu4ewEU9sqhS58CSvKFiFD3Y28msBkYkhLeqwUhXXYL1gZO7wyhxizeSRHHLGvenhdmUoJzDt-u9i_eXj_C3gPay_qL3CmL3zYjOn7TBqYb5mr3GmdGNIrYBXoKYJQWOylwwOermYg9JBV42hTRMomKFBW8H7pty9sJH10yVpVz3WLvobzpV_7hHrDQ_ESf8bpCn8Uw1Xj2kxmuPbmTJcmWjE9QZ0-v-zSujHP1tnrtiHgTCw80z1gPOcJP4G5A",
+            "api_key": "",
             "base_url": "https://api.minimaxi.com/anthropic"
         },
         model_id="MiniMax-M2",
