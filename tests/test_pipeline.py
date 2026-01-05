@@ -1,0 +1,96 @@
+"""Pipeline 组装测试。"""
+
+import unittest
+from context_retrieval.pipeline import retrieve
+from context_retrieval.models import Device, CommandSpec, RetrievalResult
+from context_retrieval.ir_compiler import FakeLLM
+from context_retrieval.state import ConversationState
+
+
+class TestRetrieve(unittest.TestCase):
+    """测试 retrieve 函数。"""
+
+    def setUp(self):
+        """设置测试数据。"""
+        self.lamp = Device(
+            id="lamp-1",
+            name="老伙计",
+            room="客厅",
+            type="light",
+            commands=[
+                CommandSpec(id="on", description="打开设备"),
+                CommandSpec(id="off", description="关闭设备"),
+            ],
+        )
+        self.bedroom_lamp = Device(
+            id="lamp-2",
+            name="卧室灯",
+            room="卧室",
+            type="light",
+            commands=[
+                CommandSpec(id="on", description="打开设备"),
+            ],
+        )
+        self.devices = [self.lamp, self.bedroom_lamp]
+
+        self.llm = FakeLLM({
+            "打开老伙计": {
+                "action": {"kind": "open"},
+                "name_hint": "老伙计",
+            },
+            "关闭卧室的灯": {
+                "action": {"kind": "close"},
+                "scope_include": ["卧室"],
+            },
+        })
+        self.state = ConversationState()
+
+    def test_retrieve_returns_result(self):
+        """retrieve 返回 RetrievalResult。"""
+        result = retrieve(
+            text="打开老伙计",
+            devices=self.devices,
+            llm=self.llm,
+            state=self.state,
+        )
+        self.assertIsInstance(result, RetrievalResult)
+
+    def test_retrieve_finds_device_by_name(self):
+        """根据名称找到设备。"""
+        result = retrieve(
+            text="打开老伙计",
+            devices=self.devices,
+            llm=self.llm,
+            state=self.state,
+        )
+        candidate_ids = {c.entity_id for c in result.candidates}
+        self.assertIn("lamp-1", candidate_ids)
+
+    def test_retrieve_with_room_scope(self):
+        """根据房间范围过滤。"""
+        result = retrieve(
+            text="关闭卧室的灯",
+            devices=self.devices,
+            llm=self.llm,
+            state=self.state,
+        )
+        candidate_ids = {c.entity_id for c in result.candidates}
+        self.assertIn("lamp-2", candidate_ids)
+        # 客厅灯不应在结果中（被 scope 过滤）
+        self.assertNotIn("lamp-1", candidate_ids)
+
+    def test_retrieve_updates_state(self):
+        """检索后更新会话状态。"""
+        result = retrieve(
+            text="打开老伙计",
+            devices=self.devices,
+            llm=self.llm,
+            state=self.state,
+        )
+        # 如果有候选，应更新 last-mentioned
+        if result.candidates:
+            self.assertIsNotNone(self.state.resolve_reference("last-mentioned"))
+
+
+if __name__ == "__main__":
+    unittest.main()
