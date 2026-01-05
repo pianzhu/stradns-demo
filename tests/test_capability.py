@@ -2,7 +2,7 @@
 
 import unittest
 from context_retrieval.capability import capability_filter, SimilarityFunc
-from context_retrieval.models import Device, CommandSpec, QueryIR, ActionIntent
+from context_retrieval.models import Device, CommandSpec, QueryIR
 
 
 def mock_similarity(text1: str, text2: str) -> float:
@@ -59,7 +59,7 @@ class TestCapabilityFilter(unittest.TestCase):
         """open 动作过滤无匹配命令的设备。"""
         ir = QueryIR(
             raw="打开设备",
-            action=ActionIntent(text="打开", confidence=0.9),
+            action="打开",
         )
         result = capability_filter(
             self.all_devices, ir, similarity_func=mock_similarity, threshold=0.5
@@ -73,7 +73,7 @@ class TestCapabilityFilter(unittest.TestCase):
         """close 动作过滤无匹配命令的设备。"""
         ir = QueryIR(
             raw="关闭设备",
-            action=ActionIntent(text="关闭", confidence=0.9),
+            action="关闭",
         )
         result = capability_filter(
             self.all_devices, ir, similarity_func=mock_similarity, threshold=0.5
@@ -87,7 +87,7 @@ class TestCapabilityFilter(unittest.TestCase):
         """无相似度函数时返回所有设备。"""
         ir = QueryIR(
             raw="打开设备",
-            action=ActionIntent(text="打开", confidence=0.9),
+            action="打开",
         )
         result = capability_filter(self.all_devices, ir, similarity_func=None)
         self.assertEqual(len(result), 3)
@@ -96,7 +96,7 @@ class TestCapabilityFilter(unittest.TestCase):
         """无动作文本时不过滤。"""
         ir = QueryIR(
             raw="测试",
-            action=ActionIntent(text=None),
+            action=None,
         )
         result = capability_filter(
             self.all_devices, ir, similarity_func=mock_similarity

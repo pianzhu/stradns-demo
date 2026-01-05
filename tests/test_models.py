@@ -3,7 +3,6 @@
 import unittest
 
 from context_retrieval.models import (
-    ActionIntent,
     Candidate,
     CommandSpec,
     Device,
@@ -104,21 +103,6 @@ class TestGroup(unittest.TestCase):
         self.assertEqual(len(group.device_ids), 2)
 
 
-class TestActionIntent(unittest.TestCase):
-    """测试动作意图模型。"""
-
-    def test_open_action(self):
-        """测试打开动作。"""
-        action = ActionIntent(text="打开", confidence=0.95)
-        self.assertEqual(action.text, "打开")
-        self.assertEqual(action.confidence, 0.95)
-
-    def test_set_action_with_value(self):
-        """测试设置动作仅包含 text。"""
-        action = ActionIntent(text="调到50")
-        self.assertEqual(action.text, "调到50")
-
-
 class TestQueryIR(unittest.TestCase):
     """测试查询IR模型。"""
 
@@ -127,17 +111,17 @@ class TestQueryIR(unittest.TestCase):
         ir = QueryIR(
             raw="打开老伙计",
             name_hint="老伙计",
-            action=ActionIntent(text="打开"),
+            action="打开",
         )
         self.assertEqual(ir.raw, "打开老伙计")
         self.assertEqual(ir.name_hint, "老伙计")
-        self.assertEqual(ir.action.text, "打开")
+        self.assertEqual(ir.action, "打开")
 
     def test_query_with_scope(self):
         """测试带范围的查询IR。"""
         ir = QueryIR(
             raw="关闭所有卧室的灯",
-            action=ActionIntent(text="关闭"),
+            action="关闭",
             scope_include={"卧室"},
             quantifier="all",
             type_hint="light",
@@ -149,7 +133,7 @@ class TestQueryIR(unittest.TestCase):
         """测试带排除的查询IR。"""
         ir = QueryIR(
             raw="打开除卧室以外的灯",
-            action=ActionIntent(text="打开"),
+            action="打开",
             scope_exclude={"卧室"},
             quantifier="except",
         )

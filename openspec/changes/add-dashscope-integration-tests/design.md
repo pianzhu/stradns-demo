@@ -1,7 +1,7 @@
 # 设计：dashscope 集成测试
 
 ## 范围与模型
-- LLM：`qwen-flash`，使用现有 `DashScopeLLM`，系统提示沿用当前 schema（action.text、name_hint、scope/type_hint、quantifier、references、confidence）。
+- LLM：`qwen-flash`，使用现有 `DashScopeLLM`，系统提示沿用当前 schema（action、name_hint、scope/type_hint、quantifier、references、confidence）。
 - Embedding：`text-embedding-v4`，通过 `DashScopeEmbeddingModel` → `InMemoryVectorSearcher`，输入命令描述。
 - 数据：
   - `src/spec.jsonl`（内容为 JSON 数组）中的 profile/capabilities 作为命令库
@@ -9,9 +9,9 @@
 
 ## 测试形态
 - 类型：集成测试（标记 slow/optional），需 `DASHSCOPE_API_KEY`；无 key 则 skip。
-- LLM 解析测试：对每个 query 调用 qwen，校验输出字段是否命中预期（action.text；name_hint；scope/type_hint；quantifier）；并输出覆盖率统计（例如 action.text 非空比例）。
+- LLM 解析测试：对每个 query 调用 qwen，校验输出字段是否命中预期（action；name_hint；scope/type_hint；quantifier）；并输出覆盖率统计（例如 action 非空比例）。
 - Embedding 测试：
-  - 主路径：先用 LLM 得到 QueryIR，优先使用 `QueryIR.action.text`（为空则 fallback 原始 query）作为 embedding 查询文本
+  - 主路径：先用 LLM 得到 QueryIR，优先使用 `QueryIR.action`（为空则 fallback 原始 query）作为 embedding 查询文本
   - 断言口径：以“期望 capability.id 命中 top-N”为准（默认 N=10，可调），并输出 top-N 命中率
 - Pipeline 端到端（可选）：通过 dashscope LLM + embedding 构造一个完整检索，断言设备候选 top5 内包含期望设备（若具备映射），reason 含 semantic_match。
 

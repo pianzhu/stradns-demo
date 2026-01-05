@@ -56,20 +56,12 @@ class Group:
 
 
 @dataclass
-class ActionIntent:
-    """动作意图。"""
-
-    text: str | None = None  # 原始/简短意图文本，用于语义相似度
-    confidence: float = 1.0
-
-
-@dataclass
 class QueryIR:
     """查询中间表示（Intermediate Representation）。"""
 
     raw: str
     name_hint: str | None = None
-    action: ActionIntent = field(default_factory=ActionIntent)
+    action: str | None = None  # 动作意图文本，用于语义相似度检索
     scope_include: set[str] = field(default_factory=set)
     scope_exclude: set[str] = field(default_factory=set)
     quantifier: Literal["one", "all", "any", "except"] = "one"

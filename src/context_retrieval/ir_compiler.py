@@ -8,7 +8,7 @@ import os
 import re
 from typing import Any, Protocol
 
-from context_retrieval.models import ActionIntent, QueryIR
+from context_retrieval.models import QueryIR
 
 
 class LLMClient(Protocol):
@@ -88,7 +88,8 @@ class DashScopeLLM:
 
         response = self._generation.call(
             model=self.model,
-            messages=messages, # type: ignore
+            messages=messages,  # type: ignore
+            result_format="message",  # 使用 message 格式以获取 choices 结构
         )
 
         content = self._extract_content(response)
@@ -116,7 +117,11 @@ class DashScopeLLM:
 
         # 直接尝试解析
         try:
-            return json.loads(content)
+            parsed = json.loads(content)
+            # 调试输出：查看实际返回的 JSON 结构
+            if os.getenv("DEBUG_LLM_RESPONSE"):
+                print(f"[DEBUG] LLM 返回: {json.dumps(parsed, ensure_ascii=False)}")
+            return parsed
         except json.JSONDecodeError:
             pass
 
@@ -124,7 +129,10 @@ class DashScopeLLM:
         match = re.search(r"{.*}", content, re.DOTALL)
         if match:
             try:
-                return json.loads(match.group(0))
+                parsed = json.loads(match.group(0))
+                if os.getenv("DEBUG_LLM_RESPONSE"):
+                    print(f"[DEBUG] LLM 返回（提取后）: {json.dumps(parsed, ensure_ascii=False)}")
+                return parsed
             except json.JSONDecodeError:
                 pass
 
@@ -135,13 +143,7 @@ class DashScopeLLM:
 QUERY_IR_SCHEMA = {
     "type": "object",
     "properties": {
-        "action": {
-            "type": "object",
-            "properties": {
-                "text": {"type": "string"},
-                "confidence": {"type": "number"},
-            },
-        },
+        "action": {"type": "string"},
         "name_hint": {"type": "string"},
         "scope_include": {"type": "array", "items": {"type": "string"}},
         "scope_exclude": {"type": "array", "items": {"type": "string"}},
@@ -154,27 +156,18 @@ QUERY_IR_SCHEMA = {
 
 # TODO optimize prompt
 DEFAULT_SYSTEM_PROMPT = """你是智能家居助手的语义解析器，请仅返回一个 JSON 对象。
-字段要求（只输出有把握且非空的键，避免空数组/空字符串）：
-- action.text: 简短动词/意图短语，用于语义相似度
-- name_hint: 可选
-- scope_include: 可选字符串数组
-- scope_exclude: 可选字符串数组
-- quantifier: one/all/any/except
-- type_hint: 可选
-- references: 可选字符串数组
-- confidence: 数值，0-1
-无法解析，请输出 {"confidence":0}。"""
+字段要求（只输出有把握且非空的键）：
+- action: 简短动词/意图短语（字符串）
+- name_hint: 设备名称提示（可选，字符串）
+- scope_include: 包含的房间/区域（可选，字符串数组）
+- scope_exclude: 排除的房间/区域（可选，字符串数组）
+- quantifier: one/all/any/except（可选，枚举值）
+- type_hint: 设备类型提示（可选，字符串）
+- references: 参考信息（可选，字符串数组）
+- confidence: 整体置信度 0-1（数值）
+无法解析时返回 {"confidence": 0}"""
 
 FALLBACK_IR = {"confidence": 0.0}
-
-def _parse_action(data: dict[str, Any] | None) -> ActionIntent:
-    """解析动作意图。"""
-    if not data:
-        return ActionIntent(confidence=0.0)
-    return ActionIntent(
-        text=data.get("text"),
-        confidence=data.get("confidence", 1.0),
-    )
 
 
 def compile_ir(text: str, llm: LLMClient) -> QueryIR:
@@ -192,7 +185,7 @@ def compile_ir(text: str, llm: LLMClient) -> QueryIR:
     return QueryIR(
         raw=text,
         name_hint=data.get("name_hint"),
-        action=_parse_action(data.get("action")),
+        action=data.get("action"),
         scope_include=set(data.get("scope_include", [])),
         scope_exclude=set(data.get("scope_exclude", [])),
         quantifier=data.get("quantifier", "one"),

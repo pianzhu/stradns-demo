@@ -17,9 +17,13 @@ class MockGeneration:
         self.calls: list[dict] = []
 
     def call(self, model: str, messages: list[dict], **kwargs):
-        """记录调用并返回带 output_text 的响应。"""
+        """记录调用并返回带 choices 结构的响应（匹配 result_format='message'）。"""
         self.calls.append({"model": model, "messages": messages, "kwargs": kwargs})
-        return type("Resp", (), {"output_text": self.output_text})
+        # 模拟 response.output.choices[0].message.content 结构
+        message = type("Message", (), {"content": self.output_text})
+        choice = type("Choice", (), {"message": message})
+        output = type("Output", (), {"choices": [choice]})
+        return type("Resp", (), {"status_code": 200, "output": output})
 
 
 class MockEmbeddingClient:
@@ -50,13 +54,13 @@ class TestDashScopeLLM(unittest.TestCase):
     def test_parse_json_response(self):
         """能解析标准 JSON 文本。"""
         mock_gen = MockGeneration(
-            output_text='{"action":{"text":"打开"},"name_hint":"老伙计"}'
+            output_text='{"action":"打开","name_hint":"老伙计"}'
         )
         llm = DashScopeLLM(generation_client=mock_gen, system_prompt="prompt")
 
         result = llm.parse("打开老伙计")
 
-        self.assertEqual(result["action"]["text"], "打开")
+        self.assertEqual(result["action"], "打开")
         self.assertEqual(result["name_hint"], "老伙计")
         # 确认 prompt 与用户消息都传递出去了
         self.assertEqual(mock_gen.calls[0]["messages"][0]["content"], "prompt")

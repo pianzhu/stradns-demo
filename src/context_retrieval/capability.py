@@ -48,7 +48,7 @@ def capability_filter(
     if similarity_func is None:
         return devices
 
-    action_query = ir.action.text
+    action_query = ir.action
 
     # 非操作类动作不过滤
     if not action_query:

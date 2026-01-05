@@ -183,7 +183,7 @@ class KeywordSearcher:
 
     def _score_action(self, device: Device, ir: QueryIR) -> float:
         """计算动作-命令匹配分数。"""
-        action_text = (ir.action.text or "").strip()
+        action_text = (ir.action or "").strip()
         if not action_text:
             return 0.0
 

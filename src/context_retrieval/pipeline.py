@@ -58,7 +58,7 @@ def retrieve(
     if vector_searcher:
         # 重新索引当前过滤后的设备，避免额外设备干扰
         vector_searcher.index(filtered_devices)
-        search_text = (ir.action.text or "").strip() or ir.raw
+        search_text = (ir.action or "").strip() or ir.raw
         vector_candidates = vector_searcher.search(search_text, top_k=top_k)
 
     # 5. 融合评分

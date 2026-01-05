@@ -5,13 +5,13 @@
 #### 场景：LLM 解析 QueryIR
 - 给定：真实中文查询（包含动作、名称/房间/类型等信息）
 - 当：使用 dashscope `qwen-flash` 调用 `DashScopeLLM` 解析
-- 则：输出应包含 action.text
+- 则：输出应包含 action
 - 且：应提取与查询匹配的 name_hint 或 scope/type_hint 或 quantifier 中的至少一项
 
 #### 场景：LLM → Embedding 的主路径联通
 - 给定：真实中文查询
 - 当：先使用 dashscope `qwen-flash` 解析为 QueryIR
-- 且：使用 QueryIR.action.text（为空则 fallback 使用原始 query）作为 embedding 查询文本
+- 且：使用 QueryIR.action（为空则 fallback 使用原始 query）作为 embedding 查询文本
 - 且：使用 dashscope `text-embedding-v4` 在命令库上进行相似度检索
 - 则：检索流程应可完成且返回非空候选列表
 

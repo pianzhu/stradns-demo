@@ -26,6 +26,24 @@ from typing import Any
 
 import numpy as np
 
+# 进度打印开关（默认开启；设置为 0 可关闭）
+PROGRESS_ENABLED = os.getenv("DASHSCOPE_IT_PROGRESS", "1") != "0"
+
+
+def _log_progress(message: str) -> None:
+    """打印进度信息（带 flush，便于实时看到输出）。"""
+    if PROGRESS_ENABLED:
+        print(message, flush=True)
+
+
+def _short_text(text: str, max_len: int = 60) -> str:
+    """缩短输出文本，避免刷屏。"""
+    text = (text or "").replace("\n", " ").strip()
+    if len(text) <= max_len:
+        return text
+    return f"{text[: max_len - 1]}…"
+
+
 # 运行开关
 SKIP_REASON = None
 if not os.getenv("RUN_DASHSCOPE_IT"):
@@ -80,8 +98,13 @@ class TestDashScopeLLMIntegration(unittest.TestCase):
         """初始化 LLM 客户端。"""
         from context_retrieval.ir_compiler import DashScopeLLM
 
+        start = time.perf_counter()
         cls.llm = DashScopeLLM(model=LLM_MODEL)
         cls.queries = load_test_queries()
+        _log_progress(
+            f"[LLM] 初始化完成 model={LLM_MODEL} queries={len(cls.queries)} "
+            f"(DASHSCOPE_MAX_QUERIES={MAX_QUERIES or 'ALL'}) 用时={time.perf_counter() - start:.2f}s"
+        )
 
     def test_llm_parse_action_text_coverage(self):
         """测试 LLM 解析 action.text 的覆盖率。
@@ -89,11 +112,13 @@ class TestDashScopeLLMIntegration(unittest.TestCase):
         action.kind 已移除，action.text 作为 embedding 检索的主查询文本。
         action.text 为空时允许 fallback 到原始 query，但会降低召回质量，因此需要监控覆盖率。
         """
+        _log_progress("\n[LLM action.text] 开始执行...")
         total = 0
         has_text = 0
         results = []
 
-        for case in self.queries:
+        cases = [c for c in self.queries if c.get("expected_capability_ids")]
+        for idx, case in enumerate(cases, start=1):
             query = case["query"]
             expected_cap_ids = case.get("expected_capability_ids", [])
             if not expected_cap_ids:
@@ -101,19 +126,32 @@ class TestDashScopeLLMIntegration(unittest.TestCase):
 
             total += 1
             try:
+                call_start = time.perf_counter()
                 result = self.llm.parse(query)
-                action_text = (result.get("action") or {}).get("text", "")
+                call_cost = time.perf_counter() - call_start
+                action_text = result.get("action", "")
                 ok = isinstance(action_text, str) and bool(action_text.strip())
                 if ok:
                     has_text += 1
                     results.append((query, "PASS", action_text))
+                    _log_progress(
+                        f"[LLM action.text] {idx}/{len(cases)} PASS 用时={call_cost:.2f}s "
+                        f"query={_short_text(query)} action.text={_short_text(action_text)}"
+                    )
                 else:
                     results.append((query, "FAIL", action_text))
+                    _log_progress(
+                        f"[LLM action.text] {idx}/{len(cases)} FAIL 用时={call_cost:.2f}s "
+                        f"query={_short_text(query)} action.text={_short_text(str(action_text))}"
+                    )
 
                 time.sleep(0.1)
 
             except Exception as e:
                 results.append((query, "ERROR", str(e)))
+                _log_progress(
+                    f"[LLM action.text] {idx}/{len(cases)} ERROR query={_short_text(query)} err={e}"
+                )
 
         coverage = has_text / total if total > 0 else 0
 
@@ -135,11 +173,15 @@ class TestDashScopeLLMIntegration(unittest.TestCase):
 
     def test_llm_parse_scope_include(self):
         """测试 LLM 解析 scope_include 的准确率。"""
+        _log_progress("\n[LLM scope_include] 开始执行...")
         total = 0
         correct = 0
         results = []
 
-        for case in self.queries:
+        cases = [
+            c for c in self.queries if (c.get("expected_fields", {}) or {}).get("scope_include")
+        ]
+        for idx, case in enumerate(cases, start=1):
             query = case["query"]
             expected = case.get("expected_fields", {})
             expected_scope = expected.get("scope_include", [])
@@ -149,7 +191,9 @@ class TestDashScopeLLMIntegration(unittest.TestCase):
 
             total += 1
             try:
+                call_start = time.perf_counter()
                 result = self.llm.parse(query)
+                call_cost = time.perf_counter() - call_start
                 actual_scope = result.get("scope_include", [])
 
                 # 检查期望的 scope 是否在实际结果中
@@ -160,13 +204,24 @@ class TestDashScopeLLMIntegration(unittest.TestCase):
                 if expected_set <= actual_set or expected_set == actual_set:
                     correct += 1
                     results.append((query, "PASS", expected_scope, actual_scope))
+                    _log_progress(
+                        f"[LLM scope_include] {idx}/{len(cases)} PASS 用时={call_cost:.2f}s "
+                        f"query={_short_text(query)} expected={expected_scope} actual={actual_scope}"
+                    )
                 else:
                     results.append((query, "FAIL", expected_scope, actual_scope))
+                    _log_progress(
+                        f"[LLM scope_include] {idx}/{len(cases)} FAIL 用时={call_cost:.2f}s "
+                        f"query={_short_text(query)} expected={expected_scope} actual={actual_scope}"
+                    )
 
                 time.sleep(0.1)
 
             except Exception as e:
                 results.append((query, "ERROR", expected_scope, str(e)))
+                _log_progress(
+                    f"[LLM scope_include] {idx}/{len(cases)} ERROR query={_short_text(query)} err={e}"
+                )
 
         accuracy = correct / total if total > 0 else 0
 
@@ -194,18 +249,27 @@ class TestDashScopeEmbeddingIntegration(unittest.TestCase):
         from context_retrieval.ir_compiler import DashScopeLLM
         from context_retrieval.vector_search import DashScopeEmbeddingModel
 
+        start = time.perf_counter()
         cls.llm = DashScopeLLM(model=LLM_MODEL)
         cls.embedding_model = DashScopeEmbeddingModel(model=EMBEDDING_MODEL)
         cls.queries = load_test_queries()
         cls.capabilities = load_capabilities()
+        _log_progress(
+            f"[Embedding] 初始化完成 llm={LLM_MODEL} embedding={EMBEDDING_MODEL} "
+            f"queries={len(cls.queries)} capabilities={len(cls.capabilities)} 用时={time.perf_counter() - start:.2f}s"
+        )
 
         # 构建命令 embedding 索引
         cls.cap_texts = [cap["text"] for cap in cls.capabilities]
         cls.cap_ids = [cap["id"] for cap in cls.capabilities]
 
         print(f"\n正在构建 embedding 索引，共 {len(cls.capabilities)} 个命令...")
+        index_start = time.perf_counter()
         cls.cap_embeddings = cls.embedding_model.encode(cls.cap_texts)
-        print(f"索引构建完成，向量维度: {cls.cap_embeddings.shape}")
+        print(
+            f"索引构建完成，向量维度: {cls.cap_embeddings.shape} "
+            f"(用时 {time.perf_counter() - index_start:.2f}s)"
+        )
 
     def _search_top_n(self, query_text: str, top_n: int = TOP_N) -> list[tuple[str, float]]:
         """执行 top-N 检索。"""
@@ -230,11 +294,13 @@ class TestDashScopeEmbeddingIntegration(unittest.TestCase):
 
     def test_embedding_recall_with_action_text(self):
         """测试使用 QueryIR.action.text 进行 embedding 召回。"""
+        _log_progress("\n[Embedding action.text] 开始执行...")
         total = 0
         hits = 0
         results = []
 
-        for case in self.queries:
+        cases = [c for c in self.queries if c.get("expected_capability_ids")]
+        for idx, case in enumerate(cases, start=1):
             query = case["query"]
             expected_cap_ids = case.get("expected_capability_ids", [])
 
@@ -244,14 +310,18 @@ class TestDashScopeEmbeddingIntegration(unittest.TestCase):
             total += 1
             try:
                 # 先调用 LLM 得到 QueryIR
+                llm_start = time.perf_counter()
                 ir = self.llm.parse(query)
-                action_text = ir.get("action", {}).get("text", "")
+                llm_cost = time.perf_counter() - llm_start
+                action_text = ir.get("action", "")
 
-                # 使用 action.text，为空则 fallback 到原始 query
+                # 使用 action，为空则 fallback 到原始 query
                 search_text = action_text if action_text else query
 
                 # 执行 embedding 检索
+                search_start = time.perf_counter()
                 top_results = self._search_top_n(search_text, TOP_N)
+                search_cost = time.perf_counter() - search_start
                 top_cap_ids = [cap_id for cap_id, _ in top_results]
 
                 # 检查期望的 capability_id 是否在 top-N 中
@@ -260,13 +330,24 @@ class TestDashScopeEmbeddingIntegration(unittest.TestCase):
                 if hit:
                     hits += 1
                     results.append((query, "HIT", expected_cap_ids, top_cap_ids[:3], search_text))
+                    _log_progress(
+                        f"[Embedding action.text] {idx}/{len(cases)} HIT llm={llm_cost:.2f}s embed+search={search_cost:.2f}s "
+                        f"query={_short_text(query)} search_text={_short_text(search_text)}"
+                    )
                 else:
                     results.append((query, "MISS", expected_cap_ids, top_cap_ids[:3], search_text))
+                    _log_progress(
+                        f"[Embedding action.text] {idx}/{len(cases)} MISS llm={llm_cost:.2f}s embed+search={search_cost:.2f}s "
+                        f"query={_short_text(query)} search_text={_short_text(search_text)}"
+                    )
 
                 time.sleep(0.1)
 
             except Exception as e:
                 results.append((query, "ERROR", expected_cap_ids, [], str(e)))
+                _log_progress(
+                    f"[Embedding action.text] {idx}/{len(cases)} ERROR query={_short_text(query)} err={e}"
+                )
 
         hit_rate = hits / total if total > 0 else 0
 
@@ -290,11 +371,13 @@ class TestDashScopeEmbeddingIntegration(unittest.TestCase):
 
     def test_embedding_recall_with_raw_query(self):
         """测试使用原始 query 进行 embedding 召回（对照组）。"""
+        _log_progress("\n[Embedding raw] 开始执行...")
         total = 0
         hits = 0
         results = []
 
-        for case in self.queries:
+        cases = [c for c in self.queries if c.get("expected_capability_ids")]
+        for idx, case in enumerate(cases, start=1):
             query = case["query"]
             expected_cap_ids = case.get("expected_capability_ids", [])
 
@@ -304,7 +387,9 @@ class TestDashScopeEmbeddingIntegration(unittest.TestCase):
             total += 1
             try:
                 # 直接使用原始 query 进行检索
+                search_start = time.perf_counter()
                 top_results = self._search_top_n(query, TOP_N)
+                search_cost = time.perf_counter() - search_start
                 top_cap_ids = [cap_id for cap_id, _ in top_results]
 
                 hit = any(cap_id in top_cap_ids for cap_id in expected_cap_ids)
@@ -312,11 +397,20 @@ class TestDashScopeEmbeddingIntegration(unittest.TestCase):
                 if hit:
                     hits += 1
                     results.append((query, "HIT", expected_cap_ids, top_cap_ids[:3]))
+                    _log_progress(
+                        f"[Embedding raw] {idx}/{len(cases)} HIT embed+search={search_cost:.2f}s query={_short_text(query)}"
+                    )
                 else:
                     results.append((query, "MISS", expected_cap_ids, top_cap_ids[:3]))
+                    _log_progress(
+                        f"[Embedding raw] {idx}/{len(cases)} MISS embed+search={search_cost:.2f}s query={_short_text(query)}"
+                    )
 
             except Exception as e:
                 results.append((query, "ERROR", expected_cap_ids, []))
+                _log_progress(
+                    f"[Embedding raw] {idx}/{len(cases)} ERROR query={_short_text(query)} err={e}"
+                )
 
         hit_rate = hits / total if total > 0 else 0
 
@@ -338,18 +432,26 @@ class TestDashScopePipelineIntegration(unittest.TestCase):
         from context_retrieval.ir_compiler import DashScopeLLM
         from context_retrieval.vector_search import DashScopeEmbeddingModel
 
+        start = time.perf_counter()
         cls.llm = DashScopeLLM(model=LLM_MODEL)
         cls.embedding_model = DashScopeEmbeddingModel(model=EMBEDDING_MODEL)
         cls.queries = load_test_queries()
         cls.capabilities = load_capabilities()
+        _log_progress(
+            f"[Pipeline] 初始化完成 llm={LLM_MODEL} embedding={EMBEDDING_MODEL} "
+            f"queries={len(cls.queries)} capabilities={len(cls.capabilities)} 用时={time.perf_counter() - start:.2f}s"
+        )
 
         # 构建索引
         cls.cap_texts = [cap["text"] for cap in cls.capabilities]
         cls.cap_ids = [cap["id"] for cap in cls.capabilities]
+        index_start = time.perf_counter()
         cls.cap_embeddings = cls.embedding_model.encode(cls.cap_texts)
+        _log_progress(f"[Pipeline] 索引构建完成 用时={time.perf_counter() - index_start:.2f}s")
 
     def test_end_to_end_pipeline(self):
         """端到端 pipeline 测试：LLM 解析 + embedding 召回。"""
+        _log_progress("\n[Pipeline] 开始执行...")
         total = 0
         action_text_present = 0
         action_text_fallback = 0
@@ -363,8 +465,10 @@ class TestDashScopePipelineIntegration(unittest.TestCase):
             total += 1
             try:
                 # Step 1: LLM 解析
+                llm_start = time.perf_counter()
                 ir = self.llm.parse(query)
-                action_text = (ir.get("action") or {}).get("text", "")
+                llm_cost = time.perf_counter() - llm_start
+                action_text = ir.get("action", "")
                 if isinstance(action_text, str) and action_text.strip():
                     action_text_present += 1
                     search_text = action_text
@@ -373,7 +477,9 @@ class TestDashScopePipelineIntegration(unittest.TestCase):
                     search_text = query
 
                 # Step 2: Embedding 召回
+                embed_start = time.perf_counter()
                 query_embedding = self.embedding_model.encode([search_text])[0]
+                embed_cost = time.perf_counter() - embed_start
 
                 query_norm = query_embedding / (np.linalg.norm(query_embedding) + 1e-8)
                 corpus_norm = self.cap_embeddings / (
@@ -391,6 +497,10 @@ class TestDashScopePipelineIntegration(unittest.TestCase):
                 if recall_hit and isinstance(action_text, str) and action_text.strip():
                     both_ok += 1
 
+                _log_progress(
+                    f"[Pipeline] {total}/10 llm={llm_cost:.2f}s embed={embed_cost:.2f}s "
+                    f"query={_short_text(query)} search_text={_short_text(search_text)}"
+                )
                 time.sleep(0.1)
 
             except Exception as e:

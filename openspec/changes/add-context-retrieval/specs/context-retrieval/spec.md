@@ -20,14 +20,14 @@
 
 - 给定：用户查询"打开老伙计"
 - 当：进行 LLM 语义解析
-- 则：action.text 应为 "打开"
+- 则：action 应为 "打开"
 - 且：name_hint 应为 "老伙计"
 
 #### 场景：解析量词与范围
 
 - 给定：用户查询"关闭所有卧室的灯"
 - 当：进行 LLM 语义解析
-- 则：action.text 应为 "关闭"
+- 则：action 应为 "关闭"
 - 且：quantifier 应为 "all"
 - 且：scope_include 应包含 "卧室"
 - 且：type_hint 应为 "light"
@@ -84,7 +84,7 @@
 #### 场景：无匹配命令被过滤
 
 - 给定：设备只有命令 description="读取温度"
-- 且：action.text = "打开"
+- 且：action = "打开"
 - 且：提供了 similarity_func
 - 当：执行能力过滤
 - 则：该设备应被过滤

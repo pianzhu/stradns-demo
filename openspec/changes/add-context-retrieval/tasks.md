@@ -82,7 +82,7 @@
 **数据模型**：
 - `ValueOption`, `ValueRange`
 - `CommandSpec`, `Device`, `Group`
-- `ActionIntent`, `QueryIR`（`action.kind` 与条件字段已移除）
+- `QueryIR`（`action` 类型为 `str | None`，`action.kind` 与条件字段已移除）
 - `Candidate`, `RetrievalResult`（简化版，含 hint）
 
 **变更**：移除 `ClarificationOption`, `ClarificationRequest`

@@ -4,7 +4,6 @@ import unittest
 
 from context_retrieval.keyword_search import KeywordSearcher
 from context_retrieval.models import (
-    ActionIntent,
     CommandSpec,
     Device,
     QueryIR,
@@ -107,7 +106,7 @@ class TestKeywordSearcher(unittest.TestCase):
         ir = QueryIR(
             raw="打开老伙计",
             name_hint="老伙计",
-            action=ActionIntent(text="打开"),
+            action="打开",
         )
         candidates = self.searcher.search(ir)
 
@@ -125,7 +124,7 @@ class TestKeywordSearcher(unittest.TestCase):
 
     def test_top_k_limit(self):
         """测试 top_k 限制。"""
-        ir = QueryIR(raw="设备", action=ActionIntent(text="打开"))
+        ir = QueryIR(raw="设备", action="打开")
         candidates = self.searcher.search(ir, top_k=2)
 
         self.assertLessEqual(len(candidates), 2)
@@ -135,7 +134,7 @@ class TestKeywordSearcher(unittest.TestCase):
         ir = QueryIR(
             raw="打开老伙计",
             name_hint="老伙计",
-            action=ActionIntent(text="打开"),
+            action="打开",
         )
         candidates = self.searcher.search(ir)
 

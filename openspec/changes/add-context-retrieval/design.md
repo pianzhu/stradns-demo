@@ -230,7 +230,7 @@ devices:
 class QueryIR:
     raw: str                          # 原始查询
     name_hint: str | None             # 名称提示
-    action: ActionIntent              # 动作意图
+    action: str | None                # 动作意图文本，用于语义相似度检索
     scope_include: set[str]           # 包含的 room
     scope_exclude: set[str]           # 排除的 room
     quantifier: Literal["one", "all", "any", "except"]

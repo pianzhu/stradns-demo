@@ -7,7 +7,7 @@
 
 ## 变更内容
 
-- 新增基于 dashscope 在线模型的集成测试用例（本地手动运行），覆盖 **LLM 解析 QueryIR → 使用 QueryIR.action.text 做 embedding 检索** 的主路径。
+- 新增基于 dashscope 在线模型的集成测试用例（本地手动运行），覆盖 **LLM 解析 QueryIR → 使用 QueryIR.action 做 embedding 检索** 的主路径。
 - 复用 `src/spec.jsonl` 的真实命令描述作为 embedding 侧的基准数据，并以“可扩展”的真实中文 query 用例集驱动测试（默认不少于 30 条，可配置规模）。
 - 通过标准以“命令 ID 命中 top-N”为主（默认 top10，可配置），避免“命令或设备”混合口径导致断言不明确。
 - 提供可跳过/可配置的测试入口：依赖 `DASHSCOPE_API_KEY`，并使用运行开关（如 `RUN_DASHSCOPE_IT=1`）避免默认执行带来的耗时/耗费配额。
