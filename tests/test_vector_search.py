@@ -1,5 +1,6 @@
 """测试向量检索模块。"""
 
+import os
 import unittest
 
 import numpy as np
@@ -149,8 +150,12 @@ class TestSentenceTransformerSearcher(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """检查 sentence-transformers 是否可用。"""
+        if os.getenv("RUN_SENTENCE_TRANSFORMER_TESTS") != "1":
+            cls.has_sentence_transformers = False
+            return
+
         try:
-            from sentence_transformers import SentenceTransformer
+            from sentence_transformers import SentenceTransformer  # noqa: F401
 
             cls.has_sentence_transformers = True
         except ImportError:
@@ -159,7 +164,9 @@ class TestSentenceTransformerSearcher(unittest.TestCase):
     def setUp(self):
         """设置测试数据。"""
         if not self.has_sentence_transformers:
-            self.skipTest("sentence-transformers not installed")
+            self.skipTest(
+                "跳过 sentence-transformers 测试，设置 RUN_SENTENCE_TRANSFORMER_TESTS=1 可启用"
+            )
 
         from context_retrieval.vector_search import SentenceTransformerSearcher
 

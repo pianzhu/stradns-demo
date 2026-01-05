@@ -1,10 +1,12 @@
 """向量检索模块。
 
-使用 sentence-transformers 进行语义相似度检索。
+使用 sentence-transformers 或 dashscope embedding 进行语义相似度检索。
 """
 
+import os
 from abc import ABC, abstractmethod
-from typing import Protocol
+from http import HTTPStatus
+from typing import Any, Protocol
 
 import numpy as np
 from numpy.typing import NDArray
@@ -124,16 +126,15 @@ class SentenceTransformerSearcher(VectorSearcher):
         candidates = []
         for idx in top_indices:
             score = float(similarities[idx])
-            if score > 0:  # 只返回正相似度的结果
-                candidates.append(
-                    Candidate(
-                        entity_id=self.devices[idx].id,
-                        entity_kind="device",
-                        vector_score=score,
-                        total_score=score,
-                        reasons=["semantic_match"],
-                    )
+            candidates.append(
+                Candidate(
+                    entity_id=self.devices[idx].id,
+                    entity_kind="device",
+                    vector_score=score,
+                    total_score=score,
+                    reasons=["semantic_match"],
                 )
+            )
 
         return candidates
 
@@ -198,19 +199,100 @@ class InMemoryVectorSearcher(VectorSearcher):
         candidates = []
         for idx in top_indices:
             score = float(similarities[idx])
-            if score > 0:
-                candidates.append(
-                    Candidate(
-                        entity_id=self.devices[idx].id,
-                        entity_kind="device",
-                        vector_score=score,
-                        total_score=score,
-                        reasons=["semantic_match"],
-                    )
+            candidates.append(
+                Candidate(
+                    entity_id=self.devices[idx].id,
+                    entity_kind="device",
+                    vector_score=score,
+                    total_score=score,
+                    reasons=["semantic_match"],
                 )
+            )
 
         return candidates
 
+
+class DashScopeEmbeddingModel:
+    """基于 dashscope 的 embedding 模型实现。"""
+
+    def __init__(
+        self,
+        model: str = "text-embedding-v4",
+        api_key: str | None = None,
+        embedding_client: Any | None = None,
+    ):
+        """初始化。
+
+        Args:
+            model: 模型名称，默认 text-embedding-v4
+            api_key: API Key，未提供时从 `DASHSCOPE_API_KEY` 读取
+            embedding_client: 可注入的 embedding 客户端，便于测试
+        """
+        self.model = model
+
+        if embedding_client is not None:
+            self._embedding = embedding_client
+            self._dashscope = None
+            return
+
+        try:
+            import dashscope
+        except ImportError as exc:  # pragma: no cover - 依赖缺失提示
+            raise ImportError("需要安装 dashscope 才能使用 DashScopeEmbeddingModel") from exc
+
+        api_key = api_key or os.getenv("DASHSCOPE_API_KEY")
+        if api_key:
+            dashscope.api_key = api_key
+
+        embedding_class = getattr(dashscope, "TextEmbedding", None)
+        if embedding_class is None:
+            try:
+                from dashscope import embeddings as embedding_mod
+
+                embedding_class = getattr(embedding_mod, "Embedding")
+            except Exception as exc:  # pragma: no cover - 避免依赖差异导致崩溃
+                raise ImportError("未找到 dashscope TextEmbedding/Embedding 接口") from exc
+
+        self._embedding = embedding_class
+        self._dashscope = dashscope
+
+    def encode(self, texts: list[str]) -> NDArray[np.float32]:
+        """编码文本列表为向量数组。"""
+        if not texts:
+            return np.zeros((0, 0), dtype=np.float32)
+
+        response = self._embedding.call(
+            model=self.model,
+            input=texts,
+        )
+        self._ensure_success(response)
+
+        output = getattr(response, "output", None) or {}
+        embeddings = output.get("embeddings")
+        if not embeddings:
+            raise ValueError("dashscope 未返回 embeddings 结果")
+
+        vectors = []
+        for item in embeddings:
+            if not isinstance(item, dict):
+                continue
+            vector = item.get("embedding")
+            if vector is not None:
+                vectors.append(np.asarray(vector, dtype=np.float32))
+
+        if not vectors:
+            raise ValueError("dashscope 返回的 embedding 为空")
+
+        return np.vstack(vectors)
+
+    def _ensure_success(self, response: Any) -> None:
+        """校验 dashscope 响应状态。"""
+        status = getattr(response, "status_code", None)
+        if status is not None and status != HTTPStatus.OK:
+            message = getattr(response, "message", "") or getattr(
+                response, "error", ""
+            )
+            raise RuntimeError(f"dashscope 调用失败: {status} {message}")
 
 class StubVectorSearcher(VectorSearcher):
     """Stub 向量检索器（用于测试）。

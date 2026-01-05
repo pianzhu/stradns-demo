@@ -8,4 +8,5 @@ dependencies = [
     "strands-agents",
     "mcp",
     "anthropic>=0.75.0",
+    "dashscope",
 ]

@@ -309,6 +309,16 @@ class RetrievalResult:
 - 集合指令返回 Group 而非展开
 - Scene 作为一等实体参与召回
 
+### 5.5 DashScope 适配
+
+当前：
+- LLM 解析：`DashScopeLLM` 使用 `qwen-flash`，系统提示约束输出 JSON（QueryIR schema），API Key 从 `DASHSCOPE_API_KEY` 读取
+- Embedding：`DashScopeEmbeddingModel` 使用 `text-embedding-v4`，可注入 InMemoryVectorSearcher，返回 `np.ndarray` 供融合评分
+
+未来：
+- 支持模型名配置（环境/构造参数）
+- 允许在 pipeline 层注入 dashscope 向量检索器或其他实现
+
 ## 6. 性能考量
 
 ### 6.1 当前实现

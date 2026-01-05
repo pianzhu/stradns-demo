@@ -5,6 +5,7 @@ from context_retrieval.pipeline import retrieve
 from context_retrieval.models import Device, CommandSpec, RetrievalResult
 from context_retrieval.ir_compiler import FakeLLM
 from context_retrieval.state import ConversationState
+from context_retrieval.vector_search import StubVectorSearcher
 
 
 class TestRetrieve(unittest.TestCase):
@@ -90,6 +91,22 @@ class TestRetrieve(unittest.TestCase):
         # 如果有候选，应更新 last-mentioned
         if result.candidates:
             self.assertIsNotNone(self.state.resolve_reference("last-mentioned"))
+
+    def test_retrieve_with_vector_searcher(self):
+        """提供向量检索器时也能返回候选。"""
+        stub_vector = StubVectorSearcher(
+            stub_results={"用向量检索": [("lamp-2", 0.9)]}
+        )
+        result = retrieve(
+            text="用向量检索",
+            devices=self.devices,
+            llm=self.llm,
+            state=self.state,
+            vector_searcher=stub_vector,
+        )
+
+        ids = {c.entity_id for c in result.candidates}
+        self.assertIn("lamp-2", ids)
 
 
 if __name__ == "__main__":
