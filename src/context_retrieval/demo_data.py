@@ -91,39 +91,39 @@ DEMO_DEVICES = [
 # FakeLLM 预设响应
 DEMO_LLM_PRESETS = {
     "打开老伙计": {
-        "action": {"kind": "open"},
+        "action": {"text": "打开"},
         "name_hint": "老伙计",
     },
     "关闭客厅灯": {
-        "action": {"kind": "close"},
+        "action": {"text": "关闭"},
         "name_hint": "客厅灯",
     },
     "打开客厅的灯": {
-        "action": {"kind": "open"},
+        "action": {"text": "打开"},
         "scope_include": ["客厅"],
         "type_hint": "light",
     },
     "关闭所有灯": {
-        "action": {"kind": "close"},
+        "action": {"text": "关闭"},
         "quantifier": "all",
         "type_hint": "light",
     },
     "打开除卧室以外的灯": {
-        "action": {"kind": "open"},
+        "action": {"text": "打开"},
         "quantifier": "except",
         "scope_exclude": ["卧室"],
         "type_hint": "light",
     },
     "打开大白": {
-        "action": {"kind": "open"},
+        "action": {"text": "打开"},
         "name_hint": "大白",
     },
     "把空调温度设置为26度": {
-        "action": {"kind": "set", "target_value": "26"},
+        "action": {"text": "设置温度"},
         "name_hint": "空调",
     },
     "客厅温度是多少": {
-        "action": {"kind": "query"},
+        "action": {"text": "查询温度"},
         "scope_include": ["客厅"],
         "type_hint": "sensor",
     },

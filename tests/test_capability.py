@@ -59,7 +59,7 @@ class TestCapabilityFilter(unittest.TestCase):
         """open 动作过滤无匹配命令的设备。"""
         ir = QueryIR(
             raw="打开设备",
-            action=ActionIntent(kind="open", confidence=0.9),
+            action=ActionIntent(text="打开", confidence=0.9),
         )
         result = capability_filter(
             self.all_devices, ir, similarity_func=mock_similarity, threshold=0.5
@@ -73,7 +73,7 @@ class TestCapabilityFilter(unittest.TestCase):
         """close 动作过滤无匹配命令的设备。"""
         ir = QueryIR(
             raw="关闭设备",
-            action=ActionIntent(kind="close", confidence=0.9),
+            action=ActionIntent(text="关闭", confidence=0.9),
         )
         result = capability_filter(
             self.all_devices, ir, similarity_func=mock_similarity, threshold=0.5
@@ -87,16 +87,16 @@ class TestCapabilityFilter(unittest.TestCase):
         """无相似度函数时返回所有设备。"""
         ir = QueryIR(
             raw="打开设备",
-            action=ActionIntent(kind="open", confidence=0.9),
+            action=ActionIntent(text="打开", confidence=0.9),
         )
         result = capability_filter(self.all_devices, ir, similarity_func=None)
         self.assertEqual(len(result), 3)
 
     def test_unknown_action_no_filter(self):
-        """unknown 动作不过滤。"""
+        """无动作文本时不过滤。"""
         ir = QueryIR(
             raw="测试",
-            action=ActionIntent(kind="unknown"),
+            action=ActionIntent(text=None),
         )
         result = capability_filter(
             self.all_devices, ir, similarity_func=mock_similarity

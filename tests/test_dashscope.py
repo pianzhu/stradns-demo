@@ -50,13 +50,13 @@ class TestDashScopeLLM(unittest.TestCase):
     def test_parse_json_response(self):
         """能解析标准 JSON 文本。"""
         mock_gen = MockGeneration(
-            output_text='{"action":{"kind":"open"},"name_hint":"老伙计"}'
+            output_text='{"action":{"text":"打开"},"name_hint":"老伙计"}'
         )
         llm = DashScopeLLM(generation_client=mock_gen, system_prompt="prompt")
 
         result = llm.parse("打开老伙计")
 
-        self.assertEqual(result["action"]["kind"], "open")
+        self.assertEqual(result["action"]["text"], "打开")
         self.assertEqual(result["name_hint"], "老伙计")
         # 确认 prompt 与用户消息都传递出去了
         self.assertEqual(mock_gen.calls[0]["messages"][0]["content"], "prompt")
@@ -69,8 +69,8 @@ class TestDashScopeLLM(unittest.TestCase):
 
         result = llm.parse("test")
 
-        self.assertTrue(result.get("needs_fallback"))
-        self.assertEqual(result["action"]["kind"], "unknown")
+        self.assertEqual(result.get("confidence"), 0)
+        self.assertNotIn("action", result)
 
 
 class TestDashScopeEmbeddingModel(unittest.TestCase):

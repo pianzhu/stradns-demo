@@ -36,11 +36,11 @@ class TestRetrieve(unittest.TestCase):
 
         self.llm = FakeLLM({
             "打开老伙计": {
-                "action": {"kind": "open"},
+                "action": {"text": "打开"},
                 "name_hint": "老伙计",
             },
             "关闭卧室的灯": {
-                "action": {"kind": "close"},
+                "action": {"text": "关闭"},
                 "scope_include": ["卧室"],
             },
         })

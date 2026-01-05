@@ -8,7 +8,7 @@ import os
 import re
 from typing import Any, Protocol
 
-from context_retrieval.models import ActionIntent, Condition, QueryIR
+from context_retrieval.models import ActionIntent, QueryIR
 
 
 class LLMClient(Protocol):
@@ -34,10 +34,7 @@ class FakeLLM:
         """解析文本，返回预设响应或 fallback。"""
         if text in self._presets:
             return self._presets[text]
-        return {
-            "action": {"kind": "unknown"},
-            "needs_fallback": True,
-        }
+        return {"confidence": 0.0}
 
 
 class DashScopeLLM:
@@ -99,34 +96,18 @@ class DashScopeLLM:
         return data
 
     def _extract_content(self, response: Any) -> str:
-        """从 dashscope 响应中提取文本内容。"""
-        # 常见属性：output_text
-        if hasattr(response, "output_text"):
-            return getattr(response, "output_text") or ""
+        """从 dashscope 响应中提取文本内容。
 
-        output = getattr(response, "output", None)
-        if isinstance(output, dict):
-            if "text" in output:
-                return output.get("text") or ""
+        dashscope 响应结构：response.output.choices[0].message.content
+        """
+        # 检查 HTTP 状态码
+        if response.status_code != 200:
+            raise RuntimeError(
+                f"dashscope 调用失败: code={response.code}, message={response.message}"
+            )
 
-            choices = output.get("choices")
-            if choices:
-                first = choices[0] or {}
-                message = first.get("message", {})
-                content = message.get("content")
-                if isinstance(content, str):
-                    return content
-                if isinstance(content, list):
-                    # 兼容 content 分片结构
-                    parts = [
-                        part.get("text", "")
-                        for part in content
-                        if isinstance(part, dict)
-                    ]
-                    return "".join(parts)
-
-        # 兜底字符串化
-        return str(response)
+        # 按官方文档解析：response.output.choices[0].message.content
+        return response.output.choices[0].message.content
 
     def _safe_json_loads(self, content: str) -> dict[str, Any]:
         """解析 JSON，失败时返回 fallback。"""
@@ -157,86 +138,43 @@ QUERY_IR_SCHEMA = {
         "action": {
             "type": "object",
             "properties": {
-                "kind": {"type": "string", "enum": ["open", "close", "set", "query", "unknown"]},
-                "target_value": {"type": "string"},
+                "text": {"type": "string"},
                 "confidence": {"type": "number"},
             },
-            "required": ["kind"],
         },
         "name_hint": {"type": "string"},
-        "entity_mentions": {"type": "array", "items": {"type": "string"}},
         "scope_include": {"type": "array", "items": {"type": "string"}},
         "scope_exclude": {"type": "array", "items": {"type": "string"}},
         "quantifier": {"type": "string", "enum": ["one", "all", "any", "except"]},
         "type_hint": {"type": "string"},
-        "conditions": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "kind": {"type": "string"},
-                    "operator": {"type": "string"},
-                    "threshold": {"type": "number"},
-                    "unit": {"type": "string"},
-                    "room": {"type": "string"},
-                },
-            },
-        },
         "references": {"type": "array", "items": {"type": "string"}},
         "confidence": {"type": "number"},
-        "needs_fallback": {"type": "boolean"},
     },
 }
 
 # TODO optimize prompt
 DEFAULT_SYSTEM_PROMPT = """你是智能家居助手的语义解析器，请仅返回一个 JSON 对象。
-字段要求：
-- action.kind: open/close/set/query/unknown
-- action.target_value: 可选，字符串
-- name_hint: 可选，字符串
-- entity_mentions: 字符串数组
-- scope_include: 字符串数组
-- scope_exclude: 字符串数组
+字段要求（只输出有把握且非空的键，避免空数组/空字符串）：
+- action.text: 简短动词/意图短语，用于语义相似度
+- name_hint: 可选
+- scope_include: 可选字符串数组
+- scope_exclude: 可选字符串数组
 - quantifier: one/all/any/except
-- type_hint: 可选，字符串
-- conditions: 对象数组，字段包括 kind/operator/threshold/unit/room
-- references: 字符串数组
-- confidence: 数值
-- needs_fallback: 布尔
-如果无法解析，请返回 {"action":{"kind":"unknown"},"needs_fallback":true}。"""
+- type_hint: 可选
+- references: 可选字符串数组
+- confidence: 数值，0-1
+无法解析，请输出 {"confidence":0}。"""
 
-FALLBACK_IR = {
-    "action": {"kind": "unknown"},
-    "needs_fallback": True,
-}
+FALLBACK_IR = {"confidence": 0.0}
 
 def _parse_action(data: dict[str, Any] | None) -> ActionIntent:
     """解析动作意图。"""
     if not data:
-        return ActionIntent(kind="unknown")
+        return ActionIntent(confidence=0.0)
     return ActionIntent(
-        kind=data.get("kind", "unknown"),
-        target_value=data.get("target_value"),
+        text=data.get("text"),
         confidence=data.get("confidence", 1.0),
     )
-
-
-def _parse_conditions(data: list[dict[str, Any]] | None) -> list[Condition]:
-    """解析条件列表。"""
-    if not data:
-        return []
-    conditions = []
-    for item in data:
-        conditions.append(
-            Condition(
-                kind=item.get("kind", "other"),
-                operator=item.get("operator", "eq"),
-                threshold=item.get("threshold", 0),
-                unit=item.get("unit", ""),
-                room=item.get("room"),
-            )
-        )
-    return conditions
 
 
 def compile_ir(text: str, llm: LLMClient) -> QueryIR:
@@ -253,15 +191,12 @@ def compile_ir(text: str, llm: LLMClient) -> QueryIR:
 
     return QueryIR(
         raw=text,
-        entity_mentions=data.get("entity_mentions", []),
         name_hint=data.get("name_hint"),
         action=_parse_action(data.get("action")),
         scope_include=set(data.get("scope_include", [])),
         scope_exclude=set(data.get("scope_exclude", [])),
         quantifier=data.get("quantifier", "one"),
         type_hint=data.get("type_hint"),
-        conditions=_parse_conditions(data.get("conditions")),
         references=data.get("references", []),
         confidence=data.get("confidence", 1.0),
-        needs_fallback=data.get("needs_fallback", False),
     )

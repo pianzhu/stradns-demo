@@ -56,22 +56,10 @@ class Group:
 
 
 @dataclass
-class Condition:
-    """条件依赖。"""
-
-    kind: Literal["temperature", "humidity", "brightness", "other"]
-    operator: Literal["gt", "lt", "eq", "gte", "lte"]
-    threshold: float
-    unit: str = ""
-    room: str | None = None
-
-
-@dataclass
 class ActionIntent:
     """动作意图。"""
 
-    kind: Literal["open", "close", "set", "query", "unknown"]
-    target_value: str | None = None
+    text: str | None = None  # 原始/简短意图文本，用于语义相似度
     confidence: float = 1.0
 
 
@@ -80,17 +68,14 @@ class QueryIR:
     """查询中间表示（Intermediate Representation）。"""
 
     raw: str
-    entity_mentions: list[str] = field(default_factory=list)
     name_hint: str | None = None
-    action: ActionIntent = field(default_factory=lambda: ActionIntent(kind="unknown"))
+    action: ActionIntent = field(default_factory=ActionIntent)
     scope_include: set[str] = field(default_factory=set)
     scope_exclude: set[str] = field(default_factory=set)
     quantifier: Literal["one", "all", "any", "except"] = "one"
     type_hint: str | None = None
-    conditions: list[Condition] = field(default_factory=list)
     references: list[str] = field(default_factory=list)
     confidence: float = 1.0
-    needs_fallback: bool = False
 
 
 @dataclass

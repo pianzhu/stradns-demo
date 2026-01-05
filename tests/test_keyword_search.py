@@ -107,23 +107,12 @@ class TestKeywordSearcher(unittest.TestCase):
         ir = QueryIR(
             raw="打开老伙计",
             name_hint="老伙计",
-            action=ActionIntent(kind="open"),
+            action=ActionIntent(text="打开"),
         )
         candidates = self.searcher.search(ir)
 
         self.assertEqual(candidates[0].entity_id, "lamp-1")
         self.assertIn("action_match", candidates[0].reasons)
-
-    def test_entity_mentions(self):
-        """测试 entity_mentions 匹配。"""
-        ir = QueryIR(raw="打开大白", entity_mentions=["大白"])
-        candidates = self.searcher.search(ir)
-
-        self.assertGreater(len(candidates), 0)
-        ac_candidate = next(
-            (c for c in candidates if c.entity_id == "ac-1"), None
-        )
-        self.assertIsNotNone(ac_candidate)
 
     def test_no_match(self):
         """测试无匹配情况。"""
@@ -136,7 +125,7 @@ class TestKeywordSearcher(unittest.TestCase):
 
     def test_top_k_limit(self):
         """测试 top_k 限制。"""
-        ir = QueryIR(raw="设备", action=ActionIntent(kind="open"))
+        ir = QueryIR(raw="设备", action=ActionIntent(text="打开"))
         candidates = self.searcher.search(ir, top_k=2)
 
         self.assertLessEqual(len(candidates), 2)
@@ -146,7 +135,7 @@ class TestKeywordSearcher(unittest.TestCase):
         ir = QueryIR(
             raw="打开老伙计",
             name_hint="老伙计",
-            action=ActionIntent(kind="open"),
+            action=ActionIntent(text="打开"),
         )
         candidates = self.searcher.search(ir)
 

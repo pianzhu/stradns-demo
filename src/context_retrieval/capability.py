@@ -10,14 +10,6 @@ from context_retrieval.models import Device, QueryIR
 # 相似度计算函数类型
 SimilarityFunc = Callable[[str, str], float]
 
-# 动作意图到查询文本的映射
-ACTION_QUERIES = {
-    "open": "打开",
-    "close": "关闭",
-    "set": "设置",
-    "query": "查询",
-}
-
 DEFAULT_THRESHOLD = 0.5
 
 
@@ -56,8 +48,7 @@ def capability_filter(
     if similarity_func is None:
         return devices
 
-    action_kind = ir.action.kind
-    action_query = ACTION_QUERIES.get(action_kind)
+    action_query = ir.action.text
 
     # 非操作类动作不过滤
     if not action_query:

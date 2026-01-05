@@ -1,0 +1,260 @@
+[
+  {
+    "query": "打开客厅的灯",
+    "expected_capability_ids": ["main-switch-on"],
+    "expected_fields": {
+      "scope_include": ["客厅"],
+      "type_hint": "灯"
+    }
+  },
+  {
+    "query": "关闭卧室所有灯光",
+    "expected_capability_ids": ["main-switch-off"],
+    "expected_fields": {
+      "scope_include": ["卧室"],
+      "quantifier": "all",
+      "type_hint": "灯"
+    }
+  },
+  {
+    "query": "把客厅灯光调到50%",
+    "expected_capability_ids": ["main-switchLevel-setLevel"],
+    "expected_fields": {
+      "scope_include": ["客厅"],
+      "type_hint": "灯"
+    }
+  },
+  {
+    "query": "调整灯光亮度",
+    "expected_capability_ids": ["main-switchLevel-setLevel"],
+    "expected_fields": {
+    }
+  },
+  {
+    "query": "设置灯光色温为暖白色",
+    "expected_capability_ids": ["main-colorTemperature-setColorTemperature"],
+    "expected_fields": {
+      "type_hint": "灯"
+    }
+  },
+  {
+    "query": "把灯调成红色",
+    "expected_capability_ids": ["main-colorControl-setHue", "main-colorControl-setSaturation"],
+    "expected_fields": {
+      "type_hint": "灯"
+    }
+  },
+  {
+    "query": "启用电源",
+    "expected_capability_ids": ["main-switch-on"],
+    "expected_fields": {
+    }
+  },
+  {
+    "query": "关闭电源",
+    "expected_capability_ids": ["main-switch-off"],
+    "expected_fields": {
+    }
+  },
+  {
+    "query": "设置色相",
+    "expected_capability_ids": ["main-colorControl-setHue"],
+    "expected_fields": {
+    }
+  },
+  {
+    "query": "调节饱和度",
+    "expected_capability_ids": ["main-colorControl-setSaturation"],
+    "expected_fields": {
+    }
+  },
+  {
+    "query": "打开所有房间的灯",
+    "expected_capability_ids": ["main-switch-on"],
+    "expected_fields": {
+      "quantifier": "all",
+      "type_hint": "灯"
+    }
+  },
+  {
+    "query": "关掉除了客厅以外的灯",
+    "expected_capability_ids": ["main-switch-off"],
+    "expected_fields": {
+      "scope_exclude": ["客厅"],
+      "quantifier": "except",
+      "type_hint": "灯"
+    }
+  },
+  {
+    "query": "调整卧室灯光亮度到80",
+    "expected_capability_ids": ["main-switchLevel-setLevel"],
+    "expected_fields": {
+      "scope_include": ["卧室"],
+      "type_hint": "灯"
+    }
+  },
+  {
+    "query": "把厨房的灯打开",
+    "expected_capability_ids": ["main-switch-on"],
+    "expected_fields": {
+      "scope_include": ["厨房"],
+      "type_hint": "灯"
+    }
+  },
+  {
+    "query": "关闭浴室的电源",
+    "expected_capability_ids": ["main-switch-off"],
+    "expected_fields": {
+      "scope_include": ["浴室"]
+    }
+  },
+  {
+    "query": "设置书房灯光色温",
+    "expected_capability_ids": ["main-colorTemperature-setColorTemperature"],
+    "expected_fields": {
+      "scope_include": ["书房"],
+      "type_hint": "灯"
+    }
+  },
+  {
+    "query": "把走廊灯调成蓝色",
+    "expected_capability_ids": ["main-colorControl-setHue", "main-colorControl-setSaturation"],
+    "expected_fields": {
+      "scope_include": ["走廊"],
+      "type_hint": "灯"
+    }
+  },
+  {
+    "query": "打开任意一盏灯",
+    "expected_capability_ids": ["main-switch-on"],
+    "expected_fields": {
+      "quantifier": "any",
+      "type_hint": "灯"
+    }
+  },
+  {
+    "query": "调暗灯光",
+    "expected_capability_ids": ["main-switchLevel-setLevel"],
+    "expected_fields": {
+      "type_hint": "灯"
+    }
+  },
+  {
+    "query": "调亮灯光",
+    "expected_capability_ids": ["main-switchLevel-setLevel"],
+    "expected_fields": {
+      "type_hint": "灯"
+    }
+  },
+  {
+    "query": "设置灯光为冷白色",
+    "expected_capability_ids": ["main-colorTemperature-setColorTemperature"],
+    "expected_fields": {
+      "type_hint": "灯"
+    }
+  },
+  {
+    "query": "关闭一楼所有灯",
+    "expected_capability_ids": ["main-switch-off"],
+    "expected_fields": {
+      "scope_include": ["一楼"],
+      "quantifier": "all",
+      "type_hint": "灯"
+    }
+  },
+  {
+    "query": "打开二楼的灯",
+    "expected_capability_ids": ["main-switch-on"],
+    "expected_fields": {
+      "scope_include": ["二楼"],
+      "type_hint": "灯"
+    }
+  },
+  {
+    "query": "把餐厅灯调到最亮",
+    "expected_capability_ids": ["main-switchLevel-setLevel"],
+    "expected_fields": {
+      "scope_include": ["餐厅"],
+      "type_hint": "灯"
+    }
+  },
+  {
+    "query": "设置阳台灯光为暖黄色",
+    "expected_capability_ids": ["main-colorTemperature-setColorTemperature", "main-colorControl-setHue"],
+    "expected_fields": {
+      "scope_include": ["阳台"],
+      "type_hint": "灯"
+    }
+  },
+  {
+    "query": "关闭客厅和卧室的灯",
+    "expected_capability_ids": ["main-switch-off"],
+    "expected_fields": {
+      "scope_include": ["客厅", "卧室"],
+      "type_hint": "灯"
+    }
+  },
+  {
+    "query": "打开车库的电源",
+    "expected_capability_ids": ["main-switch-on"],
+    "expected_fields": {
+      "scope_include": ["车库"]
+    }
+  },
+  {
+    "query": "调整玄关灯光亮度到30%",
+    "expected_capability_ids": ["main-switchLevel-setLevel"],
+    "expected_fields": {
+      "scope_include": ["玄关"],
+      "type_hint": "灯"
+    }
+  },
+  {
+    "query": "把花园的灯打开",
+    "expected_capability_ids": ["main-switch-on"],
+    "expected_fields": {
+      "scope_include": ["花园"],
+      "type_hint": "灯"
+    }
+  },
+  {
+    "query": "关闭地下室所有设备",
+    "expected_capability_ids": ["main-switch-off"],
+    "expected_fields": {
+      "scope_include": ["地下室"],
+      "quantifier": "all"
+    }
+  },
+  {
+    "query": "设置储物间灯光色温为4000K",
+    "expected_capability_ids": ["main-colorTemperature-setColorTemperature"],
+    "expected_fields": {
+      "scope_include": ["储物间"],
+      "type_hint": "灯"
+    }
+  },
+  {
+    "query": "把阁楼灯调成绿色",
+    "expected_capability_ids": ["main-colorControl-setHue", "main-colorControl-setSaturation"],
+    "expected_fields": {
+      "scope_include": ["阁楼"],
+      "type_hint": "灯"
+    }
+  },
+  {
+    "query": "打开办公室的灯并调到70%亮度",
+    "expected_capability_ids": ["main-switch-on", "main-switchLevel-setLevel"],
+    "expected_fields": {
+      "scope_include": ["办公室"],
+      "type_hint": "灯"
+    }
+  },
+  {
+    "query": "查询客厅灯光状态",
+    "expected_capability_ids": ["main-switch-on", "main-switch-off"],
+    "expected_fields": {
+      "scope_include": ["客厅"],
+      "type_hint": "灯"
+    }
+  }
+]

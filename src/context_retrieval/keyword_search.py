@@ -16,7 +16,7 @@ class KeywordSearcher:
 
     基于 QueryIR 解析结果和设备元数据进行匹配。
     主要负责精确匹配和基于 rapidfuzz 的模糊匹配。
-    语义相似度匹配由 VectorSearcher (T5) 负责。
+    语义相似度匹配由 VectorSearcher 负责。
     """
 
     # 评分权重
@@ -70,7 +70,7 @@ class KeywordSearcher:
         scores: list[float] = []
         reasons: list[str] = []
 
-        # 1. 名称匹配（基于 name_hint 和 entity_mentions）
+        # 1. 名称匹配（基于 name_hint）
         name_score = self._score_name(device, ir)
         if name_score > 0:
             scores.append(name_score)
@@ -116,13 +116,10 @@ class KeywordSearcher:
 
     def _score_name(self, device: Device, ir: QueryIR) -> float:
         """计算名称匹配分数。"""
-        queries = []
-        if ir.name_hint:
-            queries.append(ir.name_hint)
-        queries.extend(ir.entity_mentions)
-
-        if not queries:
+        if not ir.name_hint:
             return 0.0
+
+        queries = [ir.name_hint]
 
         best_score = 0.0
         for q in queries:
@@ -186,21 +183,16 @@ class KeywordSearcher:
 
     def _score_action(self, device: Device, ir: QueryIR) -> float:
         """计算动作-命令匹配分数。"""
-        if ir.action.kind == "unknown":
+        action_text = (ir.action.text or "").strip()
+        if not action_text:
             return 0.0
 
-        action_keywords = {
-            "open": ["打开", "开启", "on", "open", "start"],
-            "close": ["关闭", "关掉", "off", "close", "stop"],
-            "set": ["设置", "调节", "set", "level", "adjust", "亮度", "温度"],
-            "query": ["查询", "状态", "query", "status", "get"],
-        }
-
-        keywords = action_keywords.get(ir.action.kind, [])
+        action_lower = action_text.lower()
         for cmd in device.commands:
             cmd_text = f"{cmd.id} {cmd.description}".lower()
-            for kw in keywords:
-                if kw.lower() in cmd_text:
-                    return self.WEIGHT_ACTION
+            if action_lower in cmd_text:
+                return self.WEIGHT_ACTION
+            if fuzzy_match_score(cmd.description, action_text) > 0.7:
+                return self.WEIGHT_ACTION
 
         return 0.0

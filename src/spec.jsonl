@@ -1,0 +1,4970 @@
+[
+    {
+      "profileId": "b17b6d08-3470-361a-a579-87997d4a356a",
+      "capabilities": [
+        {
+          "id": "main-switch-on",
+          "description": "电源启用",
+          "type": "string"
+        },
+        {
+          "id": "main-switch-off",
+          "description": "电源关闭",
+          "type": "string"
+        },
+        {
+          "id": "main-switchLevel-setLevel",
+          "description": "调光器",
+          "type": "integer",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 100,
+            "unit": [
+              "%"
+            ]
+          }
+        },
+        {
+          "id": "main-colorControl-setHue",
+          "description": "设置灯光颜色的色相",
+          "type": "number",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 360
+          }
+        },
+        {
+          "id": "main-colorControl-setSaturation",
+          "description": "设置灯光颜色的饱和度",
+          "type": "number",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 100
+          }
+        },
+        {
+          "id": "main-colorTemperature-setColorTemperature",
+          "description": "设置灯光的色温",
+          "type": "integer",
+          "value_range": {
+            "minimum": 2200,
+            "maximum": 6500,
+            "unit": [
+              "K"
+            ]
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "id": "main-switch",
+          "description": "电源",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "on",
+              "description": "开"
+            },
+            {
+              "value": "off",
+              "description": "关"
+            }
+          ]
+        },
+        {
+          "id": "main-switchLevel-level",
+          "description": "调光器",
+          "type": "integer",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 100,
+            "unit": [
+              "%"
+            ]
+          }
+        },
+        {
+          "id": "main-colorTemperature",
+          "description": "色温",
+          "type": "integer",
+          "value_range": {
+            "minimum": 2200,
+            "maximum": 6500,
+            "unit": [
+              "K"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "profileId": "a38eafbd-1ebb-3e1a-861e-122774e78ef3",
+      "capabilities": [
+        {
+          "id": "main-switch-on",
+          "description": "电源启用",
+          "type": "string"
+        },
+        {
+          "id": "main-switch-off",
+          "description": "电源关闭",
+          "type": "string"
+        },
+        {
+          "id": "main-switchLevel-setLevel",
+          "description": "调光器",
+          "type": "integer",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 100,
+            "unit": [
+              "%"
+            ]
+          }
+        },
+        {
+          "id": "main-colorControl-setHue",
+          "description": "设置灯光颜色的色相",
+          "type": "number",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 360
+          }
+        },
+        {
+          "id": "main-colorControl-setSaturation",
+          "description": "设置灯光颜色的饱和度",
+          "type": "number",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 100
+          }
+        },
+        {
+          "id": "main-colorTemperature-setColorTemperature",
+          "description": "设置灯光的色温",
+          "type": "integer",
+          "value_range": {
+            "minimum": 2200,
+            "maximum": 6500,
+            "unit": [
+              "K"
+            ]
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "id": "main-switch",
+          "description": "电源",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "on",
+              "description": "开"
+            },
+            {
+              "value": "off",
+              "description": "关"
+            }
+          ]
+        },
+        {
+          "id": "main-switchLevel-level",
+          "description": "调光器",
+          "type": "integer",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 100,
+            "unit": [
+              "%"
+            ]
+          }
+        },
+        {
+          "id": "main-colorTemperature",
+          "description": "色温",
+          "type": "integer",
+          "value_range": {
+            "minimum": 2200,
+            "maximum": 6500,
+            "unit": [
+              "K"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "profileId": "29d66332-6b9e-3f5e-ae39-a7d53464ac15",
+      "capabilities": [
+        {
+          "id": "main-switch-on",
+          "description": "电源启用",
+          "type": "string"
+        },
+        {
+          "id": "main-switch-off",
+          "description": "电源关闭",
+          "type": "string"
+        },
+        {
+          "id": "main-switchLevel-setLevel",
+          "description": "调光器",
+          "type": "integer",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 100,
+            "unit": [
+              "%"
+            ]
+          }
+        },
+        {
+          "id": "main-colorControl-setHue",
+          "description": "设置灯光颜色的色相",
+          "type": "number",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 360
+          }
+        },
+        {
+          "id": "main-colorControl-setSaturation",
+          "description": "设置灯光颜色的饱和度",
+          "type": "number",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 100
+          }
+        },
+        {
+          "id": "main-colorTemperature-setColorTemperature",
+          "description": "设置灯光的色温",
+          "type": "integer",
+          "value_range": {
+            "minimum": 2200,
+            "maximum": 6500,
+            "unit": [
+              "K"
+            ]
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "id": "main-switch",
+          "description": "电源",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "on",
+              "description": "开"
+            },
+            {
+              "value": "off",
+              "description": "关"
+            }
+          ]
+        },
+        {
+          "id": "main-switchLevel-level",
+          "description": "调光器",
+          "type": "integer",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 100,
+            "unit": [
+              "%"
+            ]
+          }
+        },
+        {
+          "id": "main-colorTemperature",
+          "description": "色温",
+          "type": "integer",
+          "value_range": {
+            "minimum": 2200,
+            "maximum": 6500,
+            "unit": [
+              "K"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "profileId": "eac0300f-87bc-39e6-9ff0-3a38526c27b8",
+      "capabilities": [
+        {
+          "id": "main-switch-on",
+          "description": "电源启用",
+          "type": "string"
+        },
+        {
+          "id": "main-switch-off",
+          "description": "电源关闭",
+          "type": "string"
+        },
+        {
+          "id": "main-switchLevel-setLevel",
+          "description": "调光器",
+          "type": "integer",
+          "value_range": {
+            "minimum": 1,
+            "maximum": 100,
+            "unit": [
+              "%"
+            ]
+          }
+        },
+        {
+          "id": "main-colorControl-setHue",
+          "description": "设置灯光颜色的色相",
+          "type": "number",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 360
+          }
+        },
+        {
+          "id": "main-colorControl-setSaturation",
+          "description": "设置灯光颜色的饱和度",
+          "type": "number",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 100
+          }
+        },
+        {
+          "id": "main-colorTemperature-setColorTemperature",
+          "description": "设置灯光的色温",
+          "type": "integer",
+          "value_range": {
+            "minimum": 2700,
+            "maximum": 6500,
+            "unit": [
+              "K"
+            ]
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "id": "main-switch",
+          "description": "电源",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "on",
+              "description": "开"
+            },
+            {
+              "value": "off",
+              "description": "关"
+            }
+          ]
+        },
+        {
+          "id": "main-switchLevel-level",
+          "description": "调光器",
+          "type": "integer",
+          "value_range": {
+            "minimum": 1,
+            "maximum": 100,
+            "unit": [
+              "%"
+            ]
+          }
+        },
+        {
+          "id": "main-colorTemperature",
+          "description": "色温",
+          "type": "integer",
+          "value_range": {
+            "minimum": 2700,
+            "maximum": 6500,
+            "unit": [
+              "K"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "profileId": "45d57326-f1f6-3d9e-96a2-c67b6c344dc5",
+      "capabilities": [
+        {
+          "id": "main-switch-on",
+          "description": "电源启用",
+          "type": "string"
+        },
+        {
+          "id": "main-switch-off",
+          "description": "电源关闭",
+          "type": "string"
+        },
+        {
+          "id": "main-switchLevel-setLevel",
+          "description": "调光器",
+          "type": "integer",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 100,
+            "unit": [
+              "%"
+            ]
+          }
+        },
+        {
+          "id": "main-colorControl-setHue",
+          "description": "设置灯光颜色的色相",
+          "type": "number",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 360
+          }
+        },
+        {
+          "id": "main-colorControl-setSaturation",
+          "description": "设置灯光颜色的饱和度",
+          "type": "number",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 100
+          }
+        },
+        {
+          "id": "main-colorTemperature-setColorTemperature",
+          "description": "设置灯光的色温",
+          "type": "integer",
+          "value_range": {
+            "minimum": 2200,
+            "maximum": 6500,
+            "unit": [
+              "K"
+            ]
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "id": "main-switch",
+          "description": "电源",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "on",
+              "description": "开"
+            },
+            {
+              "value": "off",
+              "description": "关"
+            }
+          ]
+        },
+        {
+          "id": "main-switchLevel-level",
+          "description": "调光器",
+          "type": "integer",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 100,
+            "unit": [
+              "%"
+            ]
+          }
+        },
+        {
+          "id": "main-colorTemperature",
+          "description": "色温",
+          "type": "integer",
+          "value_range": {
+            "minimum": 2200,
+            "maximum": 6500,
+            "unit": [
+              "K"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "profileId": "af299ecc-ee2e-38a6-bcdc-e1185644ad5e",
+      "capabilities": [
+        {
+          "id": "main-windowShade-pause",
+          "description": "暂停",
+          "type": "string"
+        },
+        {
+          "id": "main-windowShade-open",
+          "description": "打开",
+          "type": "string"
+        },
+        {
+          "id": "main-windowShade-close",
+          "description": "关闭",
+          "type": "string"
+        },
+        {
+          "id": "main-windowShadePreset-setPresetPosition",
+          "description": "设置窗帘预设位置",
+          "type": "integer",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 100,
+            "unit": [
+              "%"
+            ]
+          }
+        },
+        {
+          "id": "main-windowShadeLevel-setShadeLevel",
+          "description": "设置窗帘遮光等级",
+          "type": "integer",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 100,
+            "unit": [
+              "%"
+            ]
+          }
+        },
+        {
+          "id": "main-windowShadeTiltLevel-setShadeTiltLevel",
+          "description": "设置窗帘倾斜度",
+          "type": "integer",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 100,
+            "unit": [
+              "%"
+            ]
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "id": "main-windowShade",
+          "description": "窗帘离散的运行状态",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "close",
+              "description": "已关闭"
+            },
+            {
+              "value": "closing",
+              "description": "正在关闭"
+            },
+            {
+              "value": "open",
+              "description": "打开"
+            },
+            {
+              "value": "opening",
+              "description": "正在打开"
+            },
+            {
+              "value": "partially open",
+              "description": "部分打开"
+            }
+          ]
+        },
+        {
+          "id": "main-windowShadeLevel-shadeLevel",
+          "description": "窗帘遮光等级",
+          "type": "integer",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 100,
+            "unit": [
+              "%"
+            ]
+          }
+        },
+        {
+          "id": "main-windowShadeTiltLevel-shadeTiltLevel",
+          "description": "窗帘倾斜度",
+          "type": "integer",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 100,
+            "unit": [
+              "%"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "profileId": "71cdc337-1599-3116-8d2b-a40c0570ab3a",
+      "capabilities": [
+        {
+          "id": "main-windowShade-pause",
+          "description": "暂停",
+          "type": "string"
+        },
+        {
+          "id": "main-windowShade-open",
+          "description": "打开",
+          "type": "string"
+        },
+        {
+          "id": "main-windowShade-close",
+          "description": "关闭",
+          "type": "string"
+        },
+        {
+          "id": "main-windowShadePreset-setPresetPosition",
+          "description": "设置窗帘预设位置",
+          "type": "integer",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 100,
+            "unit": [
+              "%"
+            ]
+          }
+        },
+        {
+          "id": "main-windowShadeLevel-setShadeLevel",
+          "description": "设置窗帘遮光等级",
+          "type": "integer",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 100,
+            "unit": [
+              "%"
+            ]
+          }
+        },
+        {
+          "id": "main-windowShadeTiltLevel-setShadeTiltLevel",
+          "description": "设置窗帘倾斜度",
+          "type": "integer",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 100,
+            "unit": [
+              "%"
+            ]
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "id": "main-windowShade",
+          "description": "窗帘离散的运行状态",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "close",
+              "description": "已关闭"
+            },
+            {
+              "value": "closing",
+              "description": "正在关闭"
+            },
+            {
+              "value": "open",
+              "description": "打开"
+            },
+            {
+              "value": "opening",
+              "description": "正在打开"
+            },
+            {
+              "value": "partially open",
+              "description": "部分打开"
+            }
+          ]
+        },
+        {
+          "id": "main-windowShadeLevel-shadeLevel",
+          "description": "窗帘遮光等级",
+          "type": "integer",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 100,
+            "unit": [
+              "%"
+            ]
+          }
+        },
+        {
+          "id": "main-windowShadeTiltLevel-windowShadeTiltLevel",
+          "description": "窗帘倾斜度",
+          "type": "integer",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 100,
+            "unit": [
+              "%"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "profileId": "a8618b01-5b99-3d2d-865b-f450d9f88958",
+      "capabilities": [
+        {
+          "id": "main-switch-on",
+          "description": "电源启用",
+          "type": "string"
+        },
+        {
+          "id": "main-switch-off",
+          "description": "电源关闭",
+          "type": "string"
+        },
+        {
+          "id": "main-energyMeter-resetEnergyMeter",
+          "description": "电表重置",
+          "type": "number",
+          "value_range": {
+            "minimum": 0,
+            "unit": [
+              "Wh",
+              "kWh",
+              "mWh",
+              "kVAh"
+            ]
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "id": "main-switch",
+          "description": "电源",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "on",
+              "description": "开"
+            },
+            {
+              "value": "off",
+              "description": "关"
+            }
+          ]
+        },
+        {
+          "id": "main-powerMeter-power",
+          "description": "功率计",
+          "type": "number",
+          "value_range": {
+            "minimum": 0,
+            "unit": [
+              "W"
+            ]
+          }
+        },
+        {
+          "id": "main-energyMeter-energy",
+          "description": "电表",
+          "type": "number",
+          "value_range": {
+            "minimum": 0,
+            "unit": [
+              "Wh",
+              "kWh",
+              "mWh",
+              "kVAh"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "profileId": "fe6b5d3d-e8c0-3b47-b664-604f4dbc6aa7",
+      "capabilities": [
+        {
+          "id": "main-switch-on",
+          "description": "电源启用",
+          "type": "string"
+        },
+        {
+          "id": "main-switch-off",
+          "description": "电源关闭",
+          "type": "string"
+        }
+      ],
+      "conditions": [
+        {
+          "id": "main-switch",
+          "description": "电源",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "on",
+              "description": "开"
+            },
+            {
+              "value": "off",
+              "description": "关"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "profileId": "5c7a0b52-34da-3ee5-80f9-755881e648d4",
+      "capabilities": [
+        {
+          "id": "main-switch-on",
+          "description": "电源启用",
+          "type": "string"
+        },
+        {
+          "id": "main-switch-off",
+          "description": "电源关闭",
+          "type": "string"
+        },
+        {
+          "id": "main-thermostatCoolingSetpoint-setCoolingSetpoint",
+          "description": "设置制冷设定点为特定温度值，明确降温目标。",
+          "type": "number",
+          "value_range": {
+            "minimum": 16,
+            "maximum": 30,
+            "unit": [
+              "C"
+            ]
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "id": "main-switch",
+          "description": "电源",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "on",
+              "description": "开"
+            },
+            {
+              "value": "off",
+              "description": "关"
+            }
+          ]
+        },
+        {
+          "id": "main-temperatureMeasurement-temperature",
+          "description": "当前设置的温度",
+          "type": "number",
+          "value_range": {
+            "minimum": 16,
+            "maximum": 30,
+            "unit": [
+              "C"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "profileId": "ffd4b408-18f7-3c0b-80f2-ae0467dcf673",
+      "capabilities": [
+        {
+          "id": "main-switch-on",
+          "description": "电源启用",
+          "type": "string"
+        },
+        {
+          "id": "main-switch-off",
+          "description": "电源关闭",
+          "type": "string"
+        },
+        {
+          "id": "main-thermostatCoolingSetpoint-setCoolingSetpoint",
+          "description": "设置制冷设定点为特定温度值，明确降温目标。",
+          "type": "number",
+          "value_range": {
+            "minimum": 16,
+            "maximum": 30,
+            "unit": [
+              "C"
+            ]
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "id": "main-switch",
+          "description": "电源",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "on",
+              "description": "开"
+            },
+            {
+              "value": "off",
+              "description": "关"
+            }
+          ]
+        },
+        {
+          "id": "main-temperatureMeasurement-temperature",
+          "description": "当前设置的温度",
+          "type": "number",
+          "value_range": {
+            "minimum": 16,
+            "maximum": 30,
+            "unit": [
+              "C"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "profileId": "28d23822-7791-363b-ac62-10edf834cbe1",
+      "capabilities": [
+        {
+          "id": "main-switch-on",
+          "description": "电源启用",
+          "type": "string"
+        },
+        {
+          "id": "main-switch-off",
+          "description": "电源关闭",
+          "type": "string"
+        },
+        {
+          "id": "main-thermostatCoolingSetpoint-setCoolingSetpoint",
+          "description": "设置制冷设定点为特定温度值，明确降温目标。",
+          "type": "number",
+          "value_range": {
+            "minimum": 16,
+            "maximum": 30,
+            "unit": [
+              "C"
+            ]
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "id": "main-switch",
+          "description": "电源",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "on",
+              "description": "开"
+            },
+            {
+              "value": "off",
+              "description": "关"
+            }
+          ]
+        },
+        {
+          "id": "main-temperatureMeasurement-temperature",
+          "description": "当前设置的温度",
+          "type": "number",
+          "value_range": {
+            "minimum": 16,
+            "maximum": 30,
+            "unit": [
+              "C"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "profileId": "c8e50fd8-1284-3bfa-aa69-c5d6401e0028",
+      "capabilities": [
+        {
+          "id": "main-switch-on",
+          "description": "电源启用",
+          "type": "string"
+        },
+        {
+          "id": "main-switch-off",
+          "description": "电源关闭",
+          "type": "string"
+        },
+        {
+          "id": "main-thermostatCoolingSetpoint-setCoolingSetpoint",
+          "description": "设置制冷设定点为特定温度值，明确降温目标。",
+          "type": "number",
+          "value_range": {
+            "minimum": 16,
+            "maximum": 30,
+            "unit": [
+              "C"
+            ]
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "id": "main-switch",
+          "description": "电源",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "on",
+              "description": "开"
+            },
+            {
+              "value": "off",
+              "description": "关"
+            }
+          ]
+        },
+        {
+          "id": "main-temperatureMeasurement-temperature",
+          "description": "当前设置的温度",
+          "type": "number",
+          "value_range": {
+            "minimum": 16,
+            "maximum": 30,
+            "unit": [
+              "C"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "profileId": "e91ed924-525d-3544-9d0a-db1b02d27751",
+      "capabilities": [
+        {
+          "id": "main-switch-on",
+          "description": "电源启用",
+          "type": "string"
+        },
+        {
+          "id": "main-switch-off",
+          "description": "电源关闭",
+          "type": "string"
+        },
+        {
+          "id": "main-thermostatCoolingSetpoint-setCoolingSetpoint",
+          "description": "设置制冷设定点为特定温度值，明确降温目标。",
+          "type": "number",
+          "value_range": {
+            "minimum": 16,
+            "maximum": 30,
+            "unit": [
+              "C"
+            ]
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "id": "main-switch",
+          "description": "电源",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "on",
+              "description": "开"
+            },
+            {
+              "value": "off",
+              "description": "关"
+            }
+          ]
+        },
+        {
+          "id": "main-temperatureMeasurement-temperature",
+          "description": "当前设置的温度",
+          "type": "number",
+          "value_range": {
+            "minimum": 16,
+            "maximum": 30,
+            "unit": [
+              "C"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "profileId": "5974eaee-2074-3b69-8d86-91bbee59ee9e",
+      "capabilities": [
+        {
+          "id": "main-switch-on",
+          "description": "电源启用",
+          "type": "string"
+        },
+        {
+          "id": "main-switch-off",
+          "description": "电源关闭",
+          "type": "string"
+        }
+      ],
+      "conditions": [
+        {
+          "id": "main-switch",
+          "description": "电源",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "on",
+              "description": "开"
+            },
+            {
+              "value": "off",
+              "description": "关"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "profileId": "ca5af98d-f0ec-3277-8405-efe1d0811944",
+      "capabilities": [
+        {
+          "id": "main-switch-on",
+          "description": "电源启用",
+          "type": "string"
+        },
+        {
+          "id": "main-switch-off",
+          "description": "电源关闭",
+          "type": "string"
+        }
+      ],
+      "conditions": [
+        {
+          "id": "main-switch",
+          "description": "电源",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "on",
+              "description": "开"
+            },
+            {
+              "value": "off",
+              "description": "关"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "profileId": "485d3502-cf9a-3dff-9dee-ac6ad4f75262",
+      "capabilities": [
+        {
+          "id": "main-switch-on",
+          "description": "电源启用",
+          "type": "string"
+        },
+        {
+          "id": "main-switch-off",
+          "description": "电源关闭",
+          "type": "string"
+        }
+      ],
+      "conditions": [
+        {
+          "id": "main-switch",
+          "description": "电源",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "on",
+              "description": "开"
+            },
+            {
+              "value": "off",
+              "description": "关"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "profileId": "d07b1f90-c449-3ad4-99a4-eb9673452e1f",
+      "capabilities": [
+        {
+          "id": "main-switch-on",
+          "description": "电源启用",
+          "type": "string"
+        },
+        {
+          "id": "main-switch-off",
+          "description": "电源关闭",
+          "type": "string"
+        },
+        {
+          "id": "main-samsungce.dryerOperatingState-start",
+          "description": "开始烘干",
+          "type": "string"
+        },
+        {
+          "id": "main-samsungce.dryerOperatingState-pause",
+          "description": "暂停烘干",
+          "type": "string"
+        },
+        {
+          "id": "main-samsungce.dryerOperatingState-cancel",
+          "description": "取消烘干",
+          "type": "string"
+        }
+      ],
+      "conditions": [
+        {
+          "id": "main-switch",
+          "description": "电源",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "on",
+              "description": "开"
+            },
+            {
+              "value": "off",
+              "description": "关"
+            }
+          ]
+        },
+        {
+          "id": "main-samsungce.dryerOperatingState-operatingState",
+          "description": "设备状态",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "running",
+              "description": "正在烘干"
+            },
+            {
+              "value": "paused",
+              "description": "已暂停"
+            },
+            {
+              "value": "ready",
+              "description": "就绪"
+            }
+          ]
+        },
+        {
+          "id": "main-samsungce.dryerOperatingState-dryerJobState",
+          "description": "烘干程序",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "drying",
+              "description": "正在烘干"
+            },
+            {
+              "value": "cooling",
+              "description": "正在冷却"
+            },
+            {
+              "value": "wrinklePrevent",
+              "description": "防皱功能运行中"
+            },
+            {
+              "value": "finished",
+              "description": "程序完成"
+            }
+          ]
+        },
+        {
+          "id": "main-remoteControlStatus-remoteControlEnabled",
+          "description": "智能控制",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "true",
+              "description": "开"
+            },
+            {
+              "value": "false",
+              "description": "关"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "profileId": "2c613eb3-f987-3cd5-b8a1-946f0f0a02ea",
+      "capabilities": [
+        {
+          "id": "main-switch-on",
+          "description": "电源启用",
+          "type": "string"
+        },
+        {
+          "id": "main-switch-off",
+          "description": "电源关闭",
+          "type": "string"
+        }
+      ],
+      "conditions": [
+        {
+          "id": "main-switch",
+          "description": "电源",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "on",
+              "description": "启用"
+            },
+            {
+              "value": "off",
+              "description": "关闭"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "profileId": "3fdd644a-9b57-3390-8f0f-e5f89a73ab93",
+      "capabilities": [
+        {
+          "id": "main-switch-on",
+          "description": "电源启用",
+          "type": "string"
+        },
+        {
+          "id": "main-switch-off",
+          "description": "电源关闭",
+          "type": "string"
+        }
+      ],
+      "conditions": [
+        {
+          "id": "main-switch",
+          "description": "电源",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "on",
+              "description": "启用"
+            },
+            {
+              "value": "off",
+              "description": "关闭"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "profileId": "8ae87732-2b2c-3e91-8768-ccdc1ef10739",
+      "capabilities": [
+        {
+          "id": "main-switch-on",
+          "description": "电源启用",
+          "type": "string"
+        },
+        {
+          "id": "main-switch-off",
+          "description": "电源关闭",
+          "type": "string"
+        },
+        {
+          "id": "main-switchLevel-setLevel",
+          "description": "调光器",
+          "type": "integer",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 100,
+            "unit": [
+              "%"
+            ]
+          }
+        },
+        {
+          "id": "main-colorControl-setHue",
+          "description": "设置灯光颜色的色相",
+          "type": "number",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 360
+          }
+        },
+        {
+          "id": "main-colorControl-setSaturation",
+          "description": "设置灯光颜色的饱和度",
+          "type": "number",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 100
+          }
+        },
+        {
+          "id": "main-colorTemperature-setColorTemperature",
+          "description": "设置灯光的色温",
+          "type": "integer",
+          "value_range": {
+            "minimum": 2200,
+            "maximum": 6500,
+            "unit": [
+              "K"
+            ]
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "id": "main-switch",
+          "description": "电源",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "on",
+              "description": "开"
+            },
+            {
+              "value": "off",
+              "description": "关"
+            }
+          ]
+        },
+        {
+          "id": "main-switchLevel-setLevel",
+          "description": "调光器",
+          "type": "integer",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 100,
+            "unit": [
+              "%"
+            ]
+          }
+        },
+        {
+          "id": "main-colorTemperature-setColorTemperature",
+          "description": "色温",
+          "type": "integer",
+          "value_range": {
+            "minimum": 2200,
+            "maximum": 6500,
+            "unit": [
+              "K"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "profileId": "772c0307-3aab-3915-ba42-7198a47b85de",
+      "capabilities": [
+      ],
+      "conditions": [
+        {
+          "id": "main-stse.cubeAction",
+          "description": "魔方控制器动作",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "shake",
+              "description": "摇一摇"
+            },
+            {
+              "value": "rotate",
+              "description": "平面旋转"
+            },
+            {
+              "value": "pickUpAndHold",
+              "description": "拿起"
+            },
+            {
+              "value": "flipToSide1",
+              "description": "翻到第1面"
+            },
+            {
+              "value": "flipToSide2",
+              "description": "翻到第2面"
+            },
+            {
+              "value": "flipToSide3",
+              "description": "翻到第3面"
+            },
+            {
+              "value": "flipToSide4",
+              "description": "翻到第4面"
+            },
+            {
+              "value": "flipToSide5",
+              "description": "翻到第5面"
+            },
+            {
+              "value": "flipToSide6",
+              "description": "翻到第6面"
+            }
+          ]
+        },
+        {
+          "id": "main-stse.cubeFace",
+          "description": "魔方状态",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "face1Up",
+              "description": "第1面朝上"
+            },
+            {
+              "value": "face2Up",
+              "description": "第2面朝上"
+            },
+            {
+              "value": "face3Up",
+              "description": "第3面朝上"
+            },
+            {
+              "value": "face4Up",
+              "description": "第4面朝上"
+            },
+            {
+              "value": "face5Up",
+              "description": "第5面朝上"
+            },
+            {
+              "value": "face6Up",
+              "description": "第6面朝上"
+            }
+          ]
+        },
+        {
+          "id": "main-battery",
+          "description": "电池",
+          "type": "integer",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 100,
+            "unit": [
+              "%"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "profileId": "cd2343a3-3451-395b-94e7-1f7eef9d8845",
+      "capabilities": [
+        {
+          "id": "main-feederOperatingState-startFeeding",
+          "description": "开始喂食",
+          "type": "string"
+        }
+      ],
+      "conditions": [
+        {
+          "id": "main-feederOperatingState",
+          "description": "宠物喂食器",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "feeding",
+              "description": "喂食"
+            },
+            {
+              "value": "idle",
+              "description": "开"
+            },
+            {
+              "value": "error",
+              "description": "发生错误"
+            }
+          ]
+        },
+        {
+          "id": "main-powerSource",
+          "description": "电源",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "battery",
+              "description": "电池"
+            },
+            {
+              "value": "dc",
+              "description": "直流电源"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "profileId": "3cb57ecb-562a-3134-b92d-44e22fa31e8b",
+      "capabilities": [
+        {
+          "id": "main-switch-on",
+          "description": "电源启用",
+          "type": "string"
+        },
+        {
+          "id": "main-switch-off",
+          "description": "电源关闭",
+          "type": "string"
+        }
+      ],
+      "conditions": [
+        {
+          "id": "main-switch",
+          "description": "电源",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "on",
+              "description": "启用"
+            },
+            {
+              "value": "off",
+              "description": "关闭"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "profileId": "6aa652fe-0ad6-3ffe-bd48-6556e9691d29",
+      "capabilities": [
+      ],
+      "conditions": [
+        {
+          "id": "main-contactSensor-contact",
+          "description": "接触传感器",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "open",
+              "description": "打开"
+            },
+            {
+              "value": "closed",
+              "description": "已关闭"
+            }
+          ]
+        },
+        {
+          "id": "main-battery",
+          "description": "电池",
+          "type": "integer",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 100,
+            "unit": [
+              "%"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "profileId": "244a8983-dce4-3608-a473-37fb0d5eed86",
+      "capabilities": [
+        {
+          "id": "main-switch-on",
+          "description": "电源启用",
+          "type": "string"
+        },
+        {
+          "id": "main-switch-off",
+          "description": "电源关闭",
+          "type": "string"
+        },
+        {
+          "id": "main-switchLevel-setLevel",
+          "description": "调光器",
+          "type": "integer",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 100,
+            "unit": [
+              "%"
+            ]
+          }
+        },
+        {
+          "id": "main-colorControl-setHue",
+          "description": "设置灯光颜色的色相",
+          "type": "number",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 360
+          }
+        },
+        {
+          "id": "main-colorControl-setSaturation",
+          "description": "设置灯光颜色的饱和度",
+          "type": "number",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 100
+          }
+        },
+        {
+          "id": "main-colorTemperature-setColorTemperature",
+          "description": "设置灯光的色温",
+          "type": "integer",
+          "value_range": {
+            "minimum": 2200,
+            "maximum": 6500,
+            "unit": [
+              "K"
+            ]
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "id": "main-switch",
+          "description": "电源",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "on",
+              "description": "开"
+            },
+            {
+              "value": "off",
+              "description": "关"
+            }
+          ]
+        },
+        {
+          "id": "main-switchLevel-level",
+          "description": "调光器",
+          "type": "integer",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 100,
+            "unit": [
+              "%"
+            ]
+          }
+        },
+        {
+          "id": "main-colorTemperature",
+          "description": "色温",
+          "type": "integer",
+          "value_range": {
+            "minimum": 2200,
+            "maximum": 6500,
+            "unit": [
+              "K"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "profileId": "d5faa784-87fb-3e72-8783-a2ee2a6afe51",
+      "capabilities": [
+        {
+          "id": "main-switch-on",
+          "description": "电源启用",
+          "type": "string"
+        },
+        {
+          "id": "main-switch-off",
+          "description": "电源关闭",
+          "type": "string"
+        },
+        {
+          "id": "main-audioMute-mute",
+          "description": "静音",
+          "type": "string"
+        },
+        {
+          "id": "main-audioMute-unmute",
+          "description": "关闭静音",
+          "type": "string"
+        },
+        {
+          "id": "main-samsungvd.mediaInputSource.setInputSource-NotAvailable",
+          "description": "更改节目源暂不可用",
+          "type": "string"
+        },
+        {
+          "id": "main-samsungvd.pictureMode.setPictureMode-NotAvailable",
+          "description": "更改图像模式暂不可用",
+          "type": "string"
+        },
+        {
+          "id": "main-samsungvd.soundMode.setSoundMode-NotAvailable",
+          "description": "更改伴音模式暂不可用",
+          "type": "string"
+        },
+        {
+          "id": "main-samsungvd.ambient-setAmbientOn",
+          "description": "环境屏模式开启",
+          "type": "string"
+        },
+        {
+          "id": "main-samsungvd.lightControl.setLightControlMode-NotAvailable",
+          "description": "灯光控制",
+          "type": "string"
+        },
+        {
+          "id": "main-samsungvd.ambientContent.setAmbientContent-weather",
+          "description": "环境屏天气模式",
+          "type": "string"
+        }
+      ],
+      "conditions": [
+        {
+          "id": "main-switch",
+          "description": "电源",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "on",
+              "description": "开"
+            },
+            {
+              "value": "off",
+              "description": "关"
+            }
+          ]
+        },
+        {
+          "id": "main-samsungvd.mediaInputSource",
+          "description": "节目源",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "NotAvailable",
+              "description": "找不到设备"
+            },
+            {
+              "value": "off",
+              "description": "关"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "profileId": "4d2c5e4c-9905-368a-acb1-c76c70adbc39",
+      "capabilities": [
+        {
+          "id": "main-switch-on",
+          "description": "电源启用",
+          "type": "string"
+        },
+        {
+          "id": "main-switch-off",
+          "description": "电源关闭",
+          "type": "string"
+        }
+      ],
+      "conditions": [
+        {
+          "id": "main-switch",
+          "description": "电源",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "on",
+              "description": "开"
+            },
+            {
+              "value": "off",
+              "description": "关"
+            }
+          ]
+        },
+        {
+          "id": "main-button",
+          "description": "按钮",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "pushed",
+              "description": "按一下"
+            },
+            {
+              "value": "double",
+              "description": "按下两次"
+            },
+            {
+              "value": "held",
+              "description": "长按"
+            },
+            {
+              "value": "pushed_2x",
+              "description": "按2次"
+            },
+            {
+              "value": "pushed_3x",
+              "description": "按3次"
+            },
+            {
+              "value": "pushed_4x",
+              "description": "按4次"
+            },
+            {
+              "value": "pushed_5x",
+              "description": "按5次"
+            },
+            {
+              "value": "pushed_6x",
+              "description": "按6次"
+            },
+            {
+              "value": "down",
+              "description": "已向下切换"
+            },
+            {
+              "value": "down_2x",
+              "description": "已向下切换2次"
+            },
+            {
+              "value": "down_3x",
+              "description": "已向下切换3次"
+            },
+            {
+              "value": "down_4x",
+              "description": "已向下切换4次"
+            },
+            {
+              "value": "down_5x",
+              "description": "已向下切换5次"
+            },
+            {
+              "value": "down_6x",
+              "description": "已向下切换6次"
+            },
+            {
+              "value": "down_hold",
+              "description": "按下"
+            },
+            {
+              "value": "up",
+              "description": "已向上切换"
+            },
+            {
+              "value": "up_2x",
+              "description": "已向上切换2次"
+            },
+            {
+              "value": "up_3x",
+              "description": "已向上切换3次"
+            },
+            {
+              "value": "up_4x",
+              "description": "已向上切换4次"
+            },
+            {
+              "value": "up_5x",
+              "description": "已向上切换5次"
+            },
+            {
+              "value": "up_6x",
+              "description": "已向上切换6次"
+            },
+            {
+              "value": "up_hold",
+              "description": "抬起"
+            },
+            {
+              "value": "swipe_up",
+              "description": "向上滑动"
+            },
+            {
+              "value": "swipe_down",
+              "description": "向下滑动"
+            },
+            {
+              "value": "swipe_left",
+              "description": "向左滑动"
+            },
+            {
+              "value": "swipe_right",
+              "description": "向右滑动"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "profileId": "0dcca3d1-2a7a-3745-bc5b-759e4ed0d138",
+      "capabilities": [
+        {
+          "id": "main-switch-on",
+          "description": "电源启用",
+          "type": "string"
+        },
+        {
+          "id": "main-switch-off",
+          "description": "电源关闭",
+          "type": "string"
+        },
+        {
+          "id": "main-switchLevel-setLevel",
+          "description": "调光器",
+          "type": "integer",
+          "value_range": {
+            "minimum": 1,
+            "maximum": 100,
+            "unit": [
+              "%"
+            ]
+          }
+        },
+        {
+          "id": "main-colorControl-setHue",
+          "description": "设置灯光颜色的色相",
+          "type": "number",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 360
+          }
+        },
+        {
+          "id": "main-colorControl-setSaturation",
+          "description": "设置灯光颜色的饱和度",
+          "type": "number",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 100
+          }
+        },
+        {
+          "id": "main-colorTemperature-setColorTemperature",
+          "description": "设置灯光的色温",
+          "type": "integer",
+          "value_range": {
+            "minimum": 2200,
+            "maximum": 6500,
+            "unit": [
+              "K"
+            ]
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "id": "main-switch",
+          "description": "电源",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "on",
+              "description": "开"
+            },
+            {
+              "value": "off",
+              "description": "关"
+            }
+          ]
+        },
+        {
+          "id": "main-switchLevel-level",
+          "description": "调光器",
+          "type": "integer",
+          "value_range": {
+            "minimum": 1,
+            "maximum": 100,
+            "unit": [
+              "%"
+            ]
+          }
+        },
+        {
+          "id": "main-colorTemperature",
+          "description": "色温",
+          "type": "integer",
+          "value_range": {
+            "minimum": 2200,
+            "maximum": 6500,
+            "unit": [
+              "K"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "profileId": "c0b813a8-6be4-3ce2-b461-b4f78381e4e0",
+      "capabilities": [
+        {
+          "id": "main-switch-on",
+          "description": "电源启用",
+          "type": "string"
+        },
+        {
+          "id": "main-switch-off",
+          "description": "电源关闭",
+          "type": "string"
+        },
+        {
+          "id": "main-switchLevel-setLevel",
+          "description": "调光器",
+          "type": "integer",
+          "value_range": {
+            "minimum": 1,
+            "maximum": 100,
+            "unit": [
+              "%"
+            ]
+          }
+        },
+        {
+          "id": "main-colorControl-setHue",
+          "description": "设置灯光颜色的色相",
+          "type": "number",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 360
+          }
+        },
+        {
+          "id": "main-colorControl-setSaturation",
+          "description": "设置灯光颜色的饱和度",
+          "type": "number",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 100
+          }
+        },
+        {
+          "id": "main-colorTemperature-setColorTemperature",
+          "description": "设置灯光的色温",
+          "type": "integer",
+          "value_range": {
+            "minimum": 2700,
+            "maximum": 6500,
+            "unit": [
+              "K"
+            ]
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "id": "main-switch",
+          "description": "电源",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "on",
+              "description": "开"
+            },
+            {
+              "value": "off",
+              "description": "关"
+            }
+          ]
+        },
+        {
+          "id": "main-switchLevel-level",
+          "description": "调光器",
+          "type": "integer",
+          "value_range": {
+            "minimum": 1,
+            "maximum": 100,
+            "unit": [
+              "%"
+            ]
+          }
+        },
+        {
+          "id": "main-colorTemperature",
+          "description": "色温",
+          "type": "integer",
+          "value_range": {
+            "minimum": 2700,
+            "maximum": 6500,
+            "unit": [
+              "K"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "profileId": "42f4435f-1690-3404-91f1-785a25ca60d0",
+      "capabilities": [
+      ],
+      "conditions": [
+        {
+          "id": "main-motionSensor-motion",
+          "description": "运动传感器",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "active",
+              "description": "检测到运动"
+            },
+            {
+              "value": "inactive",
+              "description": "没有运动"
+            }
+          ]
+        },
+        {
+          "id": "main-illuminanceMeasurement-illuminance",
+          "description": "照明度",
+          "type": "number",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 100000
+          },
+          "unit": [
+            "lux"
+          ]
+        },
+        {
+          "id": "main-battery",
+          "description": "电池",
+          "type": "integer",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 100
+          }
+        }
+      ]
+    },
+    {
+      "profileId": "c5d6c915-af5b-32db-8356-671dc276db7e",
+      "capabilities": [
+        {
+          "id": "main-switch-on",
+          "description": "电源启用",
+          "type": "string"
+        },
+        {
+          "id": "main-switch-off",
+          "description": "电源关闭",
+          "type": "string"
+        },
+        {
+          "id": "main-switchLevel-setLevel",
+          "description": "调光器",
+          "type": "integer",
+          "value_range": {
+            "minimum": 1,
+            "maximum": 100,
+            "unit": [
+              "%"
+            ]
+          }
+        },
+        {
+          "id": "main-colorControl-setHue",
+          "description": "设置灯光颜色的色相",
+          "type": "number",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 360
+          }
+        },
+        {
+          "id": "main-colorControl-setSaturation",
+          "description": "设置灯光颜色的饱和度",
+          "type": "number",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 100
+          }
+        },
+        {
+          "id": "main-colorTemperature-setColorTemperature",
+          "description": "设置灯光的色温",
+          "type": "integer",
+          "value_range": {
+            "minimum": 2700,
+            "maximum": 6500,
+            "unit": [
+              "K"
+            ]
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "id": "main-switch",
+          "description": "电源",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "on",
+              "description": "开"
+            },
+            {
+              "value": "off",
+              "description": "关"
+            }
+          ]
+        },
+        {
+          "id": "main-switchLevel-level",
+          "description": "调光器",
+          "type": "integer",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 100,
+            "unit": [
+              "%"
+            ]
+          }
+        },
+        {
+          "id": "main-colorTemperature",
+          "description": "色温",
+          "type": "integer",
+          "value_range": {
+            "minimum": 2200,
+            "maximum": 6500,
+            "unit": [
+              "K"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "profileId": "7f46a740-e303-3e14-9a72-ae454556be2d",
+      "capabilities": [
+      ],
+      "conditions": [
+        {
+          "id": "main-button",
+          "description": "按钮",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "pushed",
+              "description": "按一下"
+            },
+            {
+              "value": "double",
+              "description": "按下两次"
+            },
+            {
+              "value": "held",
+              "description": "长按"
+            },
+            {
+              "value": "pushed_2x",
+              "description": "按2次"
+            },
+            {
+              "value": "pushed_3x",
+              "description": "按3次"
+            },
+            {
+              "value": "pushed_4x",
+              "description": "按4次"
+            },
+            {
+              "value": "pushed_5x",
+              "description": "按5次"
+            },
+            {
+              "value": "pushed_6x",
+              "description": "按6次"
+            },
+            {
+              "value": "down",
+              "description": "已向下切换"
+            },
+            {
+              "value": "down_2x",
+              "description": "已向下切换2次"
+            },
+            {
+              "value": "down_3x",
+              "description": "已向下切换3次"
+            },
+            {
+              "value": "down_4x",
+              "description": "已向下切换4次"
+            },
+            {
+              "value": "down_5x",
+              "description": "已向下切换5次"
+            },
+            {
+              "value": "down_6x",
+              "description": "已向下切换6次"
+            },
+            {
+              "value": "down_hold",
+              "description": "按下"
+            },
+            {
+              "value": "up",
+              "description": "已向上切换"
+            },
+            {
+              "value": "up_2x",
+              "description": "已向上切换2次"
+            },
+            {
+              "value": "up_3x",
+              "description": "已向上切换3次"
+            },
+            {
+              "value": "up_4x",
+              "description": "已向上切换4次"
+            },
+            {
+              "value": "up_5x",
+              "description": "已向上切换5次"
+            },
+            {
+              "value": "up_6x",
+              "description": "已向上切换6次"
+            },
+            {
+              "value": "up_hold",
+              "description": "抬起"
+            },
+            {
+              "value": "swipe_up",
+              "description": "向上滑动"
+            },
+            {
+              "value": "swipe_down",
+              "description": "向下滑动"
+            },
+            {
+              "value": "swipe_left",
+              "description": "向左滑动"
+            },
+            {
+              "value": "swipe_right",
+              "description": "向右滑动"
+            }
+          ]
+        },
+        {
+          "id": "button2-button",
+          "description": "按钮",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "pushed",
+              "description": "按一下"
+            },
+            {
+              "value": "double",
+              "description": "按下两次"
+            },
+            {
+              "value": "held",
+              "description": "长按"
+            },
+            {
+              "value": "pushed_2x",
+              "description": "按2次"
+            },
+            {
+              "value": "pushed_3x",
+              "description": "按3次"
+            },
+            {
+              "value": "pushed_4x",
+              "description": "按4次"
+            },
+            {
+              "value": "pushed_5x",
+              "description": "按5次"
+            },
+            {
+              "value": "pushed_6x",
+              "description": "按6次"
+            },
+            {
+              "value": "down",
+              "description": "已向下切换"
+            },
+            {
+              "value": "down_2x",
+              "description": "已向下切换2次"
+            },
+            {
+              "value": "down_3x",
+              "description": "已向下切换3次"
+            },
+            {
+              "value": "down_4x",
+              "description": "已向下切换4次"
+            },
+            {
+              "value": "down_5x",
+              "description": "已向下切换5次"
+            },
+            {
+              "value": "down_6x",
+              "description": "已向下切换6次"
+            },
+            {
+              "value": "down_hold",
+              "description": "按下"
+            },
+            {
+              "value": "up",
+              "description": "已向上切换"
+            },
+            {
+              "value": "up_2x",
+              "description": "已向上切换2次"
+            },
+            {
+              "value": "up_3x",
+              "description": "已向上切换3次"
+            },
+            {
+              "value": "up_4x",
+              "description": "已向上切换4次"
+            },
+            {
+              "value": "up_5x",
+              "description": "已向上切换5次"
+            },
+            {
+              "value": "up_6x",
+              "description": "已向上切换6次"
+            },
+            {
+              "value": "up_hold",
+              "description": "抬起"
+            },
+            {
+              "value": "swipe_up",
+              "description": "向上滑动"
+            },
+            {
+              "value": "swipe_down",
+              "description": "向下滑动"
+            },
+            {
+              "value": "swipe_left",
+              "description": "向左滑动"
+            },
+            {
+              "value": "swipe_right",
+              "description": "向右滑动"
+            }
+          ]
+        },
+        {
+          "id": "button3-button",
+          "description": "按钮",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "pushed",
+              "description": "按一下"
+            },
+            {
+              "value": "double",
+              "description": "按下两次"
+            },
+            {
+              "value": "held",
+              "description": "长按"
+            },
+            {
+              "value": "pushed_2x",
+              "description": "按2次"
+            },
+            {
+              "value": "pushed_3x",
+              "description": "按3次"
+            },
+            {
+              "value": "pushed_4x",
+              "description": "按4次"
+            },
+            {
+              "value": "pushed_5x",
+              "description": "按5次"
+            },
+            {
+              "value": "pushed_6x",
+              "description": "按6次"
+            },
+            {
+              "value": "down",
+              "description": "已向下切换"
+            },
+            {
+              "value": "down_2x",
+              "description": "已向下切换2次"
+            },
+            {
+              "value": "down_3x",
+              "description": "已向下切换3次"
+            },
+            {
+              "value": "down_4x",
+              "description": "已向下切换4次"
+            },
+            {
+              "value": "down_5x",
+              "description": "已向下切换5次"
+            },
+            {
+              "value": "down_6x",
+              "description": "已向下切换6次"
+            },
+            {
+              "value": "down_hold",
+              "description": "按下"
+            },
+            {
+              "value": "up",
+              "description": "已向上切换"
+            },
+            {
+              "value": "up_2x",
+              "description": "已向上切换2次"
+            },
+            {
+              "value": "up_3x",
+              "description": "已向上切换3次"
+            },
+            {
+              "value": "up_4x",
+              "description": "已向上切换4次"
+            },
+            {
+              "value": "up_5x",
+              "description": "已向上切换5次"
+            },
+            {
+              "value": "up_6x",
+              "description": "已向上切换6次"
+            },
+            {
+              "value": "up_hold",
+              "description": "抬起"
+            },
+            {
+              "value": "swipe_up",
+              "description": "向上滑动"
+            },
+            {
+              "value": "swipe_down",
+              "description": "向下滑动"
+            },
+            {
+              "value": "swipe_left",
+              "description": "向左滑动"
+            },
+            {
+              "value": "swipe_right",
+              "description": "向右滑动"
+            }
+          ]
+        },
+        {
+          "id": "button4-button",
+          "description": "按钮",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "pushed",
+              "description": "按一下"
+            },
+            {
+              "value": "double",
+              "description": "按下两次"
+            },
+            {
+              "value": "held",
+              "description": "长按"
+            },
+            {
+              "value": "pushed_2x",
+              "description": "按2次"
+            },
+            {
+              "value": "pushed_3x",
+              "description": "按3次"
+            },
+            {
+              "value": "pushed_4x",
+              "description": "按4次"
+            },
+            {
+              "value": "pushed_5x",
+              "description": "按5次"
+            },
+            {
+              "value": "pushed_6x",
+              "description": "按6次"
+            },
+            {
+              "value": "down",
+              "description": "已向下切换"
+            },
+            {
+              "value": "down_2x",
+              "description": "已向下切换2次"
+            },
+            {
+              "value": "down_3x",
+              "description": "已向下切换3次"
+            },
+            {
+              "value": "down_4x",
+              "description": "已向下切换4次"
+            },
+            {
+              "value": "down_5x",
+              "description": "已向下切换5次"
+            },
+            {
+              "value": "down_6x",
+              "description": "已向下切换6次"
+            },
+            {
+              "value": "down_hold",
+              "description": "按下"
+            },
+            {
+              "value": "up",
+              "description": "已向上切换"
+            },
+            {
+              "value": "up_2x",
+              "description": "已向上切换2次"
+            },
+            {
+              "value": "up_3x",
+              "description": "已向上切换3次"
+            },
+            {
+              "value": "up_4x",
+              "description": "已向上切换4次"
+            },
+            {
+              "value": "up_5x",
+              "description": "已向上切换5次"
+            },
+            {
+              "value": "up_6x",
+              "description": "已向上切换6次"
+            },
+            {
+              "value": "up_hold",
+              "description": "抬起"
+            },
+            {
+              "value": "swipe_up",
+              "description": "向上滑动"
+            },
+            {
+              "value": "swipe_down",
+              "description": "向下滑动"
+            },
+            {
+              "value": "swipe_left",
+              "description": "向左滑动"
+            },
+            {
+              "value": "swipe_right",
+              "description": "向右滑动"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "profileId": "07ae9023-601f-32fb-b2e8-beb4f1bdd8c7",
+      "capabilities": [
+      ],
+      "conditions": [
+        {
+          "id": "main-motionSensor-motion",
+          "description": "运动传感器",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "active",
+              "description": "检测到运动"
+            },
+            {
+              "value": "inactive",
+              "description": "没有运动"
+            }
+          ]
+        },
+        {
+          "id": "main-battery",
+          "description": "电池",
+          "type": "integer",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 100
+          }
+        }
+      ]
+    },
+    {
+      "profileId": "f15ff2ec-d987-308a-9d48-4f537f97510b",
+      "capabilities": [
+        {
+          "id": "main-windowShade-pause",
+          "description": "暂停",
+          "type": "string"
+        },
+        {
+          "id": "main-windowShade-open",
+          "description": "打开",
+          "type": "string"
+        },
+        {
+          "id": "main-windowShade-close",
+          "description": "关闭",
+          "type": "string"
+        },
+        {
+          "id": "main-windowShadeLevel-setShadeLevel",
+          "description": "设置窗帘遮光等级",
+          "type": "integer",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 100,
+            "unit": [
+              "%"
+            ]
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "id": "main-windowShade",
+          "description": "窗帘离散的运行状态",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "close",
+              "description": "已关闭"
+            },
+            {
+              "value": "closing",
+              "description": "正在关闭"
+            },
+            {
+              "value": "open",
+              "description": "打开"
+            },
+            {
+              "value": "opening",
+              "description": "正在打开"
+            },
+            {
+              "value": "partially open",
+              "description": "部分打开"
+            }
+          ]
+        },
+        {
+          "id": "main-windowShadeLevel-shadeLevel",
+          "description": "窗帘遮光等级",
+          "type": "integer",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 100,
+            "unit": [
+              "%"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "profileId": "3fd6e136-ae1f-320e-8d4a-33f7fbb63b4b",
+      "capabilities": [
+        {
+          "id": "main-switch-on",
+          "description": "电源启用",
+          "type": "string"
+        },
+        {
+          "id": "main-switch-off",
+          "description": "电源关闭",
+          "type": "string"
+        }
+      ],
+      "conditions": [
+        {
+          "id": "main-switch",
+          "description": "电源",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "on",
+              "description": "开"
+            },
+            {
+              "value": "off",
+              "description": "关"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "profileId": "3e5a3878-a9bd-3c41-a28b-22a71762657e",
+      "capabilities": [
+        {
+          "id": "main-lock-locked",
+          "description": "锁定",
+          "type": "string"
+        },
+        {
+          "id": "main-lock-unlocked",
+          "description": "解锁",
+          "type": "string"
+        }
+      ],
+      "conditions": [
+        {
+          "id": "main-lock",
+          "description": "锁定状态",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "locked",
+              "description": "已锁定"
+            },
+            {
+              "value": "unlocked",
+              "description": "已解锁"
+            },
+            {
+              "value": "unknown",
+              "description": "未知"
+            },
+            {
+              "value": "unlocked with timeout",
+              "description": "已暂时解锁"
+            },
+            {
+              "value": "not fully locked",
+              "description": "未完全锁定"
+            }
+          ]
+        },
+        {
+          "id": "main-battery",
+          "description": "电池",
+          "type": "integer",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 100,
+            "unit": [
+              "%"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "profileId": "c2e3bee4-ccd4-3b6d-ba78-b9afe838a67f",
+      "capabilities": [
+        {
+          "id": "main-switch-on",
+          "description": "电源启用",
+          "type": "string"
+        },
+        {
+          "id": "main-switch-off",
+          "description": "电源关闭",
+          "type": "string"
+        },
+        {
+          "id": "main-switchLevel-setLevel",
+          "description": "调光器",
+          "type": "integer",
+          "value_range": {
+            "minimum": 1,
+            "maximum": 100,
+            "unit": [
+              "%"
+            ]
+          }
+        },
+        {
+          "id": "main-colorTemperature-setColorTemperature",
+          "description": "设置灯光的色温",
+          "type": "integer",
+          "value_range": {
+            "minimum": 2700,
+            "maximum": 6500,
+            "unit": [
+              "K"
+            ]
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "id": "main-switch",
+          "description": "电源",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "on",
+              "description": "开"
+            },
+            {
+              "value": "off",
+              "description": "关"
+            }
+          ]
+        },
+        {
+          "id": "main-switchLevel-level",
+          "description": "调光器",
+          "type": "integer",
+          "value_range": {
+            "minimum": 1,
+            "maximum": 100,
+            "unit": [
+              "%"
+            ]
+          }
+        },
+        {
+          "id": "main-colorTemperature",
+          "description": "色温",
+          "type": "integer",
+          "value_range": {
+            "minimum": 2700,
+            "maximum": 6500,
+            "unit": [
+              "K"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "profileId": "9e60e689-1913-38eb-acbc-777f2dd00cbe",
+      "capabilities": [
+        {
+          "id": "main-switch-on",
+          "description": "电源启用",
+          "type": "string"
+        },
+        {
+          "id": "main-switch-off",
+          "description": "电源关闭",
+          "type": "string"
+        },
+        {
+          "id": "main-audioVolume-setVolume",
+          "description": "音量",
+          "type": "integer",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 100,
+            "unit": [
+              "%"
+            ]
+          }
+        },
+        {
+          "id": "main-audioMute-mute",
+          "description": "静音",
+          "type": "string"
+        },
+        {
+          "id": "main-audioMute-unmute",
+          "description": "关闭静音",
+          "type": "string"
+        }
+      ],
+      "conditions": [
+        {
+          "id": "main-switch",
+          "description": "电源",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "on",
+              "description": "开"
+            },
+            {
+              "value": "off",
+              "description": "关"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "profileId": "4d2c5e4c-9905-368a-acb1-c76c70adbc39",
+      "capabilities": [
+        {
+          "id": "main-switch-on",
+          "description": "电源启用",
+          "type": "string"
+        },
+        {
+          "id": "main-switch-off",
+          "description": "电源关闭",
+          "type": "string"
+        },
+        {
+          "id": "main-energyMeter-resetEnergyMeter",
+          "description": "能耗",
+          "type": "number",
+          "value_range": {
+            "minimum": 0,
+            "unit": [
+              "Wh",
+              "kWh",
+              "mWh",
+              "kVAh"
+            ]
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "id": "main-switch",
+          "description": "电源",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "on",
+              "description": "开"
+            },
+            {
+              "value": "off",
+              "description": "关"
+            }
+          ]
+        },
+        {
+          "id": "main-button",
+          "description": "按钮",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "pushed",
+              "description": "按一下"
+            },
+            {
+              "value": "double",
+              "description": "按下两次"
+            },
+            {
+              "value": "held",
+              "description": "长按"
+            },
+            {
+              "value": "pushed_2x",
+              "description": "按2次"
+            },
+            {
+              "value": "pushed_3x",
+              "description": "按3次"
+            },
+            {
+              "value": "pushed_4x",
+              "description": "按4次"
+            },
+            {
+              "value": "pushed_5x",
+              "description": "按5次"
+            },
+            {
+              "value": "pushed_6x",
+              "description": "按6次"
+            },
+            {
+              "value": "down",
+              "description": "已向下切换"
+            },
+            {
+              "value": "down_2x",
+              "description": "已向下切换2次"
+            },
+            {
+              "value": "down_3x",
+              "description": "已向下切换3次"
+            },
+            {
+              "value": "down_4x",
+              "description": "已向下切换4次"
+            },
+            {
+              "value": "down_5x",
+              "description": "已向下切换5次"
+            },
+            {
+              "value": "down_6x",
+              "description": "已向下切换6次"
+            },
+            {
+              "value": "down_hold",
+              "description": "按下"
+            },
+            {
+              "value": "up",
+              "description": "已向上切换"
+            },
+            {
+              "value": "up_2x",
+              "description": "已向上切换2次"
+            },
+            {
+              "value": "up_3x",
+              "description": "已向上切换3次"
+            },
+            {
+              "value": "up_4x",
+              "description": "已向上切换4次"
+            },
+            {
+              "value": "up_5x",
+              "description": "已向上切换5次"
+            },
+            {
+              "value": "up_6x",
+              "description": "已向上切换6次"
+            },
+            {
+              "value": "up_hold",
+              "description": "抬起"
+            },
+            {
+              "value": "swipe_up",
+              "description": "向上滑动"
+            },
+            {
+              "value": "swipe_down",
+              "description": "向下滑动"
+            },
+            {
+              "value": "swipe_left",
+              "description": "向左滑动"
+            },
+            {
+              "value": "swipe_right",
+              "description": "向右滑动"
+            }
+          ]
+        },
+        {
+          "id": "main-powerMeter-power",
+          "description": "功率计",
+          "type": "number",
+          "value_range": {
+            "minimum": 0,
+            "unit": [
+              "W"
+            ]
+          }
+        },
+        {
+          "id": "main-energyMeter-energy",
+          "description": "能耗",
+          "type": "number",
+          "value_range": {
+            "minimum": 0,
+            "unit": [
+              "Wh",
+              "kWh",
+              "mWh",
+              "kVAh"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "profileId": "83704165-8537-3f86-b5a6-c5a68c6996c9",
+      "capabilities": [
+        {
+          "id": "main-switch-on",
+          "description": "电源启用",
+          "type": "string"
+        },
+        {
+          "id": "main-switch-off",
+          "description": "电源关闭",
+          "type": "string"
+        }
+      ],
+      "conditions": [
+        {
+          "id": "main-switch",
+          "description": "电源",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "on",
+              "description": "启用"
+            },
+            {
+              "value": "off",
+              "description": "关闭"
+            }
+          ]
+        },
+        {
+          "id": "main-hardwareFault",
+          "description": "缺水报警",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "clear",
+              "description": "正常"
+            },
+            {
+              "value": "detected",
+              "description": "缺水"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "profileId": "db65abf7-e8cd-331e-9cda-3f700da6148d",
+      "capabilities": [
+        {
+          "id": "main-switch-on",
+          "description": "电源启用",
+          "type": "string"
+        },
+        {
+          "id": "main-switch-off",
+          "description": "电源关闭",
+          "type": "string"
+        },
+        {
+          "id": "main-audioMute-mute",
+          "description": "静音",
+          "type": "string"
+        },
+        {
+          "id": "main-audioMute-unmute",
+          "description": "关闭静音",
+          "type": "string"
+        },
+        {
+          "id": "main-samsungvd.mediaInputSource.setInputSource-NotAvailable",
+          "description": "更改节目源暂不可用",
+          "type": "string"
+        },
+        {
+          "id": "main-samsungvd.pictureMode.setPictureMode-NotAvailable",
+          "description": "更改图像模式暂不可用",
+          "type": "string"
+        },
+        {
+          "id": "main-samsungvd.soundMode.setSoundMode-NotAvailable",
+          "description": "更改伴音模式暂不可用",
+          "type": "string"
+        },
+        {
+          "id": "main-samsungvd.ambient-setAmbientOn",
+          "description": "环境屏模式开启",
+          "type": "string"
+        },
+        {
+          "id": "main-samsungvd.lightControl.setLightControlMode-NotAvailable",
+          "description": "灯光控制",
+          "type": "string"
+        },
+        {
+          "id": "main-samsungvd.ambientContent.setAmbientContent-weather",
+          "description": "环境屏天气模式",
+          "type": "string"
+        },
+        {
+          "id": "main-samsungvd.art-setArtOn",
+          "description": "打开艺术模式",
+          "type": "string"
+        }
+      ],
+      "conditions": [
+        {
+          "id": "main-switch",
+          "description": "电源",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "on",
+              "description": "开"
+            },
+            {
+              "value": "off",
+              "description": "关"
+            }
+          ]
+        },
+        {
+          "id": "main-samsungvd.mediaInputSource-inputSource",
+          "description": "节目源",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "NotAvailable",
+              "description": "暂不可用"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "profileId": "9605dd7d-e9f7-34a9-b093-3ed667108c25",
+      "capabilities": [
+        {
+          "id": "main-airPurifierFanMode-setAirPurifierFanMode",
+          "description": "空气净化器风扇模式",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "auto",
+              "description": "自动"
+            },
+            {
+              "value": "sleep",
+              "description": "睡眠"
+            },
+            {
+              "value": "low",
+              "description": "低"
+            },
+            {
+              "value": "medium",
+              "description": "中"
+            },
+            {
+              "value": "high",
+              "description": "高"
+            },
+            {
+              "value": "quiet",
+              "description": "安静"
+            },
+            {
+              "value": "windFree",
+              "description": "无风"
+            },
+            {
+              "value": "off",
+              "description": "关"
+            }
+          ]
+        },
+        {
+          "id": "main-fanSpeedPercent-setPercent",
+          "description": "风扇速度",
+          "type": "integer",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 100,
+            "unit": [
+              "%"
+            ]
+          }
+        },
+        {
+          "id": "main-fanOscillationMode-setFanOscillationMode",
+          "description": "风扇摆动模式",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "fixed",
+              "description": "固定"
+            },
+            {
+              "value": "vertical",
+              "description": "垂直"
+            },
+            {
+              "value": "horizontal",
+              "description": "水平"
+            },
+            {
+              "value": "all",
+              "description": "全部"
+            },
+            {
+              "value": "indirect",
+              "description": "间接风"
+            },
+            {
+              "value": "direct",
+              "description": "直吹"
+            },
+            {
+              "value": "fixedCenter",
+              "description": "中心"
+            },
+            {
+              "value": "fixedLeft",
+              "description": "向左"
+            },
+            {
+              "value": "fixedRight",
+              "description": "向右"
+            },
+            {
+              "value": "far",
+              "description": "远"
+            },
+            {
+              "value": "individual",
+              "description": "逐个"
+            },
+            {
+              "value": "wide",
+              "description": "宽"
+            },
+            {
+              "value": "mid",
+              "description": "中等"
+            },
+            {
+              "value": "off",
+              "description": "关"
+            },
+            {
+              "value": "swing",
+              "description": "摇摆"
+            },
+            {
+              "value": "spot",
+              "description": "单点"
+            }
+          ]
+        },
+        {
+          "id": "main-windMode-setWindMode",
+          "description": "风力模式",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "sleepWind",
+              "description": "睡眠风"
+            },
+            {
+              "value": "naturalWind",
+              "description": "自然风"
+            },
+            {
+              "value": "noWind",
+              "description": "关"
+            }
+          ]
+        },
+        {
+          "id": "main-thermostatHeatingSetpoint-setHeatingSetpoint",
+          "description": "制热温度",
+          "type": "number",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 40,
+            "unit": [
+              "C"
+            ]
+          }
+        },
+        {
+          "id": "main-thermostatCoolingSetpoint-setCoolingSetpoint",
+          "description": "制冷温度",
+          "type": "number",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 40,
+            "unit": [
+              "C"
+            ]
+          }
+        },
+        {
+          "id": "main-thermostatMode-setThermostatMode",
+          "description": "温控器模式",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "antifreezing",
+              "description": "防冻"
+            },
+            {
+              "value": "asleep",
+              "description": "睡着"
+            },
+            {
+              "value": "auto",
+              "description": "自动"
+            },
+            {
+              "value": "autowitheco",
+              "description": "自动节能"
+            },
+            {
+              "value": "autowithreset",
+              "description": "自动重置"
+            },
+            {
+              "value": "autochangeover",
+              "description": "自动切换"
+            },
+            {
+              "value": "autochangeoveractive",
+              "description": "自动切换激活"
+            },
+            {
+              "value": "autocool",
+              "description": "自动制冷"
+            },
+            {
+              "value": "autoheat",
+              "description": "自动制热"
+            },
+            {
+              "value": "auxheatonly",
+              "description": "辅助加热"
+            },
+            {
+              "value": "auxiliaryemergencyheat",
+              "description": "辅助应急加热"
+            },
+            {
+              "value": "away",
+              "description": "外出"
+            },
+            {
+              "value": "cool",
+              "description": "冷"
+            },
+            {
+              "value": "custom",
+              "description": "自定义"
+            },
+            {
+              "value": "dayoff",
+              "description": "休息日"
+            },
+            {
+              "value": "dryair",
+              "description": "除湿"
+            },
+            {
+              "value": "eco",
+              "description": "环保"
+            },
+            {
+              "value": "emergency heat",
+              "description": "紧急加热"
+            },
+            {
+              "value": "emergencyheat",
+              "description": "紧急加热"
+            },
+            {
+              "value": "emergencyheatactive",
+              "description": "紧急加热激活"
+            },
+            {
+              "value": "energysavecool",
+              "description": "节能制冷"
+            },
+            {
+              "value": "energysaveheat",
+              "description": "节能制热"
+            },
+            {
+              "value": "fanonly",
+              "description": "仅风扇"
+            },
+            {
+              "value": "frostguard",
+              "description": "除霜"
+            },
+            {
+              "value": "furnace",
+              "description": "火炉"
+            },
+            {
+              "value": "heat",
+              "description": "热"
+            },
+            {
+              "value": "heatingoff",
+              "description": "制热关闭"
+            },
+            {
+              "value": "home",
+              "description": "家庭"
+            },
+            {
+              "value": "hotwateronly",
+              "description": "仅热水"
+            },
+            {
+              "value": "in",
+              "description": "室内"
+            },
+            {
+              "value": "manual",
+              "description": "手动"
+            },
+            {
+              "value": "moistair",
+              "description": "加湿"
+            },
+            {
+              "value": "on",
+              "description": "开"
+            },
+            {
+              "value": "off",
+              "description": "关"
+            },
+            {
+              "value": "comfort",
+              "description": "舒适"
+            },
+            {
+              "value": "out",
+              "description": "室外"
+            },
+            {
+              "value": "resume",
+              "description": "继续"
+            },
+            {
+              "value": "rush hour",
+              "description": "高峰期"
+            },
+            {
+              "value": "rushhour",
+              "description": "高峰期"
+            },
+            {
+              "value": "schedule",
+              "description": "已定时"
+            },
+            {
+              "value": "southernaway",
+              "description": "南方除湿"
+            },
+            {
+              "value": "precooling",
+              "description": "预冷"
+            },
+            {
+              "value": "lukewarm",
+              "description": "微暖"
+            },
+            {
+              "value": "warm",
+              "description": "温暖"
+            },
+            {
+              "value": "hot",
+              "description": "热"
+            },
+            {
+              "value": "veryhot",
+              "description": "很热"
+            },
+            {
+              "value": "ondol",
+              "description": "温突"
+            },
+            {
+              "value": "bath",
+              "description": "浴盆"
+            },
+            {
+              "value": "iterativeReservation",
+              "description": "重复预订"
+            },
+            {
+              "value": "24hourReservation",
+              "description": "24小时预订"
+            }
+          ]
+        }
+      ],
+      "conditions": [
+        {
+          "id": "main-airPurifierFanMode",
+          "description": "空气净化器风扇模式",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "auto",
+              "description": "自动"
+            },
+            {
+              "value": "sleep",
+              "description": "睡眠"
+            },
+            {
+              "value": "low",
+              "description": "低"
+            },
+            {
+              "value": "medium",
+              "description": "中"
+            },
+            {
+              "value": "high",
+              "description": "高"
+            },
+            {
+              "value": "quiet",
+              "description": "安静"
+            },
+            {
+              "value": "windFree",
+              "description": "无风"
+            },
+            {
+              "value": "off",
+              "description": "关"
+            }
+          ]
+        },
+        {
+          "id": "main-fanSpeedPercent-percent",
+          "description": "风扇速度",
+          "type": "integer",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 100,
+            "unit": [
+              "%"
+            ]
+          }
+        },
+        {
+          "id": "main-fanOscillationMode",
+          "description": "风扇摆动模式",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "fixed",
+              "description": "固定"
+            },
+            {
+              "value": "vertical",
+              "description": "垂直"
+            },
+            {
+              "value": "horizontal",
+              "description": "水平"
+            },
+            {
+              "value": "all",
+              "description": "全部"
+            },
+            {
+              "value": "indirect",
+              "description": "间接风"
+            },
+            {
+              "value": "direct",
+              "description": "直吹"
+            },
+            {
+              "value": "fixedCenter",
+              "description": "中心"
+            },
+            {
+              "value": "fixedLeft",
+              "description": "向左"
+            },
+            {
+              "value": "fixedRight",
+              "description": "向右"
+            },
+            {
+              "value": "far",
+              "description": "远"
+            },
+            {
+              "value": "individual",
+              "description": "逐个"
+            },
+            {
+              "value": "wide",
+              "description": "宽"
+            },
+            {
+              "value": "mid",
+              "description": "中等"
+            },
+            {
+              "value": "off",
+              "description": "关"
+            },
+            {
+              "value": "swing",
+              "description": "摇摆"
+            },
+            {
+              "value": "spot",
+              "description": "单点"
+            }
+          ]
+        },
+        {
+          "id": "main-windMode",
+          "description": "风力模式",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "sleepWind",
+              "description": "睡眠风"
+            },
+            {
+              "value": "naturalWind",
+              "description": "自然风"
+            },
+            {
+              "value": "noWind",
+              "description": "关"
+            }
+          ]
+        },
+        {
+          "id": "main-thermostatHeatingSetpoint-heatingSetpoint",
+          "description": "制热温度",
+          "type": "number",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 40,
+            "unit": [
+              "C"
+            ]
+          }
+        },
+        {
+          "id": "main-thermostatCoolingSetpoint-coolingSetpoint",
+          "description": "制冷温度",
+          "type": "number",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 40,
+            "unit": [
+              "C"
+            ]
+          }
+        },
+        {
+          "id": "main-thermostatMode",
+          "description": "温控器模式",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "antifreezing",
+              "description": "防冻"
+            },
+            {
+              "value": "asleep",
+              "description": "睡着"
+            },
+            {
+              "value": "auto",
+              "description": "自动"
+            },
+            {
+              "value": "autowitheco",
+              "description": "自动节能"
+            },
+            {
+              "value": "autowithreset",
+              "description": "自动重置"
+            },
+            {
+              "value": "autochangeover",
+              "description": "自动切换"
+            },
+            {
+              "value": "autochangeoveractive",
+              "description": "自动切换激活"
+            },
+            {
+              "value": "autocool",
+              "description": "自动制冷"
+            },
+            {
+              "value": "autoheat",
+              "description": "自动制热"
+            },
+            {
+              "value": "auxheatonly",
+              "description": "辅助加热"
+            },
+            {
+              "value": "auxiliaryemergencyheat",
+              "description": "辅助应急加热"
+            },
+            {
+              "value": "away",
+              "description": "外出"
+            },
+            {
+              "value": "cool",
+              "description": "冷"
+            },
+            {
+              "value": "custom",
+              "description": "自定义"
+            },
+            {
+              "value": "dayoff",
+              "description": "休息日"
+            },
+            {
+              "value": "dryair",
+              "description": "除湿"
+            },
+            {
+              "value": "eco",
+              "description": "环保"
+            },
+            {
+              "value": "emergency heat",
+              "description": "紧急加热"
+            },
+            {
+              "value": "emergencyheat",
+              "description": "紧急加热"
+            },
+            {
+              "value": "emergencyheatactive",
+              "description": "紧急加热激活"
+            },
+            {
+              "value": "energysavecool",
+              "description": "节能制冷"
+            },
+            {
+              "value": "energysaveheat",
+              "description": "节能制热"
+            },
+            {
+              "value": "fanonly",
+              "description": "仅风扇"
+            },
+            {
+              "value": "frostguard",
+              "description": "除霜"
+            },
+            {
+              "value": "furnace",
+              "description": "火炉"
+            },
+            {
+              "value": "heat",
+              "description": "热"
+            },
+            {
+              "value": "heatingoff",
+              "description": "制热关闭"
+            },
+            {
+              "value": "home",
+              "description": "家庭"
+            },
+            {
+              "value": "hotwateronly",
+              "description": "仅热水"
+            },
+            {
+              "value": "in",
+              "description": "室内"
+            },
+            {
+              "value": "manual",
+              "description": "手动"
+            },
+            {
+              "value": "moistair",
+              "description": "加湿"
+            },
+            {
+              "value": "on",
+              "description": "开"
+            },
+            {
+              "value": "off",
+              "description": "关"
+            },
+            {
+              "value": "comfort",
+              "description": "舒适"
+            },
+            {
+              "value": "out",
+              "description": "室外"
+            },
+            {
+              "value": "resume",
+              "description": "继续"
+            },
+            {
+              "value": "rush hour",
+              "description": "高峰期"
+            },
+            {
+              "value": "rushhour",
+              "description": "高峰期"
+            },
+            {
+              "value": "schedule",
+              "description": "已定时"
+            },
+            {
+              "value": "southernaway",
+              "description": "南方除湿"
+            },
+            {
+              "value": "precooling",
+              "description": "预冷"
+            },
+            {
+              "value": "lukewarm",
+              "description": "微暖"
+            },
+            {
+              "value": "warm",
+              "description": "温暖"
+            },
+            {
+              "value": "hot",
+              "description": "热"
+            },
+            {
+              "value": "veryhot",
+              "description": "很热"
+            },
+            {
+              "value": "ondol",
+              "description": "温突"
+            },
+            {
+              "value": "bath",
+              "description": "浴盆"
+            },
+            {
+              "value": "iterativeReservation",
+              "description": "重复预订"
+            },
+            {
+              "value": "24hourReservation",
+              "description": "24小时预订"
+            }
+          ]
+        },
+        {
+          "id": "main-thermostatOperatingState",
+          "description": "状态",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "idle",
+              "description": "闲置"
+            },
+            {
+              "value": "cooling",
+              "description": "制冷"
+            },
+            {
+              "value": "heating",
+              "description": "制热"
+            }
+          ]
+        },
+        {
+          "id": "main-temperatureMeasurement-temperature",
+          "description": "温度",
+          "type": "number",
+          "value_range": {
+            "minimum": -20,
+            "maximum": 50,
+            "unit": [
+              "C"
+            ]
+          }
+        },
+        {
+          "id": "main-relativeHumidityMeasurement-humidity",
+          "description": "湿度",
+          "type": "number",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 100,
+            "unit": [
+              "%"
+            ]
+          }
+        },
+        {
+          "id": "main-airQualityHealthConcern",
+          "description": "空气质量水平",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "good",
+              "description": "优"
+            },
+            {
+              "value": "moderate",
+              "description": "良"
+            },
+            {
+              "value": "slightlyUnhealthy",
+              "description": "轻度污染"
+            },
+            {
+              "value": "unhealthy",
+              "description": "中度污染"
+            },
+            {
+              "value": "veryUnhealthy",
+              "description": "重度污染"
+            },
+            {
+              "value": "hazardous",
+              "description": "严重污染"
+            },
+            {
+              "value": "unknown",
+              "description": "未知"
+            }
+          ]
+        },
+        {
+          "id": "main-carbonMonoxideMeasurement-carbonMonoxideLevel",
+          "description": "一氧化碳浓度",
+          "type": "number",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 1000000,
+            "unit": [
+              "ppm"
+            ]
+          }
+        },
+        {
+          "id": "main-carbonMonoxideHealthConcern",
+          "description": "一氧化碳水平",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "good",
+              "description": "优"
+            },
+            {
+              "value": "moderate",
+              "description": "良"
+            },
+            {
+              "value": "slightlyUnhealthy",
+              "description": "轻度污染"
+            },
+            {
+              "value": "unhealthy",
+              "description": "中度污染"
+            },
+            {
+              "value": "veryUnhealthy",
+              "description": "重度污染"
+            },
+            {
+              "value": "hazardous",
+              "description": "严重污染"
+            },
+            {
+              "value": "unknown",
+              "description": "未知"
+            }
+          ]
+        },
+        {
+          "id": "main-carbonDioxideMeasurement-carbonDioxide",
+          "description": "二氧化碳浓度",
+          "type": "integer",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 1000000,
+            "unit": [
+              "ppm"
+            ]
+          }
+        },
+        {
+          "id": "main-carbonDioxideHealthConcern",
+          "description": "二氧化碳水平",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "good",
+              "description": "优"
+            },
+            {
+              "value": "moderate",
+              "description": "良"
+            },
+            {
+              "value": "slightlyUnhealthy",
+              "description": "轻度污染"
+            },
+            {
+              "value": "unhealthy",
+              "description": "中度污染"
+            },
+            {
+              "value": "veryUnhealthy",
+              "description": "重度污染"
+            },
+            {
+              "value": "hazardous",
+              "description": "严重污染"
+            },
+            {
+              "value": "unknown",
+              "description": "未知"
+            }
+          ]
+        },
+        {
+          "id": "main-nitrogenDioxideMeasurement-nitrogenDioxide",
+          "description": "二氧化氮浓度",
+          "type": "number",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 1000000,
+            "unit": [
+              "ppm"
+            ]
+          }
+        },
+        {
+          "id": "main-carbonDioxideHealthConcern",
+          "description": "二氧化氮水平",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "good",
+              "description": "优"
+            },
+            {
+              "value": "moderate",
+              "description": "良"
+            },
+            {
+              "value": "slightlyUnhealthy",
+              "description": "轻度污染"
+            },
+            {
+              "value": "unhealthy",
+              "description": "中度污染"
+            },
+            {
+              "value": "veryUnhealthy",
+              "description": "重度污染"
+            },
+            {
+              "value": "hazardous",
+              "description": "严重污染"
+            },
+            {
+              "value": "unknown",
+              "description": "未知"
+            }
+          ]
+        },
+        {
+          "id": "main-ozoneMeasurement-ozone",
+          "description": "臭氧",
+          "type": "number",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 1000000,
+            "unit": [
+              "ppm"
+            ]
+          }
+        },
+        {
+          "id": "main-ozoneHealthConcern",
+          "description": "臭氧水平",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "good",
+              "description": "优"
+            },
+            {
+              "value": "moderate",
+              "description": "良"
+            },
+            {
+              "value": "slightlyUnhealthy",
+              "description": "轻度污染"
+            },
+            {
+              "value": "unhealthy",
+              "description": "中度污染"
+            },
+            {
+              "value": "veryUnhealthy",
+              "description": "重度污染"
+            },
+            {
+              "value": "hazardous",
+              "description": "严重污染"
+            },
+            {
+              "value": "unknown",
+              "description": "未知"
+            }
+          ]
+        },
+        {
+          "id": "main-formaldehydeMeasurement-formaldehydeLevel",
+          "description": "甲醛",
+          "type": "number",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 1000000,
+            "unit": [
+              "ppm"
+            ]
+          }
+        },
+        {
+          "id": "main-formaldehydeHealthConcern",
+          "description": "甲醛水平",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "good",
+              "description": "优"
+            },
+            {
+              "value": "moderate",
+              "description": "良"
+            },
+            {
+              "value": "slightlyUnhealthy",
+              "description": "轻度污染"
+            },
+            {
+              "value": "unhealthy",
+              "description": "中度污染"
+            },
+            {
+              "value": "veryUnhealthy",
+              "description": "重度污染"
+            },
+            {
+              "value": "hazardous",
+              "description": "严重污染"
+            },
+            {
+              "value": "unknown",
+              "description": "未知"
+            }
+          ]
+        },
+        {
+          "id": "main-veryFineDustSensor-veryFineDustLevel",
+          "description": "PM 1.0",
+          "type": "integer",
+          "value_range": {
+            "minimum": 0,
+            "unit": [
+              "μg/m^3"
+            ]
+          }
+        },
+        {
+          "id": "main-veryFineDustHealthConcern",
+          "description": "超细粉尘",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "good",
+              "description": "优"
+            },
+            {
+              "value": "moderate",
+              "description": "良"
+            },
+            {
+              "value": "slightlyUnhealthy",
+              "description": "轻度污染"
+            },
+            {
+              "value": "unhealthy",
+              "description": "中度污染"
+            },
+            {
+              "value": "veryUnhealthy",
+              "description": "重度污染"
+            },
+            {
+              "value": "hazardous",
+              "description": "严重污染"
+            },
+            {
+              "value": "unknown",
+              "description": "未知"
+            }
+          ]
+        },
+        {
+          "id": "main-fineDustSensor-fineDustLevel",
+          "description": "PM 2.5",
+          "type": "integer",
+          "value_range": {
+            "minimum": 0,
+            "unit": [
+              "μg/m^3"
+            ]
+          }
+        },
+        {
+          "id": "main-fineDustHealthConcern",
+          "description": "粉尘",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "good",
+              "description": "优"
+            },
+            {
+              "value": "moderate",
+              "description": "良"
+            },
+            {
+              "value": "slightlyUnhealthy",
+              "description": "轻度污染"
+            },
+            {
+              "value": "unhealthy",
+              "description": "中度污染"
+            },
+            {
+              "value": "veryUnhealthy",
+              "description": "重度污染"
+            },
+            {
+              "value": "hazardous",
+              "description": "严重污染"
+            },
+            {
+              "value": "unknown",
+              "description": "未知"
+            }
+          ]
+        },
+        {
+          "id": "main-dustSensor-dustLevel",
+          "description": "PM 10",
+          "type": "integer",
+          "value_range": {
+            "minimum": 0,
+            "unit": [
+              "μg/m^3"
+            ]
+          }
+        },
+        {
+          "id": "main-dustHealthConcern",
+          "description": "灰尘",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "good",
+              "description": "优"
+            },
+            {
+              "value": "moderate",
+              "description": "良"
+            },
+            {
+              "value": "slightlyUnhealthy",
+              "description": "轻度污染"
+            },
+            {
+              "value": "unhealthy",
+              "description": "中度污染"
+            },
+            {
+              "value": "veryUnhealthy",
+              "description": "重度污染"
+            },
+            {
+              "value": "hazardous",
+              "description": "严重污染"
+            },
+            {
+              "value": "unknown",
+              "description": "未知"
+            }
+          ]
+        },
+        {
+          "id": "main-radonMeasurement-radonLevel",
+          "description": "氡",
+          "type": "number",
+          "value_range": {
+            "minimum": 0.2,
+            "maximum": 99.9,
+            "unit": [
+              "pCi/L"
+            ]
+          }
+        },
+        {
+          "id": "main-radonHealthConcern",
+          "description": "氡含量",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "good",
+              "description": "优"
+            },
+            {
+              "value": "moderate",
+              "description": "良"
+            },
+            {
+              "value": "slightlyUnhealthy",
+              "description": "轻度污染"
+            },
+            {
+              "value": "unhealthy",
+              "description": "中度污染"
+            },
+            {
+              "value": "veryUnhealthy",
+              "description": "重度污染"
+            },
+            {
+              "value": "hazardous",
+              "description": "严重污染"
+            },
+            {
+              "value": "unknown",
+              "description": "未知"
+            }
+          ]
+        },
+        {
+          "id": "main-tvocMeasurement-tvocLevel",
+          "description": "TVOC",
+          "type": "number",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 1000000,
+            "unit": [
+              "ppm",
+              "ppb",
+              "ug/m3"
+            ]
+          }
+        },
+        {
+          "id": "main-tvocHealthConcern",
+          "description": "TVOC 水平",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "good",
+              "description": "优"
+            },
+            {
+              "value": "moderate",
+              "description": "良"
+            },
+            {
+              "value": "slightlyUnhealthy",
+              "description": "轻度污染"
+            },
+            {
+              "value": "unhealthy",
+              "description": "中度污染"
+            },
+            {
+              "value": "veryUnhealthy",
+              "description": "重度污染"
+            },
+            {
+              "value": "hazardous",
+              "description": "严重污染"
+            },
+            {
+              "value": "unknown",
+              "description": "未知"
+            }
+          ]
+        },
+        {
+          "id": "main-filterState-filterLifeRemaining",
+          "description": "筛选",
+          "type": "integer",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 100,
+            "unit": [
+              "%"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "profileId": "d9f6143f-dfbe-36a7-915c-b19f1c712b58",
+      "capabilities": [
+        {
+          "id": "main-switch-on",
+          "description": "电源启用",
+          "type": "string"
+        },
+        {
+          "id": "main-switch-off",
+          "description": "电源关闭",
+          "type": "string"
+        },
+        {
+          "id": "main-audioVolume-setVolume",
+          "description": "音量",
+          "type": "integer",
+          "value_range": {
+            "minimum": 0,
+            "maximum": 100,
+            "unit": [
+              "%"
+            ]
+          }
+        },
+        {
+          "id": "main-audioMute-mute",
+          "description": "静音",
+          "type": "string"
+        },
+        {
+          "id": "main-audioMute-unmute",
+          "description": "关闭静音",
+          "type": "string"
+        }
+      ],
+      "conditions": [
+        {
+          "id": "main-switch",
+          "description": "电源",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "on",
+              "description": "开"
+            },
+            {
+              "value": "off",
+              "description": "关"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "profileId": "beddf08a-28cd-3eab-a9c2-f81cdf79c7cc",
+      "capabilities": [
+        {
+          "id": "main-switch-on",
+          "description": "电源启用",
+          "type": "string"
+        },
+        {
+          "id": "main-switch-off",
+          "description": "电源关闭",
+          "type": "string"
+        },
+        {
+          "id": "main-energyMeter-resetEnergyMeter",
+          "description": "能耗",
+          "type": "number",
+          "value_range": {
+            "minimum": 0,
+            "unit": [
+              "Wh",
+              "kWh",
+              "mWh",
+              "kVAh"
+            ]
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "id": "main-switch",
+          "description": "电源",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "on",
+              "description": "开"
+            },
+            {
+              "value": "off",
+              "description": "关"
+            }
+          ]
+        },
+        {
+          "id": "main-button",
+          "description": "按钮",
+          "type": "string",
+          "value_list": [
+            {
+              "value": "pushed",
+              "description": "按一下"
+            },
+            {
+              "value": "double",
+              "description": "按下两次"
+            },
+            {
+              "value": "held",
+              "description": "长按"
+            },
+            {
+              "value": "pushed_2x",
+              "description": "按2次"
+            },
+            {
+              "value": "pushed_3x",
+              "description": "按3次"
+            },
+            {
+              "value": "pushed_4x",
+              "description": "按4次"
+            },
+            {
+              "value": "pushed_5x",
+              "description": "按5次"
+            },
+            {
+              "value": "pushed_6x",
+              "description": "按6次"
+            },
+            {
+              "value": "down",
+              "description": "已向下切换"
+            },
+            {
+              "value": "down_2x",
+              "description": "已向下切换2次"
+            },
+            {
+              "value": "down_3x",
+              "description": "已向下切换3次"
+            },
+            {
+              "value": "down_4x",
+              "description": "已向下切换4次"
+            },
+            {
+              "value": "down_5x",
+              "description": "已向下切换5次"
+            },
+            {
+              "value": "down_6x",
+              "description": "已向下切换6次"
+            },
+            {
+              "value": "down_hold",
+              "description": "按下"
+            },
+            {
+              "value": "up",
+              "description": "已向上切换"
+            },
+            {
+              "value": "up_2x",
+              "description": "已向上切换2次"
+            },
+            {
+              "value": "up_3x",
+              "description": "已向上切换3次"
+            },
+            {
+              "value": "up_4x",
+              "description": "已向上切换4次"
+            },
+            {
+              "value": "up_5x",
+              "description": "已向上切换5次"
+            },
+            {
+              "value": "up_6x",
+              "description": "已向上切换6次"
+            },
+            {
+              "value": "up_hold",
+              "description": "抬起"
+            },
+            {
+              "value": "swipe_up",
+              "description": "向上滑动"
+            },
+            {
+              "value": "swipe_down",
+              "description": "向下滑动"
+            },
+            {
+              "value": "swipe_left",
+              "description": "向左滑动"
+            },
+            {
+              "value": "swipe_right",
+              "description": "向右滑动"
+            }
+          ]
+        },
+        {
+          "id": "main-powerMeter-power",
+          "description": "功率计",
+          "type": "number",
+          "value_range": {
+            "minimum": 0,
+            "unit": [
+              "W"
+            ]
+          }
+        },
+        {
+          "id": "main-energyMeter-energy",
+          "description": "能耗",
+          "type": "number",
+          "value_range": {
+            "minimum": 0,
+            "unit": [
+              "Wh",
+              "kWh",
+              "mWh",
+              "kVAh"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+  
+  
+  
+  
+  

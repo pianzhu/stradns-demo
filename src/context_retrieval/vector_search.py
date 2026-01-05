@@ -256,34 +256,57 @@ class DashScopeEmbeddingModel:
         self._embedding = embedding_class
         self._dashscope = dashscope
 
-    def encode(self, texts: list[str]) -> NDArray[np.float32]:
-        """编码文本列表为向量数组。"""
+    def encode(self, texts: list[str], batch_size: int = 10) -> NDArray[np.float32]:
+        """编码文本列表为向量数组。
+
+        Args:
+            texts: 文本列表
+            batch_size: 每批处理的文本数量，dashscope 限制最大 10
+
+        Returns:
+            向量数组，shape=(len(texts), dim)
+        """
         if not texts:
             return np.zeros((0, 0), dtype=np.float32)
 
-        response = self._embedding.call(
-            model=self.model,
-            input=texts,
-        )
-        self._ensure_success(response)
+        all_vectors = []
 
-        output = getattr(response, "output", None) or {}
-        embeddings = output.get("embeddings")
-        if not embeddings:
-            raise ValueError("dashscope 未返回 embeddings 结果")
+        # 分批处理以避免 batch size 限制
+        for i in range(0, len(texts), batch_size):
+            batch = texts[i : i + batch_size]
 
-        vectors = []
-        for item in embeddings:
-            if not isinstance(item, dict):
-                continue
-            vector = item.get("embedding")
-            if vector is not None:
-                vectors.append(np.asarray(vector, dtype=np.float32))
+            response = self._embedding.call(
+                model=self.model,
+                input=batch,
+            )
+            self._ensure_success(response)
 
-        if not vectors:
+            output = getattr(response, "output", None)
+            if output is None and hasattr(response, "get"):
+                output = response.get("output", {})
+            if output is None:
+                output = {}
+
+            embeddings = None
+            if hasattr(output, "get"):
+                embeddings = output.get("embeddings")
+            elif isinstance(output, dict):
+                embeddings = output.get("embeddings")
+
+            if not embeddings:
+                raise ValueError(f"dashscope 未返回 embeddings 结果 (batch {i // batch_size})")
+
+            for item in embeddings:
+                if not isinstance(item, dict):
+                    continue
+                vector = item.get("embedding")
+                if vector is not None:
+                    all_vectors.append(np.asarray(vector, dtype=np.float32))
+
+        if not all_vectors:
             raise ValueError("dashscope 返回的 embedding 为空")
 
-        return np.vstack(vectors)
+        return np.vstack(all_vectors)
 
     def _ensure_success(self, response: Any) -> None:
         """校验 dashscope 响应状态。"""

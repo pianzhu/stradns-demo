@@ -1,0 +1,27 @@
+备注：
+- `action.kind` 已移除，集成测试以 `action.text` 作为语义检索主查询文本。
+- 本次在当前环境运行时未检测到 `DASHSCOPE_API_KEY`，因此所有 dashscope 集成测试被 skip，未生成真实结果。
+
+如需生成真实结果（会消耗 dashscope 配额），请在本地/目标环境设置：
+- `DASHSCOPE_API_KEY`
+- `RUN_DASHSCOPE_IT=1`
+
+推荐运行命令（仅跑该文件，可选限制用例数）：
+- `DASHSCOPE_MAX_QUERIES=10 RUN_DASHSCOPE_IT=1 PYTHONPATH=src python -m unittest discover -s tests -p 'test_dashscope_integration.py' -v`
+
+=== unittest 输出 ===
+test_embedding_recall_with_action_text (test_dashscope_integration.TestDashScopeEmbeddingIntegration.test_embedding_recall_with_action_text)
+测试使用 QueryIR.action.text 进行 embedding 召回。 ... skipped '需要设置 DASHSCOPE_API_KEY 环境变量'
+test_embedding_recall_with_raw_query (test_dashscope_integration.TestDashScopeEmbeddingIntegration.test_embedding_recall_with_raw_query)
+测试使用原始 query 进行 embedding 召回（对照组）。 ... skipped '需要设置 DASHSCOPE_API_KEY 环境变量'
+test_llm_parse_action_text_coverage (test_dashscope_integration.TestDashScopeLLMIntegration.test_llm_parse_action_text_coverage)
+测试 LLM 解析 action.text 的覆盖率。 ... skipped '需要设置 DASHSCOPE_API_KEY 环境变量'
+test_llm_parse_scope_include (test_dashscope_integration.TestDashScopeLLMIntegration.test_llm_parse_scope_include)
+测试 LLM 解析 scope_include 的准确率。 ... skipped '需要设置 DASHSCOPE_API_KEY 环境变量'
+test_end_to_end_pipeline (test_dashscope_integration.TestDashScopePipelineIntegration.test_end_to_end_pipeline)
+端到端 pipeline 测试：LLM 解析 + embedding 召回。 ... skipped '需要设置 DASHSCOPE_API_KEY 环境变量'
+
+----------------------------------------------------------------------
+Ran 0 tests in 0.000s
+
+NO TESTS RAN (skipped=5)

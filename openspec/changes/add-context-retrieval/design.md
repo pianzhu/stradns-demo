@@ -229,17 +229,14 @@ devices:
 @dataclass
 class QueryIR:
     raw: str                          # 原始查询
-    entity_mentions: list[str]        # 提取的实体名
     name_hint: str | None             # 名称提示
     action: ActionIntent              # 动作意图
     scope_include: set[str]           # 包含的 room
     scope_exclude: set[str]           # 排除的 room
     quantifier: Literal["one", "all", "any", "except"]
     type_hint: str | None             # 设备类型提示
-    conditions: list[Condition]       # 条件依赖
     references: list[str]             # 指代（last-mentioned）
     confidence: float                 # 置信度
-    needs_fallback: bool              # 是否需要 fallback
 ```
 
 ### 4.2 Candidate 结构

@@ -6,7 +6,6 @@ from context_retrieval.models import (
     ActionIntent,
     Candidate,
     CommandSpec,
-    Condition,
     Device,
     Group,
     QueryIR,
@@ -53,7 +52,7 @@ class TestCommandSpec(unittest.TestCase):
         )
         self.assertEqual(cmd.type, "integer")
         self.assertIsNotNone(cmd.value_range)
-        self.assertEqual(cmd.value_range.maximum, 100)
+        self.assertEqual(cmd.value_range.maximum, 100) # type: ignore
 
     def test_command_with_value_list(self):
         """测试带值列表的命令。"""
@@ -66,7 +65,7 @@ class TestCommandSpec(unittest.TestCase):
                 ValueOption(value="cool", description="制冷"),
             ],
         )
-        self.assertEqual(len(cmd.value_list), 2)
+        self.assertEqual(len(cmd.value_list), 2) # type: ignore
 
 
 class TestDevice(unittest.TestCase):
@@ -105,32 +104,19 @@ class TestGroup(unittest.TestCase):
         self.assertEqual(len(group.device_ids), 2)
 
 
-class TestCondition(unittest.TestCase):
-    """测试条件模型。"""
-
-    def test_temperature_condition(self):
-        """测试温度条件。"""
-        cond = Condition(
-            kind="temperature", operator="gt", threshold=26, unit="℃", room="卧室"
-        )
-        self.assertEqual(cond.kind, "temperature")
-        self.assertEqual(cond.operator, "gt")
-        self.assertEqual(cond.threshold, 26)
-
-
 class TestActionIntent(unittest.TestCase):
     """测试动作意图模型。"""
 
     def test_open_action(self):
         """测试打开动作。"""
-        action = ActionIntent(kind="open", confidence=0.95)
-        self.assertEqual(action.kind, "open")
+        action = ActionIntent(text="打开", confidence=0.95)
+        self.assertEqual(action.text, "打开")
         self.assertEqual(action.confidence, 0.95)
 
     def test_set_action_with_value(self):
-        """测试设置动作。"""
-        action = ActionIntent(kind="set", target_value="50")
-        self.assertEqual(action.target_value, "50")
+        """测试设置动作仅包含 text。"""
+        action = ActionIntent(text="调到50")
+        self.assertEqual(action.text, "调到50")
 
 
 class TestQueryIR(unittest.TestCase):
@@ -141,17 +127,17 @@ class TestQueryIR(unittest.TestCase):
         ir = QueryIR(
             raw="打开老伙计",
             name_hint="老伙计",
-            action=ActionIntent(kind="open"),
+            action=ActionIntent(text="打开"),
         )
         self.assertEqual(ir.raw, "打开老伙计")
         self.assertEqual(ir.name_hint, "老伙计")
-        self.assertEqual(ir.action.kind, "open")
+        self.assertEqual(ir.action.text, "打开")
 
     def test_query_with_scope(self):
         """测试带范围的查询IR。"""
         ir = QueryIR(
             raw="关闭所有卧室的灯",
-            action=ActionIntent(kind="close"),
+            action=ActionIntent(text="关闭"),
             scope_include={"卧室"},
             quantifier="all",
             type_hint="light",
@@ -163,7 +149,7 @@ class TestQueryIR(unittest.TestCase):
         """测试带排除的查询IR。"""
         ir = QueryIR(
             raw="打开除卧室以外的灯",
-            action=ActionIntent(kind="open"),
+            action=ActionIntent(text="打开"),
             scope_exclude={"卧室"},
             quantifier="except",
         )
@@ -175,20 +161,9 @@ class TestQueryIR(unittest.TestCase):
         ir = QueryIR(raw="打开那个", references=["last-mentioned"])
         self.assertIn("last-mentioned", ir.references)
 
-    def test_query_with_condition(self):
-        """测试带条件的查询IR。"""
-        ir = QueryIR(
-            raw="如果室温超过26度就打开空调",
-            conditions=[
-                Condition(kind="temperature", operator="gt", threshold=26)
-            ],
-        )
-        self.assertEqual(len(ir.conditions), 1)
-
     def test_default_values(self):
         """测试默认值。"""
         ir = QueryIR(raw="test")
-        self.assertEqual(ir.entity_mentions, [])
         self.assertEqual(ir.scope_include, set())
         self.assertEqual(ir.quantifier, "one")
         self.assertEqual(ir.confidence, 1.0)
