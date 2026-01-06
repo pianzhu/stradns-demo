@@ -8,7 +8,7 @@ from context_retrieval.ir_compiler import LLMClient, compile_ir
 from context_retrieval.state import ConversationState
 from context_retrieval.logic import apply_scope_filters
 from context_retrieval.keyword_search import KeywordSearcher
-from context_retrieval.scoring import merge_and_score
+from context_retrieval.scoring import apply_room_bonus, merge_and_score
 from context_retrieval.gating import select_top
 from context_retrieval.vector_search import VectorSearcher
 
@@ -67,6 +67,11 @@ def retrieve(
         vector_candidates=vector_candidates,
         w_keyword=1.0,
         w_vector=0.3,
+    )
+    merged = apply_room_bonus(
+        merged,
+        {d.id: d for d in filtered_devices},
+        ir.scope_include,
     )
 
     # 6. Top-K 筛选

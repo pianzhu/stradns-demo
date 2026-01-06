@@ -35,14 +35,25 @@ class TestApplyScopeFilters(unittest.TestCase):
         self.assertNotIn("lamp-2", result_ids)
 
     def test_include_single_room(self):
-        """仅包含指定房间。"""
+        """Scope include should not filter devices."""
         ir = QueryIR(
-            raw="打开客厅的灯",
-            scope_include={"客厅"},
+            raw="turn on living room light",
+            scope_include={self.living_room_lamp.room},
         )
         result = apply_scope_filters(self.all_devices, ir)
-        self.assertEqual(len(result), 1)
-        self.assertEqual(result[0].id, "lamp-1")
+        result_ids = {d.id for d in result}
+        self.assertEqual(result_ids, {"lamp-1", "lamp-2", "lamp-3"})
+
+    def test_include_single_room_does_not_filter(self):
+        """Scope include should not filter devices."""
+        target_room = self.living_room_lamp.room
+        ir = QueryIR(
+            raw="turn on living room light",
+            scope_include={target_room},
+        )
+        result = apply_scope_filters(self.all_devices, ir)
+        result_ids = {d.id for d in result}
+        self.assertEqual(result_ids, {"lamp-1", "lamp-2", "lamp-3"})
 
     def test_all_quantifier_no_scope(self):
         """量词"所有"无 scope 返回全部。"""

@@ -2,8 +2,9 @@
 
 import unittest
 
-from context_retrieval.models import Candidate
+from context_retrieval.models import Candidate, Device
 from context_retrieval.scoring import (
+    apply_room_bonus,
     filter_by_threshold,
     merge_and_score,
     normalize_scores,
@@ -89,6 +90,23 @@ class TestMergeAndScore(unittest.TestCase):
         self.assertTrue(all(c.keyword_score == 0.8 for c in merged))
         self.assertTrue(all(c.capability_id is not None for c in merged))
 
+    def test_room_bonus_applied(self):
+        """Applies a bonus when candidate room matches scope include."""
+        candidates = [Candidate(entity_id="lamp-1", total_score=0.5)]
+        devices = {
+            "lamp-1": Device(
+                id="lamp-1",
+                name="Lamp",
+                room="Living",
+                type="light",
+            )
+        }
+
+        boosted = apply_room_bonus(candidates, devices, {"Living"})
+
+        self.assertGreater(boosted[0].total_score, 0.5)
+        self.assertIn("room_bonus", boosted[0].reasons)
+
     def test_merge_empty(self):
         """测试空候选合并。"""
         merged = merge_and_score([], [])
@@ -169,7 +187,6 @@ class TestNormalizeScores(unittest.TestCase):
         """测试空列表归一化。"""
         normalized = normalize_scores([])
         self.assertEqual(len(normalized), 0)
-
 
 class TestFilterByThreshold(unittest.TestCase):
     """测试阈值过滤。"""

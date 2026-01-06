@@ -68,7 +68,7 @@ class TestRetrieve(unittest.TestCase):
         self.assertIn("lamp-1", candidate_ids)
 
     def test_retrieve_with_room_scope(self):
-        """根据房间范围过滤。"""
+        """Scope include should not filter candidates."""
         result = retrieve(
             text="关闭卧室的灯",
             devices=self.devices,
@@ -77,8 +77,23 @@ class TestRetrieve(unittest.TestCase):
         )
         candidate_ids = {c.entity_id for c in result.candidates}
         self.assertIn("lamp-2", candidate_ids)
-        # 客厅灯不应在结果中（被 scope 过滤）
-        self.assertNotIn("lamp-1", candidate_ids)
+        self.assertIn("lamp-1", candidate_ids)
+
+    def test_retrieve_does_not_drop_scope_include_devices(self):
+        """Scope include should not filter candidates."""
+        scope_text = next(
+            key for key, value in self.llm._presets.items()
+            if "scope_include" in value
+        )
+        result = retrieve(
+            text=scope_text,
+            devices=self.devices,
+            llm=self.llm,
+            state=self.state,
+        )
+        candidate_ids = {c.entity_id for c in result.candidates}
+        self.assertIn("lamp-1", candidate_ids)
+        self.assertIn("lamp-2", candidate_ids)
 
     def test_retrieve_updates_state(self):
         """检索后更新会话状态。"""

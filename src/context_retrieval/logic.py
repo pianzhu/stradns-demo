@@ -22,8 +22,4 @@ def apply_scope_filters(devices: list[Device], ir: QueryIR) -> list[Device]:
     if ir.scope_exclude:
         result = [d for d in result if d.room not in ir.scope_exclude]
 
-    # 仅包含指定房间
-    if ir.scope_include:
-        result = [d for d in result if d.room in ir.scope_include]
-
     return result

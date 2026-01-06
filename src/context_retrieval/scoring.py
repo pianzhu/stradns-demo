@@ -5,7 +5,9 @@
 
 from dataclasses import replace
 
-from context_retrieval.models import Candidate
+from context_retrieval.models import Candidate, Device
+
+ROOM_MATCH_BONUS = 0.2
 
 
 def merge_and_score(
@@ -84,6 +86,39 @@ def merge_and_score(
     merged.sort(key=lambda c: c.total_score, reverse=True)
 
     return merged
+
+
+def apply_room_bonus(
+    candidates: list[Candidate],
+    devices: dict[str, Device],
+    scope_include: set[str],
+    bonus: float = ROOM_MATCH_BONUS,
+) -> list[Candidate]:
+    """Apply a room match bonus to candidates."""
+    if not candidates or not scope_include:
+        return candidates
+
+    boosted: list[Candidate] = []
+    for cand in candidates:
+        device = devices.get(cand.entity_id)
+        if device and device.room in scope_include:
+            reasons = list(cand.reasons)
+            if "room_bonus" not in reasons:
+                reasons.append("room_bonus")
+            boosted.append(
+                Candidate(
+                    entity_id=cand.entity_id,
+                    entity_kind=cand.entity_kind,
+                    capability_id=cand.capability_id,
+                    keyword_score=cand.keyword_score,
+                    vector_score=cand.vector_score,
+                    total_score=cand.total_score + bonus,
+                    reasons=reasons,
+                )
+            )
+        else:
+            boosted.append(cand)
+    return boosted
 
 
 def normalize_scores(candidates: list[Candidate]) -> list[Candidate]:
