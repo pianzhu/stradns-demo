@@ -11,6 +11,7 @@ from typing import Any, Protocol
 import numpy as np
 from numpy.typing import NDArray
 
+from context_retrieval.doc_enrichment import CapabilityDoc, build_enriched_doc
 from context_retrieval.models import Candidate, Device
 
 
@@ -153,15 +154,23 @@ class InMemoryVectorSearcher(VectorSearcher):
     适用于需要自定义 embedding 模型的场景。
     """
 
-    def __init__(self, embedding_model: EmbeddingModel):
+    def __init__(
+        self,
+        embedding_model: EmbeddingModel,
+        spec_index: dict[str, list[CapabilityDoc]] | None = None,
+    ):
         """初始化检索器。
 
         Args:
             embedding_model: Embedding 模型
+            spec_index: spec.jsonl index
         """
         self.embedding_model = embedding_model
+        self.spec_index = spec_index or {}
         self.devices: list[Device] = []
         self.embeddings: NDArray[np.float32] | None = None
+        self._entries: list[tuple[str, str | None]] = []
+        self._texts: list[str] = []
 
     def _device_to_text(self, device: Device) -> str:
         """将设备转换为文本。"""
@@ -175,10 +184,12 @@ class InMemoryVectorSearcher(VectorSearcher):
         """索引设备。"""
         self.devices = devices
         if devices:
-            texts = [self._device_to_text(d) for d in devices]
-            self.embeddings = self.embedding_model.encode(texts)
+            self._entries, self._texts = self._build_corpus(devices)
+            self.embeddings = self.embedding_model.encode(self._texts)
         else:
             self.embeddings = None
+            self._entries = []
+            self._texts = []
 
     def search(self, query: str, top_k: int = 10) -> list[Candidate]:
         """执行向量检索。"""
@@ -199,10 +210,12 @@ class InMemoryVectorSearcher(VectorSearcher):
         candidates = []
         for idx in top_indices:
             score = float(similarities[idx])
+            device_id, capability_id = self._entries[idx]
             candidates.append(
                 Candidate(
-                    entity_id=self.devices[idx].id,
+                    entity_id=device_id,
                     entity_kind="device",
+                    capability_id=capability_id,
                     vector_score=score,
                     total_score=score,
                     reasons=["semantic_match"],
@@ -210,6 +223,31 @@ class InMemoryVectorSearcher(VectorSearcher):
             )
 
         return candidates
+
+    def _build_corpus(
+        self, devices: list[Device]
+    ) -> tuple[list[tuple[str, str | None]], list[str]]:
+        entries: list[tuple[str, str | None]] = []
+        texts: list[str] = []
+
+        for device in devices:
+            profile_id = getattr(device, "profile_id", None) or getattr(
+                device, "profileId", None
+            )
+            spec_docs = self.spec_index.get(profile_id) if profile_id else None
+            docs = build_enriched_doc(device, self.spec_index)
+
+            if spec_docs and len(docs) == len(spec_docs):
+                for doc, spec_doc in zip(docs, spec_docs):
+                    entries.append((device.id, spec_doc.id))
+                    texts.append(doc)
+                continue
+
+            for doc in docs:
+                entries.append((device.id, None))
+                texts.append(doc)
+
+        return entries, texts
 
 
 class DashScopeEmbeddingModel:
@@ -308,6 +346,16 @@ class DashScopeEmbeddingModel:
 
         return np.vstack(all_vectors)
 
+    def encode_enriched_docs(
+        self,
+        devices: list[Device],
+        spec_index: dict[str, list[CapabilityDoc]] | None = None,
+    ) -> tuple[list[tuple[str, str | None]], NDArray[np.float32]]:
+        """Encode enriched documents with device/capability mapping."""
+        corpus_entries, texts = self._build_command_corpus(devices, spec_index or {})
+        embeddings = self.encode(texts)
+        return corpus_entries, embeddings
+
     def _ensure_success(self, response: Any) -> None:
         """校验 dashscope 响应状态。"""
         status = getattr(response, "status_code", None)
@@ -316,6 +364,33 @@ class DashScopeEmbeddingModel:
                 response, "error", ""
             )
             raise RuntimeError(f"dashscope 调用失败: {status} {message}")
+
+    def _build_command_corpus(
+        self,
+        devices: list[Device],
+        spec_index: dict[str, list[CapabilityDoc]],
+    ) -> tuple[list[tuple[str, str | None]], list[str]]:
+        entries: list[tuple[str, str | None]] = []
+        texts: list[str] = []
+
+        for device in devices:
+            profile_id = getattr(device, "profile_id", None) or getattr(
+                device, "profileId", None
+            )
+            spec_docs = spec_index.get(profile_id) if profile_id else None
+            docs = build_enriched_doc(device, spec_index)
+
+            if spec_docs and len(docs) == len(spec_docs):
+                for doc, spec_doc in zip(docs, spec_docs):
+                    entries.append((device.id, spec_doc.id))
+                    texts.append(doc)
+                continue
+
+            for doc in docs:
+                entries.append((device.id, None))
+                texts.append(doc)
+
+        return entries, texts
 
 class StubVectorSearcher(VectorSearcher):
     """Stub 向量检索器（用于测试）。

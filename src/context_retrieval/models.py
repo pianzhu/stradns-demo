@@ -76,6 +76,7 @@ class Candidate:
 
     entity_id: str
     entity_kind: Literal["device", "group"] = "device"
+    capability_id: str | None = None
     keyword_score: float = 0.0
     vector_score: float = 0.0
     total_score: float = 0.0

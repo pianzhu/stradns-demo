@@ -1,7 +1,5 @@
 所有的categories: AirConditioner, Blind, Charger, Fan, Hub, Light, NetworkAudio, Others, Switch, Television, Washer, SmartPlug
 
-总结方案1的详细步骤，遵守claude.md中的设计和思考原则，用户设备获取通过get：https://api.samsungiotcloud.cn/v1/devices?locationId=f4b3af92-5826-416e-8e28-8b1c252912f1。数据返回格式放到readme中了.
-
 "items": [
 		{
 			"deviceId": "f3057397-d758-4914-b6c5-5906321a6537",
