@@ -31,43 +31,52 @@ def merge_and_score(
     """
     # 构建映射
     keyword_map: dict[str, Candidate] = {c.entity_id: c for c in keyword_candidates}
-    vector_map: dict[str, Candidate] = {c.entity_id: c for c in vector_candidates}
-
-    # 所有设备 ID
-    all_ids = set(keyword_map.keys()) | set(vector_map.keys())
+    vector_map: dict[tuple[str, str | None], Candidate] = {
+        (c.entity_id, c.capability_id): c for c in vector_candidates
+    }
 
     merged: list[Candidate] = []
+    seen_entities: set[str] = set()
 
-    for entity_id in all_ids:
+    for (entity_id, capability_id), vec_cand in vector_map.items():
         kw_cand = keyword_map.get(entity_id)
-        vec_cand = vector_map.get(entity_id)
 
-        # 计算分数
         keyword_score = kw_cand.keyword_score if kw_cand else 0.0
-        vector_score = vec_cand.vector_score if vec_cand else 0.0
-
+        vector_score = vec_cand.vector_score
         total_score = keyword_score * w_keyword + vector_score * w_vector
 
-        # 合并 reasons
         reasons: list[str] = []
         if kw_cand:
             reasons.extend(kw_cand.reasons)
-        if vec_cand:
-            for r in vec_cand.reasons:
-                if r not in reasons:
-                    reasons.append(r)
-
-        # 确定 entity_kind（优先使用 keyword 的结果）
-        entity_kind = (kw_cand or vec_cand).entity_kind
+        for r in vec_cand.reasons:
+            if r not in reasons:
+                reasons.append(r)
 
         merged.append(
             Candidate(
                 entity_id=entity_id,
-                entity_kind=entity_kind,
+                entity_kind=vec_cand.entity_kind,
+                capability_id=capability_id,
                 keyword_score=keyword_score,
                 vector_score=vector_score,
                 total_score=total_score,
                 reasons=reasons,
+            )
+        )
+        seen_entities.add(entity_id)
+
+    for entity_id, kw_cand in keyword_map.items():
+        if entity_id in seen_entities:
+            continue
+        merged.append(
+            Candidate(
+                entity_id=entity_id,
+                entity_kind=kw_cand.entity_kind,
+                capability_id=None,
+                keyword_score=kw_cand.keyword_score,
+                vector_score=0.0,
+                total_score=kw_cand.keyword_score * w_keyword,
+                reasons=list(kw_cand.reasons),
             )
         )
 

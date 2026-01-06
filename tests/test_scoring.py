@@ -63,6 +63,32 @@ class TestMergeAndScore(unittest.TestCase):
         self.assertIn("name_exact", merged[0].reasons)
         self.assertIn("semantic_match", merged[0].reasons)
 
+    def test_merge_with_capability_ids_applies_keyword_score(self):
+        """Applies keyword score to each capability-level candidate."""
+        keyword = [
+            Candidate(entity_id="lamp-1", keyword_score=0.8, reasons=["name_exact"])
+        ]
+        vector = [
+            Candidate(
+                entity_id="lamp-1",
+                capability_id="cap-on",
+                vector_score=0.6,
+                reasons=["semantic_match"],
+            ),
+            Candidate(
+                entity_id="lamp-1",
+                capability_id="cap-off",
+                vector_score=0.4,
+                reasons=["semantic_match"],
+            ),
+        ]
+
+        merged = merge_and_score(keyword, vector, w_keyword=1.0, w_vector=0.5)
+
+        self.assertEqual({c.capability_id for c in merged}, {"cap-on", "cap-off"})
+        self.assertTrue(all(c.keyword_score == 0.8 for c in merged))
+        self.assertTrue(all(c.capability_id is not None for c in merged))
+
     def test_merge_empty(self):
         """测试空候选合并。"""
         merged = merge_and_score([], [])
