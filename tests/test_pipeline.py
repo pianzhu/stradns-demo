@@ -1,5 +1,6 @@
 """Pipeline 组装测试。"""
 
+import logging
 import unittest
 from unittest import mock
 from context_retrieval.pipeline import retrieve
@@ -170,6 +171,21 @@ class TestRetrieve(unittest.TestCase):
             _, kwargs = merge_mock.call_args
             self.assertEqual(kwargs["w_keyword"], 1.2)
             self.assertEqual(kwargs["w_vector"], 0.2)
+
+    def test_pipeline_logs_gating_and_scores(self):
+        """Logs gating details for debugging."""
+        llm = FakeLLM({"turn on light": {"action": "turn on", "type_hint": "light"}})
+        with self.assertLogs("context_retrieval.pipeline", level=logging.INFO) as ctx:
+            retrieve(
+                text="turn on light",
+                devices=self.devices,
+                llm=llm,
+                state=self.state,
+            )
+        joined = "\n".join(ctx.output)
+        self.assertIn("mapped_category=Light", joined)
+        self.assertIn("gating_before=", joined)
+        self.assertIn("gating_after=", joined)
 
 
 if __name__ == "__main__":

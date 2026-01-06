@@ -65,6 +65,17 @@ def retrieve(
     else:
         gated_devices = filtered_devices
 
+    logger.info(
+        "mapped_category=%s type_hint=%s",
+        mapped_category,
+        ir.type_hint,
+    )
+    logger.info(
+        "gating_before=%s gating_after=%s",
+        len(filtered_devices),
+        len(gated_devices),
+    )
+
     w_keyword = DEFAULT_KEYWORD_WEIGHT
     w_vector = DEFAULT_VECTOR_WEIGHT
     if not mapped_category:
@@ -95,6 +106,12 @@ def retrieve(
         {d.id: d for d in filtered_devices},
         ir.scope_include,
     )
+    if merged:
+        top_preview = [
+            f"{cand.entity_id}:{cand.capability_id}:{cand.total_score:.3f}"
+            for cand in merged[:5]
+        ]
+        logger.info("top_candidates=%s", ",".join(top_preview))
 
     # 6. Top-K 筛选
     selection = select_top(merged, top_k=top_k)
