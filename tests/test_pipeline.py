@@ -1,11 +1,24 @@
 """Pipeline 组装测试。"""
 
 import unittest
+from unittest import mock
 from context_retrieval.pipeline import retrieve
 from context_retrieval.models import Device, CommandSpec, RetrievalResult
 from context_retrieval.ir_compiler import FakeLLM
 from context_retrieval.state import ConversationState
 from context_retrieval.vector_search import StubVectorSearcher
+
+
+class RecordingVectorSearcher(StubVectorSearcher):
+    """Vector searcher that records indexed device ids."""
+
+    def __init__(self):
+        super().__init__({})
+        self.indexed_ids: list[str] = []
+
+    def index(self, devices: list[Device]) -> None:
+        self.indexed_ids = [device.id for device in devices]
+        super().index(devices)
 
 
 class TestRetrieve(unittest.TestCase):
@@ -122,6 +135,41 @@ class TestRetrieve(unittest.TestCase):
 
         ids = {c.entity_id for c in result.candidates}
         self.assertIn("lamp-2", ids)
+
+    def test_retrieve_applies_category_gating(self):
+        """Applies category gating before vector indexing."""
+        devices = [
+            Device(id="lamp-1", name="Lamp", room="Living", type="light"),
+            Device(id="ac-1", name="AC", room="Living", type="airConditioner"),
+        ]
+        llm = FakeLLM({"turn on light": {"action": "turn on", "type_hint": "light"}})
+        recorder = RecordingVectorSearcher()
+
+        result = retrieve(
+            text="turn on light",
+            devices=devices,
+            llm=llm,
+            state=ConversationState(),
+            vector_searcher=recorder,
+        )
+
+        self.assertEqual(recorder.indexed_ids, ["lamp-1"])
+        self.assertTrue(all(c.entity_id == "lamp-1" for c in result.candidates))
+
+    def test_retrieve_fallback_weights_without_type_hint(self):
+        """Falls back to keyword-heavy weights without type hints."""
+        llm = FakeLLM({"turn on device": {"action": "turn on"}})
+        with mock.patch("context_retrieval.pipeline.merge_and_score") as merge_mock:
+            merge_mock.return_value = []
+            retrieve(
+                text="turn on device",
+                devices=self.devices,
+                llm=llm,
+                state=self.state,
+            )
+            _, kwargs = merge_mock.call_args
+            self.assertEqual(kwargs["w_keyword"], 1.2)
+            self.assertEqual(kwargs["w_vector"], 0.2)
 
 
 if __name__ == "__main__":

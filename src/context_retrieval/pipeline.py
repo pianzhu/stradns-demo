@@ -3,6 +3,9 @@
 整合各模块完成上下文检索流程。
 """
 
+import logging
+
+from context_retrieval.category_gating import filter_by_category, map_type_to_category
 from context_retrieval.models import Device, RetrievalResult
 from context_retrieval.ir_compiler import LLMClient, compile_ir
 from context_retrieval.state import ConversationState
@@ -11,6 +14,13 @@ from context_retrieval.keyword_search import KeywordSearcher
 from context_retrieval.scoring import apply_room_bonus, merge_and_score
 from context_retrieval.gating import select_top
 from context_retrieval.vector_search import VectorSearcher
+
+DEFAULT_KEYWORD_WEIGHT = 1.0
+DEFAULT_VECTOR_WEIGHT = 0.3
+FALLBACK_KEYWORD_WEIGHT = 1.2
+FALLBACK_VECTOR_WEIGHT = 0.2
+
+logger = logging.getLogger(__name__)
 
 
 def retrieve(
@@ -49,15 +59,27 @@ def retrieve(
     # 2. Scope 预过滤
     filtered_devices = apply_scope_filters(devices, ir)
 
+    mapped_category = map_type_to_category(ir.type_hint)
+    if mapped_category:
+        gated_devices = filter_by_category(filtered_devices, mapped_category)
+    else:
+        gated_devices = filtered_devices
+
+    w_keyword = DEFAULT_KEYWORD_WEIGHT
+    w_vector = DEFAULT_VECTOR_WEIGHT
+    if not mapped_category:
+        w_keyword = FALLBACK_KEYWORD_WEIGHT
+        w_vector = FALLBACK_VECTOR_WEIGHT
+
     # 3. Keyword 召回
-    searcher = KeywordSearcher(filtered_devices)
+    searcher = KeywordSearcher(gated_devices)
     keyword_candidates = searcher.search(ir)
 
     # 4. Vector 召回（可选）
     vector_candidates = []
     if vector_searcher:
         # 重新索引当前过滤后的设备，避免额外设备干扰
-        vector_searcher.index(filtered_devices)
+        vector_searcher.index(gated_devices)
         search_text = (ir.action or "").strip() or ir.raw
         vector_candidates = vector_searcher.search(search_text, top_k=top_k)
 
@@ -65,8 +87,8 @@ def retrieve(
     merged = merge_and_score(
         keyword_candidates,
         vector_candidates=vector_candidates,
-        w_keyword=1.0,
-        w_vector=0.3,
+        w_keyword=w_keyword,
+        w_vector=w_vector,
     )
     merged = apply_room_bonus(
         merged,
