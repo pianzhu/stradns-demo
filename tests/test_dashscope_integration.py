@@ -107,12 +107,11 @@ class TestDashScopeLLMIntegration(unittest.TestCase):
         )
 
     def test_llm_parse_action_text_coverage(self):
-        """测试 LLM 解析 action.text 的覆盖率。
+        """测试 LLM 解析 action 的覆盖率。
 
-        action.kind 已移除，action.text 作为 embedding 检索的主查询文本。
-        action.text 为空时允许 fallback 到原始 query，但会降低召回质量，因此需要监控覆盖率。
+        action 为空时允许 fallback 到原始 query，但会降低召回质量，因此需要监控覆盖率。
         """
-        _log_progress("\n[LLM action.text] 开始执行...")
+        _log_progress("\n[LLM action] 开始执行...")
         total = 0
         has_text = 0
         results = []
@@ -135,14 +134,14 @@ class TestDashScopeLLMIntegration(unittest.TestCase):
                     has_text += 1
                     results.append((query, "PASS", action_text))
                     _log_progress(
-                        f"[LLM action.text] {idx}/{len(cases)} PASS 用时={call_cost:.2f}s "
-                        f"query={_short_text(query)} action.text={_short_text(action_text)}"
+                        f"[LLM action] {idx}/{len(cases)} PASS 用时={call_cost:.2f}s "
+                        f"query={_short_text(query)} action={_short_text(action_text)}"
                     )
                 else:
                     results.append((query, "FAIL", action_text))
                     _log_progress(
-                        f"[LLM action.text] {idx}/{len(cases)} FAIL 用时={call_cost:.2f}s "
-                        f"query={_short_text(query)} action.text={_short_text(str(action_text))}"
+                        f"[LLM action] {idx}/{len(cases)} FAIL 用时={call_cost:.2f}s "
+                        f"query={_short_text(query)} action={_short_text(str(action_text))}"
                     )
 
                 time.sleep(0.1)
@@ -150,25 +149,25 @@ class TestDashScopeLLMIntegration(unittest.TestCase):
             except Exception as e:
                 results.append((query, "ERROR", str(e)))
                 _log_progress(
-                    f"[LLM action.text] {idx}/{len(cases)} ERROR query={_short_text(query)} err={e}"
+                    f"[LLM action] {idx}/{len(cases)} ERROR query={_short_text(query)} err={e}"
                 )
 
         coverage = has_text / total if total > 0 else 0
 
-        print(f"\n=== LLM action.text 覆盖率 ===")
+        print(f"\n=== LLM action 覆盖率 ===")
         print(f"总用例数: {total}")
-        print(f"非空 action.text: {has_text}")
+        print(f"非空 action: {has_text}")
         print(f"覆盖率: {coverage:.2%}")
 
         failed = [r for r in results if r[1] != "PASS"]
         if failed:
             print("\n失败用例:")
             for query, status, actual in failed[:10]:
-                print(f"  [{status}] {query}: action.text={actual!r}")
+                print(f"  [{status}] {query}: action={actual!r}")
 
         # 断言覆盖率 >= 60%（允许一定误差与波动）
         self.assertGreaterEqual(
-            coverage, 0.6, f"action.text 覆盖率应 >= 60%，实际 {coverage:.2%}"
+            coverage, 0.6, f"action 覆盖率应 >= 60%，实际 {coverage:.2%}"
         )
 
     def test_llm_parse_scope_include(self):
@@ -293,8 +292,8 @@ class TestDashScopeEmbeddingIntegration(unittest.TestCase):
         return results
 
     def test_embedding_recall_with_action_text(self):
-        """测试使用 QueryIR.action.text 进行 embedding 召回。"""
-        _log_progress("\n[Embedding action.text] 开始执行...")
+        """测试使用 QueryIR.action 进行 embedding 召回。"""
+        _log_progress("\n[Embedding action] 开始执行...")
         total = 0
         hits = 0
         results = []
@@ -331,13 +330,13 @@ class TestDashScopeEmbeddingIntegration(unittest.TestCase):
                     hits += 1
                     results.append((query, "HIT", expected_cap_ids, top_cap_ids[:3], search_text))
                     _log_progress(
-                        f"[Embedding action.text] {idx}/{len(cases)} HIT llm={llm_cost:.2f}s embed+search={search_cost:.2f}s "
+                        f"[Embedding action] {idx}/{len(cases)} HIT llm={llm_cost:.2f}s embed+search={search_cost:.2f}s "
                         f"query={_short_text(query)} search_text={_short_text(search_text)}"
                     )
                 else:
                     results.append((query, "MISS", expected_cap_ids, top_cap_ids[:3], search_text))
                     _log_progress(
-                        f"[Embedding action.text] {idx}/{len(cases)} MISS llm={llm_cost:.2f}s embed+search={search_cost:.2f}s "
+                        f"[Embedding action] {idx}/{len(cases)} MISS llm={llm_cost:.2f}s embed+search={search_cost:.2f}s "
                         f"query={_short_text(query)} search_text={_short_text(search_text)}"
                     )
 
@@ -346,12 +345,12 @@ class TestDashScopeEmbeddingIntegration(unittest.TestCase):
             except Exception as e:
                 results.append((query, "ERROR", expected_cap_ids, [], str(e)))
                 _log_progress(
-                    f"[Embedding action.text] {idx}/{len(cases)} ERROR query={_short_text(query)} err={e}"
+                    f"[Embedding action] {idx}/{len(cases)} ERROR query={_short_text(query)} err={e}"
                 )
 
         hit_rate = hits / total if total > 0 else 0
 
-        print(f"\n=== Embedding 召回结果 (action.text -> top-{TOP_N}) ===")
+        print(f"\n=== Embedding 召回结果 (action -> top-{TOP_N}) ===")
         print(f"总用例数: {total}")
         print(f"命中数: {hits}")
         print(f"top-{TOP_N} 命中率: {hit_rate:.2%}")
@@ -509,10 +508,10 @@ class TestDashScopePipelineIntegration(unittest.TestCase):
         print(f"\n=== 端到端 Pipeline 结果 ===")
         print(f"总用例数: {total}")
         if total > 0:
-            print(f"action.text 覆盖率: {action_text_present / total:.2%}")
-            print(f"action.text fallback 率: {action_text_fallback / total:.2%}")
+            print(f"action 覆盖率: {action_text_present / total:.2%}")
+            print(f"action fallback 率: {action_text_fallback / total:.2%}")
             print(f"top-{TOP_N} 召回命中率: {recall_hits / total:.2%}")
-            print(f"action.text 非空且召回命中率: {both_ok / total:.2%}")
+            print(f"action 非空且召回命中率: {both_ok / total:.2%}")
 
 
 if __name__ == "__main__":
