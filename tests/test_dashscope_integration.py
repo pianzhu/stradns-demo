@@ -26,6 +26,8 @@ from typing import Any
 
 import numpy as np
 
+from context_retrieval.doc_enrichment import enrich_description
+
 # 进度打印开关（默认开启；设置为 0 可关闭）
 PROGRESS_ENABLED = os.getenv("DASHSCOPE_IT_PROGRESS", "1") != "0"
 
@@ -42,6 +44,44 @@ def _short_text(text: str, max_len: int = 60) -> str:
     if len(text) <= max_len:
         return text
     return f"{text[: max_len - 1]}…"
+
+
+def build_enriched_capability_text(cap: dict[str, Any]) -> str:
+    """Build enriched capability text from spec data."""
+    cap_id = cap.get("id", "")
+    description = cap.get("description", "")
+    enriched_desc = enrich_description(description)
+    parts = [cap_id]
+    if enriched_desc:
+        parts.append(enriched_desc)
+
+    value_list = cap.get("value_list") or []
+    for item in value_list:
+        if isinstance(item, dict):
+            value_desc = item.get("description")
+            if isinstance(value_desc, str) and value_desc.strip():
+                parts.append(value_desc.strip())
+
+    return " ".join(part for part in parts if part)
+
+
+class TestCapabilityTextBuilder(unittest.TestCase):
+    """Tests for capability text enrichment."""
+
+    def test_build_enriched_capability_text(self):
+        """Builds enriched capability text with values."""
+        cap = {
+            "id": "cap-on",
+            "description": "enable",
+            "value_list": [
+                {"value": "high", "description": "high"},
+            ],
+        }
+        text = build_enriched_capability_text(cap)
+        self.assertIn("cap-on", text)
+        self.assertIn("enable", text)
+        self.assertIn("turn on", text)
+        self.assertIn("high", text)
 
 
 # 运行开关
@@ -84,7 +124,7 @@ def load_capabilities() -> list[dict[str, Any]]:
                 "id": cap_id,
                 "description": description,
                 "profile_id": profile_id,
-                "text": f"{cap_id} {description}",
+                "text": build_enriched_capability_text(cap),
             })
     return capabilities
 
