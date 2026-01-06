@@ -69,6 +69,11 @@ RUN_DASHSCOPE_IT=1 PYTHONPATH=src python -m unittest tests.test_dashscope_integr
 3. 执行 embedding 检索
 4. 验证期望命令 ID 出现在 top-N 中
 
+命令文本构建：
+- 包含 `capability_id` 与 `description` 的同义词扩展
+- 拼接 `value_list` 中的参数描述
+- 若设备元数据提供 category，则作为前缀加入文本
+
 ### 3. Pipeline 端到端测试 (TestDashScopePipelineIntegration)
 
 - `test_end_to_end_pipeline`: 验证完整 LLM + embedding 流程
