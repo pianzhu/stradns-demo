@@ -18,6 +18,7 @@
 1. **SmartThings API**：`GET /v1/devices?locationId=...`
    - 返回 `items[].components[].categories[].name`：设备类别（Light/Blind/AirConditioner/...）
    - 返回 `items[].profile.id`：关联 spec.jsonl 的 profileId
+   具体数据参考README
 
 2. **spec.jsonl**：本地规范文件
    - 结构：`{profileId, capabilities: [{id, description, type, value_range}]}`
