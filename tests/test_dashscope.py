@@ -6,7 +6,7 @@ from http import HTTPStatus
 import numpy as np
 
 from context_retrieval.ir_compiler import DashScopeLLM
-from context_retrieval.vector_search import DashScopeEmbeddingModel
+from context_retrieval.vector_search import DashScopeVectorSearcher
 
 
 class MockGeneration:
@@ -77,16 +77,16 @@ class TestDashScopeLLM(unittest.TestCase):
         self.assertNotIn("action", result)
 
 
-class TestDashScopeEmbeddingModel(unittest.TestCase):
-    """测试 DashScopeEmbeddingModel。"""
+class TestDashScopeVectorSearcher(unittest.TestCase):
+    """测试 DashScopeVectorSearcher。"""
 
     def test_encode_returns_numpy_array(self):
         """正常返回 embedding。"""
         mock_embeddings = [[0.1, 0.2], [0.3, 0.4]]
         client = MockEmbeddingClient(embeddings=mock_embeddings)
-        model = DashScopeEmbeddingModel(embedding_client=client, model="text-embedding-v4")
+        searcher = DashScopeVectorSearcher(embedding_client=client, model="text-embedding-v4")
 
-        arr = model.encode(["a", "b"])
+        arr = searcher.encode(["a", "b"])
 
         self.assertIsInstance(arr, np.ndarray)
         self.assertEqual(arr.shape, (2, 2))
@@ -96,10 +96,10 @@ class TestDashScopeEmbeddingModel(unittest.TestCase):
     def test_encode_raises_on_error_status(self):
         """错误状态码时抛出异常。"""
         client = MockEmbeddingClient(embeddings=[[0.1]], status=HTTPStatus.BAD_REQUEST)
-        model = DashScopeEmbeddingModel(embedding_client=client)
+        searcher = DashScopeVectorSearcher(embedding_client=client)
 
         with self.assertRaises(RuntimeError):
-            model.encode(["a"])
+            searcher.encode(["a"])
 
 
 if __name__ == "__main__":

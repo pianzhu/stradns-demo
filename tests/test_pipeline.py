@@ -10,18 +10,6 @@ from context_retrieval.state import ConversationState
 from context_retrieval.vector_search import StubVectorSearcher
 
 
-class RecordingVectorSearcher(StubVectorSearcher):
-    """Vector searcher that records indexed device ids."""
-
-    def __init__(self):
-        super().__init__({})
-        self.indexed_ids: list[str] = []
-
-    def index(self, devices: list[Device]) -> None:
-        self.indexed_ids = [device.id for device in devices]
-        super().index(devices)
-
-
 class TestRetrieve(unittest.TestCase):
     """测试 retrieve 函数。"""
 
@@ -143,8 +131,8 @@ class TestRetrieve(unittest.TestCase):
             Device(id="lamp-1", name="Lamp", room="Living", type="light"),
             Device(id="ac-1", name="AC", room="Living", type="airConditioner"),
         ]
-        llm = FakeLLM({"turn on light": {"action": "turn on", "type_hint": "light"}})
-        recorder = RecordingVectorSearcher()
+        llm = FakeLLM({"turn on light": {"action": "turn on", "type_hint": "Light"}})
+        recorder = StubVectorSearcher()
 
         result = retrieve(
             text="turn on light",
@@ -156,6 +144,27 @@ class TestRetrieve(unittest.TestCase):
 
         self.assertEqual(recorder.indexed_ids, ["lamp-1"])
         self.assertTrue(all(c.entity_id == "lamp-1" for c in result.candidates))
+
+    def test_retrieve_skips_category_gating_for_unknown(self):
+        """Skips category gating when type_hint is Unknown."""
+        devices = [
+            Device(id="lamp-1", name="Lamp", room="Living", type="light"),
+            Device(id="ac-1", name="AC", room="Living", type="airConditioner"),
+        ]
+        llm = FakeLLM(
+            {"turn on device": {"action": "turn on", "type_hint": "Unknown"}}
+        )
+        recorder = StubVectorSearcher()
+
+        retrieve(
+            text="turn on device",
+            devices=devices,
+            llm=llm,
+            state=ConversationState(),
+            vector_searcher=recorder,
+        )
+
+        self.assertEqual(recorder.indexed_ids, ["lamp-1", "ac-1"])
 
     def test_retrieve_fallback_weights_without_type_hint(self):
         """Falls back to keyword-heavy weights without type hints."""
@@ -174,7 +183,7 @@ class TestRetrieve(unittest.TestCase):
 
     def test_pipeline_logs_gating_and_scores(self):
         """Logs gating details for debugging."""
-        llm = FakeLLM({"turn on light": {"action": "turn on", "type_hint": "light"}})
+        llm = FakeLLM({"turn on light": {"action": "turn on", "type_hint": "Light"}})
         with self.assertLogs("context_retrieval.pipeline", level=logging.INFO) as ctx:
             retrieve(
                 text="turn on light",

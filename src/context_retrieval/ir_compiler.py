@@ -8,6 +8,7 @@ import os
 import re
 from typing import Any, Protocol
 
+from context_retrieval.category_gating import ALLOWED_CATEGORIES
 from context_retrieval.models import QueryIR
 
 
@@ -148,24 +149,29 @@ QUERY_IR_SCHEMA = {
         "scope_include": {"type": "array", "items": {"type": "string"}},
         "scope_exclude": {"type": "array", "items": {"type": "string"}},
         "quantifier": {"type": "string", "enum": ["one", "all", "any", "except"]},
-        "type_hint": {"type": "string"},
+        "type_hint": {"type": "string", "enum": list(ALLOWED_CATEGORIES)},
         "references": {"type": "array", "items": {"type": "string"}},
         "confidence": {"type": "number"},
     },
 }
 
 # TODO optimize prompt
-DEFAULT_SYSTEM_PROMPT = """你是智能家居助手的语义解析器，请仅返回一个 JSON 对象。
-字段要求（只输出有把握且非空的键）：
-- action: 简短动词/意图短语（字符串）
-- name_hint: 设备名称提示（可选，字符串）
-- scope_include: 包含的房间/区域（可选，字符串数组）
-- scope_exclude: 排除的房间/区域（可选，字符串数组）
-- quantifier: one/all/any/except（可选，枚举值）
-- type_hint: 设备类型提示（可选，字符串）
-- references: 参考信息（可选，字符串数组）
-- confidence: 整体置信度 0-1（数值）
-无法解析时返回 {"confidence": 0}"""
+DEFAULT_SYSTEM_PROMPT = f"""You are a semantic parser for a smart-home assistant. Return only ONE JSON object.
+
+Only include keys you are confident about, except:
+- Always include type_hint. If you cannot infer a category, use \"Unknown\".
+
+Field requirements:
+- action: a short verb/intent phrase (string)
+- name_hint: device name hint (string, optional)
+- scope_include: included rooms/areas (array of strings, optional)
+- scope_exclude: excluded rooms/areas (array of strings, optional)
+- quantifier: one/all/any/except (string enum, optional)
+- type_hint: MUST be one of: {", ".join(ALLOWED_CATEGORIES)} (string)
+- references: reference info (array of strings, optional)
+- confidence: overall confidence 0-1 (number)
+
+If you cannot parse the input, return {{"confidence": 0, "type_hint": "Unknown"}}."""
 
 FALLBACK_IR = {"confidence": 0.0}
 

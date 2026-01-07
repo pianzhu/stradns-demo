@@ -12,9 +12,10 @@
 ## 变更内容
 
 - **Category Gating**：利用 SmartThings API 返回的 category（Light/Blind/AirConditioner）在 embedding 检索前过滤候选集
+- **约束 type_hint**：更新 LLM system prompt，要求 `type_hint` 只能从 README 列举的 categories 中选择；无法判断时输出 `Unknown`
 - **文档富化**：通过 `profileId → spec.jsonl` 构建语义丰富的命令文档
 - **同义词归一化**：扩展 capability description 的动词同义词覆盖
-- **Fallback 策略**：当 `type_hint` 缺失时，使用 keyword 模糊匹配 name/room
+- **Fallback 策略**：当 `type_hint` 缺失或非法时，使用 keyword 模糊匹配 name/room
 - **评估与统计**：统计 category 覆盖率/缺失率、mapping 命中率、gating 触发率，并离线对比硬 gating vs 软 gating 的召回曲线
 
 ## 影响

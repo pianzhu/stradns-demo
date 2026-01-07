@@ -124,7 +124,7 @@ class TestQueryIR(unittest.TestCase):
             action="关闭",
             scope_include={"卧室"},
             quantifier="all",
-            type_hint="light",
+            type_hint="Light",
         )
         self.assertIn("卧室", ir.scope_include)
         self.assertEqual(ir.quantifier, "all")

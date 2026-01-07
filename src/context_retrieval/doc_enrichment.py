@@ -5,9 +5,7 @@ from __future__ import annotations
 import json
 import logging
 from dataclasses import dataclass, field
-from typing import Iterable
 
-from context_retrieval.category_gating import map_type_to_category
 from context_retrieval.models import Device
 
 logger = logging.getLogger(__name__)
@@ -97,13 +95,9 @@ def build_enriched_doc(device: Device, spec_index: dict[str, list[CapabilityDoc]
             logger.warning("spec index missing for device profile_id=%s", profile_id)
         return [_build_fallback_doc(device)]
 
-    category = _resolve_category(device)
     enriched_docs: list[str] = []
     for doc in docs:
         parts: list[str] = []
-        if category:
-            parts.append(category)
-        parts.append(doc.id)
 
         enriched_desc = enrich_description(doc.description)
         if enriched_desc:
@@ -121,27 +115,9 @@ def build_enriched_doc(device: Device, spec_index: dict[str, list[CapabilityDoc]
     return enriched_docs
 
 
-def _resolve_category(device: Device) -> str | None:
-    category = getattr(device, "category", None)
-    mapped = map_type_to_category(category) if category else None
-    if mapped:
-        return mapped
-
-    device_type = getattr(device, "type", None)
-    mapped = map_type_to_category(device_type) if device_type else None
-    if mapped:
-        return mapped
-
-    if isinstance(category, str) and category.strip():
-        return category.strip()
-    if isinstance(device_type, str) and device_type.strip():
-        return device_type.strip()
-    return None
-
-
 def _build_fallback_doc(device: Device) -> str:
     parts: list[str] = []
-    for value in (device.name, device.room, device.type):
+    for value in (device.name, device.room):
         if isinstance(value, str) and value.strip():
             parts.append(value.strip())
     return " ".join(parts)

@@ -337,11 +337,11 @@ class TestDashScopeEmbeddingRecall(unittest.TestCase):
     def setUpClass(cls):
         """Initialize embedding model and index."""
         from context_retrieval.ir_compiler import DashScopeLLM
-        from context_retrieval.vector_search import DashScopeEmbeddingModel
+        from context_retrieval.vector_search import DashScopeVectorSearcher
 
         start = time.perf_counter()
         cls.llm = DashScopeLLM(model=LLM_MODEL)
-        cls.embedding_model = DashScopeEmbeddingModel(model=EMBEDDING_MODEL)
+        cls.embedding_model = DashScopeVectorSearcher(model=EMBEDDING_MODEL)
 
         queries = load_test_queries()
         spec_path = Path(__file__).parent.parent / "src" / "spec.jsonl"
@@ -357,7 +357,7 @@ class TestDashScopeEmbeddingRecall(unittest.TestCase):
             for entry in entries
             if entry.get("capability_id")
         }
-        filtered_queries = filter_queries_by_capabilities(queries, available_capabilities)
+        filtered_queries = filter_queries_by_capabilities(queries, available_capabilities) # type: ignore
 
         cls.devices = devices
         cls.devices_by_id = {device.id: device for device in devices}
@@ -460,9 +460,10 @@ class TestDashScopeEmbeddingRecall(unittest.TestCase):
                 query_embedding = self.embedding_model.encode([search_text])[0]
 
                 mapped_category = map_type_to_category(type_hint)
+                apply_gating = bool(mapped_category and mapped_category != "Unknown")
                 gated_devices = (
                     filter_by_category(self.devices, mapped_category)
-                    if mapped_category
+                    if apply_gating
                     else self.devices
                 )
                 gated_device_ids = {device.id for device in gated_devices}

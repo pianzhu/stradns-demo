@@ -60,15 +60,17 @@ def retrieve(
     filtered_devices = apply_scope_filters(devices, ir)
 
     mapped_category = map_type_to_category(ir.type_hint)
-    if mapped_category:
+    apply_gating = bool(mapped_category and mapped_category != "Unknown")
+    if apply_gating:
         gated_devices = filter_by_category(filtered_devices, mapped_category)
     else:
         gated_devices = filtered_devices
 
     logger.info(
-        "mapped_category=%s type_hint=%s",
+        "mapped_category=%s type_hint=%s apply_gating=%s",
         mapped_category,
         ir.type_hint,
+        apply_gating,
     )
     logger.info(
         "gating_before=%s gating_after=%s",
@@ -78,7 +80,7 @@ def retrieve(
 
     w_keyword = DEFAULT_KEYWORD_WEIGHT
     w_vector = DEFAULT_VECTOR_WEIGHT
-    if not mapped_category:
+    if not apply_gating:
         w_keyword = FALLBACK_KEYWORD_WEIGHT
         w_vector = FALLBACK_VECTOR_WEIGHT
 

@@ -4,7 +4,7 @@
 
 ### 问题现状
 
-集成测试显示 embedding 召回率仅 40%（目标 ≥60%）。典型失败案例：
+集成测试显示 embedding 召回率仅 40%（目标 ≥90%）。典型失败案例：
 
 | 用户查询 | LLM action | 期望命令 | 实际 top-1 |
 |---------|-----------|---------|-----------|
@@ -34,7 +34,7 @@
 
 ### 非目标
 
-- 不改变 LLM prompt 结构（后续优化可单独做）
+- 不引入 `type_hint` 同义词映射表（由 LLM 直接输出 canonical category）
 - 不支持多 component 设备（当前仅处理 `main` component）
 - 不处理跨 category 的模糊命令
 
@@ -43,78 +43,80 @@
 ### 决策 1：双通道检索架构
 
 ```
-用户查询
+User query
     ↓
-LLM 解析 → QueryIR (action, type_hint, name_hint, scope_include...)
+LLM parse → QueryIR (action, type_hint, name_hint, scope_include...)
     ↓
 ┌─────────────────────────────────────────────────────────────┐
-│  type_hint 存在且可映射到 category?                          │
-│    ├─ Yes → Category Gating → 子候选集 → Embedding 检索      │
+│  Is type_hint a valid category (and not Unknown)?            │
+│    ├─ Yes → Category gating → filtered set → embedding search │
 │    │                                                         │
-│    └─ No  → Keyword 模糊匹配 (name + room) 为主              │
+│    └─ No  → Keyword-first (name + room)                       │
 └─────────────────────────────────────────────────────────────┘
     ↓
-融合排序 → Top-K
+Merge ranking → Top-K
 ```
 
 **理由**：
-- 有 type_hint → 用户使用通用描述（"灯"），category gating 有效
-- 无 type_hint → 用户使用自定义名称（"老伙计"），名称匹配更有效
+- `type_hint != Unknown` → 用户更可能在描述设备类型，category gating 有效
+- `type_hint` 缺失/非法或为 `Unknown` → 用户更可能在使用自定义名称，名称匹配更有效
 
-### 决策 2：type_hint → Category 映射
+### 决策 2：type_hint 输出约束为 categories
 
-使用静态映射表 + 模糊匹配：
+在 system prompt 中显式列举所有合法 categories，并要求 `type_hint` 必须从该集合中选择；无法判断时输出 `Unknown`。
 
 ```python
-TYPE_TO_CATEGORY = {
-    # 灯光类
-    "灯": "Light", "灯光": "Light", "照明": "Light", "台灯": "Light",
-    # 窗帘类
-    "窗帘": "Blind", "遮阳": "Blind", "百叶窗": "Blind",
-    # 空调类
-    "空调": "AirConditioner", "冷气": "AirConditioner",
-    # 开关类
-    "开关": "Switch", "插座": "SmartPlug",
-    # 影音类
-    "电视": "Television", "音响": "NetworkAudio",
-    # 其他
-    "风扇": "Fan", "洗衣机": "Washer", "充电器": "Charger",
-}
+ALLOWED_CATEGORIES = (
+    "AirConditioner",
+    "Blind",
+    "Charger",
+    "Fan",
+    "Hub",
+    "Light",
+    "NetworkAudio",
+    "Unknown",
+    "Switch",
+    "Television",
+    "Washer",
+    "SmartPlug",
+)
 ```
 
 **考虑的替代方案**：
-- LLM 直接输出 category 枚举 → 需改 prompt，增加复杂度
-- embedding 相似度匹配 type_hint → 额外计算开销
+- 维护 `type_hint` 同义词映射表 → 多语言与同义词会持续扩张，维护成本高且不可控
+- 通过 embedding 相似度推断 type_hint → 引入额外计算与不确定性
 
-**选择理由**：静态映射简单可控，覆盖常见场景，易于维护。
+**选择理由**：由 LLM 直接输出 canonical category，将语言/同义词问题收敛到 prompt；代码侧只做归一化与合法性校验。
 
 ### 决策 3：文档富化策略
 
 **当前文档**：
 ```
-设备名 房间 类型 命令描述1 命令描述2 ...
+device_name room type cmd_desc1 cmd_desc2 ...
 ```
 
-**富化后文档**（按命令粒度）：
+**富化后文档**（按命令粒度，纯语义描述）：
 ```
-{category} {capability_id} {description} {同义词扩展}
+{description} {synonyms} {value_descriptions}
 ```
+
+> **设计决策**：不在文档中包含 `category` 和 `capability_id`。中英混合文本会干扰 embedding 模型的语义理解，降低向量化准确度。
 
 **示例**：
 ```
-# 原始
-Light switch 电源启用
+# Original
+电源启用
 
-# 富化后
-Light switch 电源启用 打开 开 开启 启动 on
+# Enriched
+电源启用 打开 开 开启 启动 on
 ```
 
-**同义词扩展表**：
+**同义词扩展表**（示例，实际可按数据分布扩展）：
 ```python
 VERB_SYNONYMS = {
-    "启用": ["打开", "开", "开启", "启动", "on"],
-    "关闭": ["关", "关掉", "停止", "off"],
-    "调": ["调节", "调整", "设置", "调到", "设为"],
+    "enable": ["turn on", "on", "start"],
+    "disable": ["turn off", "off", "stop"],
+    "set": ["adjust", "change", "configure"],
 }
 ```
 
@@ -125,10 +127,10 @@ spec.jsonl 中部分命令包含 `value_list`，参数描述也携带重要语�
 ```json
 {
   "id": "main-airConditionerMode-setAirConditionerMode",
-  "description": "设置空调模式",
+  "description": "set air conditioner mode",
   "value_list": [
-    {"value": "cooling", "description": "制冷"},
-    {"value": "heating", "description": "制热"}
+    {"value": "cooling", "description": "cool"},
+    {"value": "heating", "description": "heat"}
   ]
 }
 ```
@@ -137,13 +139,13 @@ spec.jsonl 中部分命令包含 `value_list`，参数描述也携带重要语�
 
 ```python
 def build_doc_with_values(cap: dict) -> str:
-    parts = [cap["description"]]  # "设置空调模式"
+    parts = [cap["description"]]  # "set air conditioner mode"
     if "value_list" in cap:
         for v in cap["value_list"]:
-            parts.append(v["description"])  # "制冷", "制热", ...
+            parts.append(v["description"])  # "cool", "heat", ...
     return " ".join(parts)
 
-# 结果: "设置空调模式 制冷 制热"
+# Result: "set air conditioner mode cool heat"
 ```
 
 **理由**：
@@ -157,17 +159,20 @@ def build_doc_with_values(cap: dict) -> str:
 **选择**：命令级索引（而非设备级）
 
 ```
-# 设备级（当前）
+# Device-level (current)
 device_id → embedding([name, room, type, cmd1_desc, cmd2_desc, ...])
 
-# 命令级（新）
-(device_id, capability_id) → embedding([category, capability, description, synonyms])
+# Command-level (new)
+(device_id, capability_id) → embedding([description, synonyms, value_descriptions])
 ```
+
+> **注意**：`capability_id` 仅作为索引键，不参与 embedding 文本构建。
 
 **理由**：
 - 命令级文档区分度更高
 - 避免多命令描述混在一起稀释语义
 - 检索结果直接对应具体命令
+- 纯语义文本（无英文标识符）提升向量化准确度
 
 ### 决策 5：scope_include 作为评分加权（非硬过滤）
 
@@ -176,12 +181,12 @@ device_id → embedding([name, room, type, cmd1_desc, cmd2_desc, ...])
 **决策**：`scope_include` 不作为预过滤条件，而是作为评分加权因素。
 
 ```python
-# 错误做法：硬过滤
-devices = [d for d in devices if d.room in scope_include]  # ❌ 会遗漏"客厅老伙计"
+# Incorrect: hard filter
+devices = [d for d in devices if d.room in scope_include]  # may drop custom names
 
-# 正确做法：评分加权
+# Correct: score bonus
 if device.room in scope_include:
-    score += ROOM_MATCH_BONUS  # ✓ 加分但不排除
+    score += ROOM_MATCH_BONUS
 ```
 
 **理由**：
@@ -191,7 +196,7 @@ if device.room in scope_include:
 
 ### 决策 6：Fallback 策略
 
-当 `type_hint` 为空或映射失败时：
+当 `type_hint` 缺失/非法或为 `Unknown` 时：
 
 1. **不做 category gating**，保留全量候选集
 2. **提升 keyword 权重**：优先使用 name/room 模糊匹配
@@ -203,7 +208,7 @@ if device.room in scope_include:
 
 | 风险 | 缓解措施 |
 |------|----------|
-| type_hint 映射表不完整 | 持续补充 + fallback 保底 |
+| type_hint 输出不在合法集合 | prompt 约束 + 归一化校验 + fallback 保底 |
 | 同义词表维护成本 | 初期聚焦高频动词，后续按需扩展 |
 | 命令级索引存储量增加 | 当前设备规模（<1000）可接受 |
 | category 与实际能力不匹配 | 以 spec.jsonl 为准，category 仅做初筛 |
@@ -214,14 +219,14 @@ if device.room in scope_include:
 
 ```
 src/context_retrieval/
-├── category_gating.py      # Category 过滤
-│   ├── TYPE_TO_CATEGORY    # 映射表
-│   └── filter_by_category() # 过滤函数
+├── category_gating.py      # Category gating
+│   ├── ALLOWED_CATEGORIES  # Canonical categories
+│   └── filter_by_category() # Filtering helper
 │
-└── doc_enrichment.py       # 文档富化
-    ├── VERB_SYNONYMS       # 同义词表
-    ├── load_spec_index()   # 加载 spec.jsonl
-    └── build_enriched_doc() # 构建富化文档
+└── doc_enrichment.py       # Document enrichment
+    ├── VERB_SYNONYMS       # Synonym expansion
+    ├── load_spec_index()   # spec.jsonl loader
+    └── build_enriched_doc() # Doc builder
 ```
 
 ### 修改模块
@@ -229,27 +234,31 @@ src/context_retrieval/
 ```
 pipeline.py
 ├── retrieve()
-│   ├── [新增] 判断 type_hint → category 映射
-│   ├── [新增] 有映射 → apply_category_gating()
-│   ├── [新增] 无映射 → 增强 keyword 权重
-│   └── [现有] 融合评分
+│   ├── [New] type_hint canonicalization + validation
+│   ├── [New] type_hint != Unknown → category gating
+│   ├── [New] Unknown/invalid → keyword-heavy fallback
+│   └── [Existing] merge scoring
 
 vector_search.py
-├── InMemoryVectorSearcher
-│   ├── [修改] __init__() 接收 spec_index
-│   └── [修改] _build_corpus() 使用富化文档
+├── DashScopeVectorSearcher  # Refactored: replaces InMemoryVectorSearcher + DashScopeEmbeddingModel
+│   ├── __init__() accepts spec_index
+│   ├── index() builds command-level corpus
+│   ├── search() returns Candidate with capability_id
+│   └── encode() for direct embedding access
+├── StubVectorSearcher  # For testing
+└── build_command_corpus()  # Shared corpus builder
 ```
 
 ### 数据流
 
 ```
-启动时：
+At startup:
 spec.jsonl → load_spec_index() → {profileId: [capability_docs]}
     ↓
 devices + spec_index → build_enriched_docs() → corpus embeddings
 
-检索时：
-QueryIR.type_hint → TYPE_TO_CATEGORY → category
+At query time:
+QueryIR.type_hint → normalize + validate → category
     ↓
 category + devices → filter_by_category() → filtered_devices
     ↓
@@ -264,5 +273,4 @@ QueryIR.action → embedding → cosine_search(corpus) → candidates
 2. **embedding 重建策略**：设备列表变化时如何更新？
    - 建议：首次查询时按需构建，缓存复用
 
-3. **多 category 设备**：一个设备有多个 category 时如何处理？
-   - 建议：当前忽略，按首个 category 处理
+3. **device.category 来源**：测试/集成环境用 fixture 注入；生产环境应来自 SmartThings `components[].categories[].name`

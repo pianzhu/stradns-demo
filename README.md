@@ -1,4 +1,4 @@
-所有的categories: AirConditioner, Blind, Charger, Fan, Hub, Light, NetworkAudio, Others, Switch, Television, Washer, SmartPlug
+所有的categories: AirConditioner, Blind, Charger, Fan, Hub, Light, NetworkAudio, Unknown, Switch, Television, Washer, SmartPlug
 
 "items": [
 		{

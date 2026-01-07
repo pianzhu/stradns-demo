@@ -8,15 +8,21 @@
 
 #### 场景：type_hint 映射成功
 
-- **当** QueryIR.type_hint 为 "灯"
-- **那么** 系统将 type_hint 映射为 category "Light"
+- **当** QueryIR.type_hint 为 "Light"
+- **那么** 系统将 category 识别为 "Light"
 - **并且** 仅保留 category 为 "Light" 的设备进入 embedding 检索
 
 #### 场景：type_hint 映射失败
 
-- **当** QueryIR.type_hint 为 "智能设备"（无对应 category）
+- **当** QueryIR.type_hint 为 "UnknownCategory"（不在允许的 category 集合内）
 - **那么** 系统跳过 category 过滤
 - **并且** 全量设备进入 keyword 检索路径
+
+#### 场景：type_hint 为 Unknown
+
+- **当** QueryIR.type_hint 为 "Unknown"
+- **那么** 系统跳过 category 过滤
+- **并且** 优先使用 keyword 模糊匹配 name/room
 
 #### 场景：type_hint 为空
 
@@ -49,12 +55,14 @@
 
 - **当** 设备 profile.id 在 spec.jsonl 中存在
 - **那么** 系统为每个 capability 构建独立文档
-- **并且** 文档包含 category、capability_id、description 和同义词扩展
+- **并且** 文档仅包含 description、同义词扩展和 value_descriptions
+- **并且** 文档不包含 category 和 capability_id（避免中英混合干扰向量化）
 
 #### 场景：spec 不存在时降级
 
 - **当** 设备 profile.id 在 spec.jsonl 中不存在
-- **那么** 系统使用设备原始信息（name/room/type）构建文档
+- **那么** 系统使用设备原始信息（name/room）构建文档
+- **并且** 文档不包含 type 字段（避免英文类型干扰向量化）
 - **并且** 记录警告日志
 
 #### 场景：带参数命令的文档构建
@@ -108,12 +116,12 @@
 
 #### 场景：category gating 有效时
 
-- **当** type_hint 成功映射为 category
+- **当** type_hint 为有效 category 且不为 "Unknown"
 - **那么** keyword 权重为 1.0，vector 权重为 0.5
 - **并且** 在过滤后的候选集上执行 embedding 检索
 
 #### 场景：category gating 无效时
 
-- **当** type_hint 为空或映射失败
+- **当** type_hint 为 "Unknown"、为空或非法
 - **那么** keyword 权重为 1.5，vector 权重为 0.2
 - **并且** keyword 检索优先使用 name/room 模糊匹配

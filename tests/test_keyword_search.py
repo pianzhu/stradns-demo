@@ -79,7 +79,7 @@ class TestKeywordSearcher(unittest.TestCase):
         ir = QueryIR(
             raw="打开客厅的灯",
             scope_include={"客厅"},
-            type_hint="light",
+            type_hint="Light",
         )
         candidates = self.searcher.search(ir)
 
@@ -92,7 +92,7 @@ class TestKeywordSearcher(unittest.TestCase):
         ir = QueryIR(
             raw="打开卧室的灯",
             scope_include={"卧室"},
-            type_hint="light",
+            type_hint="Light",
         )
         candidates = self.searcher.search(ir)
 

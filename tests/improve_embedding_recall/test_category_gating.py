@@ -16,7 +16,7 @@ ALLOWED_CATEGORIES = {
     "Hub",
     "Light",
     "NetworkAudio",
-    "Others",
+    "Unknown",
     "Switch",
     "Television",
     "Washer",
@@ -27,22 +27,39 @@ ALLOWED_CATEGORIES = {
 class TestMapTypeToCategory(unittest.TestCase):
     """Tests for type hint mapping."""
 
-    def test_known_mappings(self):
-        """Maps known synonyms to categories."""
-        self.assertEqual(map_type_to_category("light"), "Light")
-        self.assertEqual(map_type_to_category(" Lamp "), "Light")
-        self.assertEqual(map_type_to_category("ac"), "AirConditioner")
+    def test_canonicalization(self):
+        """Normalizes case, whitespace, and separators."""
+        self.assertEqual(map_type_to_category("Light"), "Light")
+        self.assertEqual(map_type_to_category(" light "), "Light")
+        self.assertEqual(map_type_to_category("Smart Plug"), "SmartPlug")
+        self.assertEqual(map_type_to_category("Network Audio"), "NetworkAudio")
         self.assertEqual(map_type_to_category("air conditioner"), "AirConditioner")
+        self.assertEqual(
+            map_type_to_category("smartthings:air-conditioner"),
+            "AirConditioner",
+        )
 
-        for hint in ["light", "ac", "air conditioner"]:
+        for hint in [
+            "Light",
+            " light ",
+            "Smart Plug",
+            "Network Audio",
+            "air conditioner",
+            "smartthings:air-conditioner",
+        ]:
             result = map_type_to_category(hint)
             self.assertIn(result, ALLOWED_CATEGORIES)
 
-    def test_unknown_returns_none(self):
-        """Unknown or empty hints return None."""
+    def test_empty_or_invalid_returns_none(self):
+        """Empty or invalid hints return None."""
         self.assertIsNone(map_type_to_category(""))
-        self.assertIsNone(map_type_to_category("unknown"))
+        self.assertIsNone(map_type_to_category("invalid_category"))
         self.assertIsNone(map_type_to_category(None))
+
+    def test_unknown_maps_to_unknown(self):
+        """Unknown hint maps to Unknown category."""
+        self.assertEqual(map_type_to_category("unknown"), "Unknown")
+        self.assertEqual(map_type_to_category("Unknown"), "Unknown")
 
 
 class TestFilterByCategory(unittest.TestCase):
@@ -75,7 +92,7 @@ class TestFilterByCategory(unittest.TestCase):
     def test_filter_by_explicit_category_attribute(self):
         """Uses explicit category attribute when present."""
         device = Device(id="d1", name="Lamp", room="Living", type="unknown")
-        device.type = "Light"
+        setattr(device, "category", "Light")
 
         filtered = filter_by_category([device], "Light")
         self.assertEqual([d.id for d in filtered], ["d1"])
@@ -99,6 +116,15 @@ class TestFilterByCategory(unittest.TestCase):
 
         filtered = filter_by_category(devices, "UnknownCategory")
         self.assertEqual([d.id for d in filtered], ["d1", "d2"])
+
+    def test_no_match_falls_back_to_all(self):
+        """Valid category with no matches should fall back to all devices."""
+        devices = [
+            Device(id="d1", name="Blind", room="Living", type="Blind"),
+        ]
+
+        filtered = filter_by_category(devices, "Light")
+        self.assertEqual([d.id for d in filtered], ["d1"])
 
 
 if __name__ == "__main__":

@@ -15,113 +15,99 @@ ALLOWED_CATEGORIES = (
     "Hub",
     "Light",
     "NetworkAudio",
-    "Others",
+    "Unknown",
     "Switch",
     "Television",
     "Washer",
     "SmartPlug",
 )
 
-_ALLOWED_CATEGORY_LOOKUP = {category.lower(): category for category in ALLOWED_CATEGORIES}
-
-TYPE_TO_CATEGORY: dict[str, str] = {
-    "light": "Light",
-    "lamp": "Light",
-    "lighting": "Light",
-    "blind": "Blind",
-    "shade": "Blind",
-    "curtain": "Blind",
-    "airconditioner": "AirConditioner",
-    "air-conditioner": "AirConditioner",
-    "air conditioner": "AirConditioner",
-    "ac": "AirConditioner",
-    "switch": "Switch",
-    "plug": "SmartPlug",
-    "smartplug": "SmartPlug",
-    "outlet": "SmartPlug",
-    "television": "Television",
-    "tv": "Television",
-    "audio": "NetworkAudio",
-    "speaker": "NetworkAudio",
-    "sound": "NetworkAudio",
-    "networkaudio": "NetworkAudio",
-    "fan": "Fan",
-    "washer": "Washer",
-    "washingmachine": "Washer",
-    "charger": "Charger",
-    "charging": "Charger",
-    "hub": "Hub",
-    "other": "Others",
-    "others": "Others",
-}
+_ALLOWED_CATEGORY_LOOKUP: dict[str, str] = {}
+for category in ALLOWED_CATEGORIES:
+    key = "".join(ch for ch in category.lower() if ch.isalnum())
+    if key:
+        _ALLOWED_CATEGORY_LOOKUP[key] = category
 
 
 def map_type_to_category(type_hint: str | None) -> str | None:
-    """Map a type hint to a category."""
-    normalized = _normalize_hint(type_hint)
-    if not normalized:
+    """Resolve a canonical category from text.
+
+    The input is expected to be one of the canonical categories, but the function is
+    tolerant to case, whitespace, and separators (for example: "Smart Plug",
+    "smartplug", or "smartthings:air-conditioner").
+    """
+    key = _compact_key(type_hint)
+    if not key:
         return None
 
-    direct = TYPE_TO_CATEGORY.get(normalized)
+    direct = _ALLOWED_CATEGORY_LOOKUP.get(key)
     if direct:
-        return _canonical_category(direct)
+        return direct
 
-    compact = _compact_text(normalized)
-    if compact and compact in TYPE_TO_CATEGORY:
-        return _canonical_category(TYPE_TO_CATEGORY[compact])
+    for category_key, category in _ALLOWED_CATEGORY_LOOKUP.items():
+        if category_key and category_key in key:
+            return category
 
     return None
 
 
 def filter_by_category(devices: Iterable[Device], category: str | None) -> list[Device]:
     """Filter devices by category."""
-    canonical_category = _canonical_category(category)
-    if not canonical_category:
-        return list(devices)
+    device_list = list(devices)
 
-    compact_category = _compact_text(_normalize_hint(canonical_category))
-    if not compact_category:
-        return list(devices)
+    canonical_category = map_type_to_category(category)
+    if not canonical_category:
+        return device_list
+
+    category_key = _compact_key(canonical_category)
+    if not category_key:
+        return device_list
 
     filtered: list[Device] = []
-    for device in devices:
-        if _device_matches_category(device, compact_category):
+    for device in device_list:
+        if _device_matches_category(device, category_key):
             filtered.append(device)
-    return filtered
+    return filtered or device_list
 
 
-def _device_matches_category(device: Device, compact_category: str) -> bool:
-    device_category = getattr(device, "category", None)
-    canonical_category = _canonical_category(device_category)
-    if canonical_category:
-        compact_device_category = _compact_text(_normalize_hint(canonical_category))
-        if compact_device_category == compact_category:
+def _device_matches_category(device: Device, category_key: str) -> bool:
+    for raw_value in _device_category_values(device):
+        mapped = map_type_to_category(raw_value)
+        if not mapped:
+            continue
+        mapped_key = _compact_key(mapped)
+        if mapped_key == category_key:
             return True
-
-    device_type = _normalize_hint(device.type)
-    if not device_type:
-        return False
-
-    compact_device_type = _compact_text(device_type)
-    if compact_device_type == compact_category:
-        return True
-
-    return compact_category in compact_device_type
+    return False
 
 
-def _normalize_hint(value: str | None) -> str | None:
+def _device_category_values(device: Device) -> list[str]:
+    values: list[str] = []
+
+    category = getattr(device, "category", None)
+    if isinstance(category, str) and category.strip():
+        values.append(category)
+
+    categories = getattr(device, "categories", None)
+    if isinstance(categories, (list, tuple, set)):
+        for item in categories:
+            if isinstance(item, str) and item.strip():
+                values.append(item)
+            elif isinstance(item, dict):
+                name = item.get("name")
+                if isinstance(name, str) and name.strip():
+                    values.append(name)
+
+    if isinstance(device.type, str) and device.type.strip():
+        values.append(device.type)
+
+    return values
+
+
+def _compact_key(value: str | None) -> str | None:
     if not isinstance(value, str):
         return None
-    stripped = value.strip().lower()
-    return stripped or None
-
-
-def _compact_text(value: str) -> str:
-    return "".join(ch for ch in value if ch.isalnum())
-
-
-def _canonical_category(value: str | None) -> str | None:
-    normalized = _normalize_hint(value)
-    if not normalized:
+    stripped = value.strip()
+    if not stripped:
         return None
-    return _ALLOWED_CATEGORY_LOOKUP.get(normalized)
+    return "".join(ch for ch in stripped.lower() if ch.isalnum())

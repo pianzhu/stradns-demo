@@ -3,6 +3,7 @@
 基于 QueryIR 和设备元数据（name/room/type）进行检索。
 """
 
+from context_retrieval.category_gating import map_type_to_category
 from context_retrieval.models import Candidate, Device, QueryIR
 from context_retrieval.text import (
     contains_substring,
@@ -155,29 +156,17 @@ class KeywordSearcher:
         if not ir.type_hint:
             return 0.0
 
-        type_hint = ir.type_hint.lower()
-        device_type = device.type.lower()
+        hint_category = map_type_to_category(ir.type_hint)
+        if not hint_category or hint_category == "Unknown":
+            return 0.0
 
-        # 直接包含检查
-        if type_hint in device_type or device_type in type_hint:
+        device_category = getattr(device, "category", None)
+        device_mapped = map_type_to_category(device_category) if device_category else None
+        if not device_mapped:
+            device_mapped = map_type_to_category(device.type)
+
+        if device_mapped == hint_category:
             return self.WEIGHT_TYPE
-
-        # 类型别名映射（用于常见类型）
-        type_aliases = {
-            "light": ["light", "lamp", "switch", "灯"],
-            "灯": ["light", "lamp", "switch", "灯"],
-            "ac": ["air", "airconditioner", "空调", "climate"],
-            "空调": ["air", "airconditioner", "空调", "climate"],
-            "curtain": ["curtain", "shade", "blind", "窗帘"],
-            "窗帘": ["curtain", "shade", "blind", "窗帘"],
-            "sensor": ["sensor", "传感器"],
-            "传感器": ["sensor", "传感器"],
-        }
-
-        aliases = type_aliases.get(type_hint, [])
-        for alias in aliases:
-            if alias in device_type:
-                return self.WEIGHT_TYPE
 
         return 0.0
 

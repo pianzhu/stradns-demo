@@ -117,7 +117,7 @@ class TestBuildEnrichedDoc(unittest.TestCase):
 
         self.assertEqual(
             docs,
-            ["Light cap-on enable turn on on start high low"],
+            ["enable turn on on start high low"],
         )
 
     def test_build_with_empty_value_descriptions(self):
@@ -140,7 +140,7 @@ class TestBuildEnrichedDoc(unittest.TestCase):
 
         self.assertEqual(
             docs,
-            ["Light cap-on enable turn on on start high"],
+            ["enable turn on on start high"],
         )
 
     def test_build_fallback_without_profile(self):
@@ -149,7 +149,7 @@ class TestBuildEnrichedDoc(unittest.TestCase):
 
         docs = build_enriched_doc(device, {})
 
-        self.assertEqual(docs, ["Lamp Living Light"])
+        self.assertEqual(docs, ["Lamp Living"])
 
     def test_build_fallback_without_profile_no_warning(self):
         """Does not warn when profile id is missing."""

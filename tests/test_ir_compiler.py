@@ -28,7 +28,7 @@ class TestCompileIRWithFakeLLM(unittest.TestCase):
             "关闭所有灯": {
                 "action": "关闭",
                 "quantifier": "all",
-                "type_hint": "light",
+                "type_hint": "Light",
             },
             "打开除卧室以外的灯": {
                 "action": "打开",

@@ -4,7 +4,7 @@
     "expected_capability_ids": ["main-switch-on"],
     "expected_fields": {
       "scope_include": ["客厅"],
-      "type_hint": "灯"
+      "type_hint": "Light"
     }
   },
   {
@@ -13,7 +13,7 @@
     "expected_fields": {
       "scope_include": ["卧室"],
       "quantifier": "all",
-      "type_hint": "灯"
+      "type_hint": "Light"
     }
   },
   {
@@ -21,7 +21,7 @@
     "expected_capability_ids": ["main-switchLevel-setLevel"],
     "expected_fields": {
       "scope_include": ["客厅"],
-      "type_hint": "灯"
+      "type_hint": "Light"
     }
   },
   {
@@ -34,14 +34,14 @@
     "query": "设置灯光色温为暖白色",
     "expected_capability_ids": ["main-colorTemperature-setColorTemperature"],
     "expected_fields": {
-      "type_hint": "灯"
+      "type_hint": "Light"
     }
   },
   {
     "query": "把灯调成红色",
     "expected_capability_ids": ["main-colorControl-setHue", "main-colorControl-setSaturation"],
     "expected_fields": {
-      "type_hint": "灯"
+      "type_hint": "Light"
     }
   },
   {
@@ -73,7 +73,7 @@
     "expected_capability_ids": ["main-switch-on"],
     "expected_fields": {
       "quantifier": "all",
-      "type_hint": "灯"
+      "type_hint": "Light"
     }
   },
   {
@@ -82,7 +82,7 @@
     "expected_fields": {
       "scope_exclude": ["客厅"],
       "quantifier": "except",
-      "type_hint": "灯"
+      "type_hint": "Light"
     }
   },
   {
@@ -90,7 +90,7 @@
     "expected_capability_ids": ["main-switchLevel-setLevel"],
     "expected_fields": {
       "scope_include": ["卧室"],
-      "type_hint": "灯"
+      "type_hint": "Light"
     }
   },
   {
@@ -98,7 +98,7 @@
     "expected_capability_ids": ["main-switch-on"],
     "expected_fields": {
       "scope_include": ["厨房"],
-      "type_hint": "灯"
+      "type_hint": "Light"
     }
   },
   {
@@ -113,7 +113,7 @@
     "expected_capability_ids": ["main-colorTemperature-setColorTemperature"],
     "expected_fields": {
       "scope_include": ["书房"],
-      "type_hint": "灯"
+      "type_hint": "Light"
     }
   },
   {
@@ -121,7 +121,7 @@
     "expected_capability_ids": ["main-colorControl-setHue", "main-colorControl-setSaturation"],
     "expected_fields": {
       "scope_include": ["走廊"],
-      "type_hint": "灯"
+      "type_hint": "Light"
     }
   },
   {
@@ -129,28 +129,28 @@
     "expected_capability_ids": ["main-switch-on"],
     "expected_fields": {
       "quantifier": "any",
-      "type_hint": "灯"
+      "type_hint": "Light"
     }
   },
   {
     "query": "调暗灯光",
     "expected_capability_ids": ["main-switchLevel-setLevel"],
     "expected_fields": {
-      "type_hint": "灯"
+      "type_hint": "Light"
     }
   },
   {
     "query": "调亮灯光",
     "expected_capability_ids": ["main-switchLevel-setLevel"],
     "expected_fields": {
-      "type_hint": "灯"
+      "type_hint": "Light"
     }
   },
   {
     "query": "设置灯光为冷白色",
     "expected_capability_ids": ["main-colorTemperature-setColorTemperature"],
     "expected_fields": {
-      "type_hint": "灯"
+      "type_hint": "Light"
     }
   },
   {
@@ -159,7 +159,7 @@
     "expected_fields": {
       "scope_include": ["一楼"],
       "quantifier": "all",
-      "type_hint": "灯"
+      "type_hint": "Light"
     }
   },
   {
@@ -167,7 +167,7 @@
     "expected_capability_ids": ["main-switch-on"],
     "expected_fields": {
       "scope_include": ["二楼"],
-      "type_hint": "灯"
+      "type_hint": "Light"
     }
   },
   {
@@ -175,7 +175,7 @@
     "expected_capability_ids": ["main-switchLevel-setLevel"],
     "expected_fields": {
       "scope_include": ["餐厅"],
-      "type_hint": "灯"
+      "type_hint": "Light"
     }
   },
   {
@@ -183,7 +183,7 @@
     "expected_capability_ids": ["main-colorTemperature-setColorTemperature", "main-colorControl-setHue"],
     "expected_fields": {
       "scope_include": ["阳台"],
-      "type_hint": "灯"
+      "type_hint": "Light"
     }
   },
   {
@@ -191,7 +191,7 @@
     "expected_capability_ids": ["main-switch-off"],
     "expected_fields": {
       "scope_include": ["客厅", "卧室"],
-      "type_hint": "灯"
+      "type_hint": "Light"
     }
   },
   {
@@ -206,7 +206,7 @@
     "expected_capability_ids": ["main-switchLevel-setLevel"],
     "expected_fields": {
       "scope_include": ["玄关"],
-      "type_hint": "灯"
+      "type_hint": "Light"
     }
   },
   {
@@ -214,7 +214,7 @@
     "expected_capability_ids": ["main-switch-on"],
     "expected_fields": {
       "scope_include": ["花园"],
-      "type_hint": "灯"
+      "type_hint": "Light"
     }
   },
   {
@@ -230,7 +230,7 @@
     "expected_capability_ids": ["main-colorTemperature-setColorTemperature"],
     "expected_fields": {
       "scope_include": ["储物间"],
-      "type_hint": "灯"
+      "type_hint": "Light"
     }
   },
   {
@@ -238,7 +238,7 @@
     "expected_capability_ids": ["main-colorControl-setHue", "main-colorControl-setSaturation"],
     "expected_fields": {
       "scope_include": ["阁楼"],
-      "type_hint": "灯"
+      "type_hint": "Light"
     }
   },
   {
@@ -246,7 +246,7 @@
     "expected_capability_ids": ["main-switch-on", "main-switchLevel-setLevel"],
     "expected_fields": {
       "scope_include": ["办公室"],
-      "type_hint": "灯"
+      "type_hint": "Light"
     }
   },
   {
@@ -254,7 +254,7 @@
     "expected_capability_ids": ["main-switch-on", "main-switch-off"],
     "expected_fields": {
       "scope_include": ["客厅"],
-      "type_hint": "灯"
+      "type_hint": "Light"
     }
   }
 ]
