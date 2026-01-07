@@ -94,19 +94,32 @@
   - 增加 action 合法性校验：当 `action` 包含英文字母时视为无效，并降级为使用原始 query 进行 embedding 检索（同时记录调试日志）
   - 验证：更新/新增单元测试覆盖 action 校验与降级逻辑
 
-- [ ] 6.2 量词（quantifier）批量语义：Group 聚合 + 爆炸防护（需与你确认阈值与 scope_include 规则）
+- [ ] 6.2 量词（quantifier）批量语义：capability 选择 + 兼容性 group + batch 分片
   - 增加 bulk mode：`quantifier in (all, except)` 时进入批量语义路径
-  - 引入 group 概念（同组设备命令集一致）：
-    - 以 `profile_id` 对应 spec 的 `capability_id` 集合作为 command signature
-    - command signature 完全一致的设备可合并为一组（保证同组可执行同一命令）
-  - 在 bulk mode 下的检索流程：
-    - 先 `scope_exclude` 预过滤，再执行 category gating（type_hint 合法且非 Unknown）
-    - 解析/选择一个明确的 `capability_id` 作为批量执行目标（可由向量检索 top 结果推断）
-    - 扩展目标集合为“所有支持该 capability_id 的设备”，再按 command signature 聚合为 groups
-  - 爆炸防护：
-    - 定义 `MAX_BULK_DEVICES` 与 `MAX_BULK_GROUPS` 上限
-    - 超过上限时返回裁剪后的 group 列表，并给出明确 hint 提示用户缩小范围或确认继续
-  - 验证：新增单元测试覆盖分组一致性、capability_id 对组内设备的兼容性、爆炸防护触发条件
+  - capability_id 选择（先选命令，再扩展集合）：
+    - 基于命令级向量召回证据聚合得到 top-N capability 选项（`N=5`）
+      - 使用更大的候选窗口获取证据（例如 `OPTIONS_SEARCH_K=50~100`），避免 `top_k=5` 证据过少导致置信度虚高
+      - 为避免“支持设备数多 → 证据累计更高”的偏置，对每个 `capability_id` 仅保留 top-M 条证据参与聚合（例如 `M=3`）
+    - 置信度判定不只看相对排序，也看覆盖度：
+      - `top1_ratio` / `margin`：由聚合得分归一化得到分布 `p_i` 后计算
+      - `coverage = supports(capability_id) / len(filtered_devices)`：bulk 语义下用于检测“选中的命令无法覆盖全集”
+    - 低置信度时的处理（两条路径二选一，需在实现前明确约束）：
+      - **默认推荐（不增加 LLM 调用次数）**：不自动选定；返回 `hint=need_clarification` + top-2/3 选项摘要，让用户闭集选择（例如返回 `choice_index`）；最多 1 轮澄清，用户回答后重跑全链路
+      - **可选（允许额外 1 次 LLM 调用）**：在 `ENABLE_BULK_ARBITRATION_LLM=1` 时触发 LLM 闭集仲裁；输出最小协议（`0-based`）二选一：`{"choice_index": 2}` 或 `{"question": "..."}`；若仍低置信度，降级为非 bulk（返回 top-k 代表候选并提示用户更具体）
+    - 覆盖度不足的处理：当 `coverage` 低于阈值时返回 `hint=partial_coverage`（携带支持/不支持数量），避免 silent drop
+  - 兼容性 group（可执行单位）：
+    - 以“所选 capability_id 的 CommandSpec 参数契约”作为 compatibility signature（建议显式排除 `description`，只保留结构与取值域）：
+      - `type`
+      - `value_range`（`minimum/maximum/unit`）
+      - `value_list`（按 `value` 排序后的值集合；避免受翻译文案影响）
+    - signature 完全一致的设备可合并为一组；保证对该组执行 capability_id 时组内设备均有有效 CommandSpec 映射
+  - batch 分片（并发控制与爆炸防护）：
+    - 明确区分两件事：
+      - **输出压缩**：对外尽量用少量 group 覆盖全集（避免候选数量失控）
+      - **执行并发**：对内按固定大小切分 batch（用于下游并发控制）
+    - 执行 batch：对每个 compatibility group 再按固定大小切分 batch：`BATCH_SIZE=20`（不依赖 room 分组，room 可能为空/不可用）
+    - 爆炸防护：定义系统上限（例如 `MAX_TARGETS` / `MAX_GROUPS`），超过上限时返回 `hint=too_many_targets` 并提示用户缩小范围或确认继续（避免返回不可控规模的候选列表）
+  - 验证：新增/更新单元测试覆盖 capability 选择与低置信度触发、LLM 仲裁输出校验、分组兼容性、batch 切分行为
 
 - [ ] 6.3 全链路验收：按 pipeline 执行检索并输出逐用例关键日志
   - 更新 `tests/test_dashscope_integration.py`：

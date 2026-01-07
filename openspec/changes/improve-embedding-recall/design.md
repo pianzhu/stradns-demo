@@ -246,58 +246,95 @@ if device.room in scope_include:
 
 当 `QueryIR.quantifier` 为 `all` 或 `except` 时进入 bulk mode；`one/any` 仍走现有 top-k 排序路径。
 
-#### 8.2 Group 的定义与分组键
+#### 8.2 “先选命令，再扩展集合”的原则
 
-使用 group 作为“可批量执行”的最小单位，分组必须保证 **同组设备可安全执行同一个 command**。
+bulk mode 的核心思想：先确定“要执行的命令（capability_id）”，再扩展到“所有支持该命令的目标设备（targets）”，最后用 group 与 batch 压缩输出与执行。
 
-分组键使用设备的 **command signature**（来自 spec）：
+注意：`targets` 的规模不应反向影响 `capability_id` 的选择；`targets` 仅用于后续分组与分片处理。
 
-- 对每个设备，根据其 `profile_id` 对应的 spec 能力列表构建 `capability_id` 集合
-- 若两个设备的 `capability_id` 集合完全相同，则认为其命令集一致，可并为一组
-- `profile_id` 相同通常意味着命令集相同，但最终以 `capability_id` 集合一致性为准
+#### 8.3 capability_id 选择：聚合置信度 + 低置信度时 LLM 仲裁
 
-#### 8.3 Bulk mode 的检索流程（高召回 + 可控输出）
+capability_id 的选择优先使用“命令级向量召回”的证据（vector candidates 自带 capability_id），并对同一个 capability_id 的证据进行聚合：
 
-bulk mode 的核心思想：先确定“要执行的命令”，再扩展到“所有支持该命令的目标设备”，最后用 group 压缩输出。
+- 构建 `top-N` 候选 capability 选项（`N=5`）
+- 使用更大的候选窗口获取证据（例如 `OPTIONS_SEARCH_K=50~100`），避免 `top_k=5` 证据过少导致置信度虚高
+- 为避免“支持设备数多 → 证据累计更高”的偏置，对每个 `capability_id` 仅保留 top-M 条证据参与聚合（例如 `M=3`）
+- 对聚合得分进行归一化，得到分布 `p_i`
+- 置信度判定使用两个指标（组合更稳）：
+  - `top1_ratio = p1`
+  - `margin = p1 - p2`
+
+bulk mode 下还需要关注覆盖度：`coverage = supports(capability_id) / len(filtered_devices)`，用于检测“选中的命令无法覆盖全集”（避免 silent drop）。
+
+当低置信度（`top1_ratio` 或 `margin` 低于阈值）时，需要二选一明确实现路径（否则会与“不增加 LLM 调用次数”的目标冲突）：
+
+1) **默认推荐（不增加 LLM 调用次数）**：不自动选定；返回 `hint=need_clarification` + top-2/3 选项摘要，让用户闭集选择（例如返回 `choice_index`）；最多 1 轮澄清，用户回答后重跑全链路。
+
+2) **可选（允许额外 1 次 LLM 调用）**：在 `ENABLE_BULK_ARBITRATION_LLM=1` 时触发 LLM 闭集仲裁（仍避免“自由生成命令”）：
+
+- 输入：top-N capability 选项列表（仅包含必要证据：capability_id、描述、支持设备数、示例设备/room）
+- 输出（最小协议，`0-based`）二选一：
+
+```json
+{"choice_index": 2}
+```
+
+或
+
+```json
+{"question": "..."}
+```
+
+澄清问题采用开放式提问；最多允许 1 轮澄清。用户回答后重跑全链路；若仍低置信度，则降级为非 bulk（返回 top-k 代表候选并提示用户更具体）。
+
+#### 8.4 Group 的定义（兼容性 group）与 batch 分片
+
+使用 group 作为“可批量执行”的最小单位，分组必须保证 **同组设备可安全执行同一个 capability_id**。
+
+分组依据采用“所选 capability_id 的 CommandSpec 兼容性”：
+
+- 对每个 target 设备，找到与 `capability_id` 对应的 `CommandSpec`
+- 以该 `CommandSpec` 的参数形状作为 compatibility signature（例如 `type/value_range/value_list` 的结构）
+- signature 完全一致的设备可合并为同一个 compatibility group
+
+在执行/后处理阶段，再对每个 compatibility group 做固定大小分片（batch），用于并发控制与爆炸防护：
+
+- `BATCH_SIZE = 20`
+- 不依赖 room 分组（room 可能为空/不可用）
 
 ```python
 if ir.quantifier in {"all", "except"}:
     devices0 = apply_scope_filters(devices, ir)          # scope_exclude first
     devices1 = category_gating(devices0, ir.type_hint)   # optional, skip if Unknown/invalid
-    cap_id = resolve_target_capability(ir, devices1)     # find the best capability_id to execute
-    targets = [d for d in devices1 if cap_id in d.capability_ids]
-    groups = group_by_command_signature(targets)
-    return top_groups_with_hints(groups, cap_id)
+    options = build_capability_options(ir, devices1, top_n=5)
+    cap_id = select_capability_with_confidence_or_llm(options)
+    targets = [d for d in devices1 if supports(d, cap_id)]
+    groups = group_by_command_compatibility(targets, cap_id)
+    batches = split_groups_into_batches(groups, batch_size=20)
+    return bulk_result_with_hints(groups, batches, cap_id)
 ```
 
 说明：
 
-- `resolve_target_capability()` 允许复用向量检索的 top results（例如取 top-1 或 top-k majority vote），但最终必须得到一个明确的 `capability_id`
+- `capability_id` 必须先被明确选定（必要时经 LLM 仲裁），再扩展 `targets`（保证 A：例如 all lights → 全量灯设备）
 - `targets` 必须是“全量匹配集合”（保证 A：例如 all lights → 全量灯设备）
-- 输出按 group 压缩，并引入上限与提示（保证 B/C）
+- 对外输出按 compatibility group 压缩；内部处理/执行按 batch 分片（保证 B/C）
 
-#### 8.4 爆炸防护策略（可配置阈值 + 明确提示）
+#### 8.5 爆炸防护策略（固定 batch + 明确提示）
 
-需要设置两类上限（默认值待你确认，先在实现中以常量/环境变量可配置）：
+爆炸防护优先通过固定 batch 分片实现（不依赖 room）：
 
-- `MAX_BULK_DEVICES`：bulk mode 允许的最大目标设备数
-- `MAX_BULK_GROUPS`：bulk mode 允许返回的最大 group 数
+- `BATCH_SIZE = 20`
 
-当超过上限时，不直接返回巨大候选集合，而是：
+当目标规模较大时，不直接返回不可控规模的候选列表，而是：
 
-- 返回裁剪后的 group 列表（例如按 group size 或置信度排序取前 N）
-- 返回一个明确的 hint（例如 “too_many_targets”），提示用户缩小范围（room/category/name）或确认继续
+- 返回 compatibility groups（可执行单位）及其 batch 切分计划（用于下游并发控制）
+- 必要时返回明确 hint（例如 `too_many_targets`），提示用户缩小范围（room/category/name）
+- 明确系统上限（例如 `MAX_TARGETS` / `MAX_GROUPS`）：超过上限时返回 `hint=too_many_targets` 并提示用户缩小范围或确认继续，避免返回不可控规模的候选列表
 
-#### 8.5 scope_include 在 bulk mode 下的处理（需与你确认）
+#### 8.6 scope_include 在 bulk mode 下的处理
 
-现有设计将 `scope_include` 作为加权而非硬过滤，以避免遗漏自定义名称中的房间词。
-
-但在 bulk mode 下，用户通常期望范围更“严格”（例如 “all bedroom lights”）。建议采用折中策略：
-
-- 若设备 `room` 有值：`scope_include` 对 `room` 做硬过滤
-- 若设备 `room` 为空：允许使用 `name` 对 `scope_include` 做模糊匹配作为兜底
-
-该策略能在 bulk 语义下更符合直觉，同时降低漏召回风险，但需要你确认是否接受这类“兜底包含”。
+沿用现有策略：`scope_include` 作为评分加权因素，而非硬过滤条件，以避免遗漏自定义名称中包含房间信息的设备。
 
 ## 风险 / 权衡
 
