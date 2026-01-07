@@ -160,10 +160,7 @@ class KeywordSearcher:
         if not hint_category or hint_category == "Unknown":
             return 0.0
 
-        device_category = getattr(device, "category", None)
-        device_mapped = map_type_to_category(device_category) if device_category else None
-        if not device_mapped:
-            device_mapped = map_type_to_category(device.type)
+        device_mapped = map_type_to_category(device.category)
 
         if device_mapped == hint_category:
             return self.WEIGHT_TYPE

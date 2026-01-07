@@ -11,13 +11,13 @@ class TestApplyScopeFilters(unittest.TestCase):
     def setUp(self):
         """设置测试设备。"""
         self.living_room_lamp = Device(
-            id="lamp-1", name="客厅灯", room="客厅", type="light"
+            id="lamp-1", name="客厅灯", room="客厅", category="light"
         )
         self.bedroom_lamp = Device(
-            id="lamp-2", name="卧室灯", room="卧室", type="light"
+            id="lamp-2", name="卧室灯", room="卧室", category="light"
         )
         self.kitchen_lamp = Device(
-            id="lamp-3", name="厨房灯", room="厨房", type="light"
+            id="lamp-3", name="厨房灯", room="厨房", category="light"
         )
         self.all_devices = [self.living_room_lamp, self.bedroom_lamp, self.kitchen_lamp]
 

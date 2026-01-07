@@ -19,7 +19,7 @@ class TestRetrieve(unittest.TestCase):
             id="lamp-1",
             name="老伙计",
             room="客厅",
-            type="light",
+            category="light",
             commands=[
                 CommandSpec(id="on", description="打开设备"),
                 CommandSpec(id="off", description="关闭设备"),
@@ -29,7 +29,7 @@ class TestRetrieve(unittest.TestCase):
             id="lamp-2",
             name="卧室灯",
             room="卧室",
-            type="light",
+            category="light",
             commands=[
                 CommandSpec(id="on", description="打开设备"),
             ],
@@ -128,8 +128,8 @@ class TestRetrieve(unittest.TestCase):
     def test_retrieve_applies_category_gating(self):
         """Applies category gating before vector indexing."""
         devices = [
-            Device(id="lamp-1", name="Lamp", room="Living", type="light"),
-            Device(id="ac-1", name="AC", room="Living", type="airConditioner"),
+            Device(id="lamp-1", name="Lamp", room="Living", category="light"),
+            Device(id="ac-1", name="AC", room="Living", category="airConditioner"),
         ]
         llm = FakeLLM({"turn on light": {"action": "turn on", "type_hint": "Light"}})
         recorder = StubVectorSearcher()
@@ -148,8 +148,8 @@ class TestRetrieve(unittest.TestCase):
     def test_retrieve_skips_category_gating_for_unknown(self):
         """Skips category gating when type_hint is Unknown."""
         devices = [
-            Device(id="lamp-1", name="Lamp", room="Living", type="light"),
-            Device(id="ac-1", name="AC", room="Living", type="airConditioner"),
+            Device(id="lamp-1", name="Lamp", room="Living", category="light"),
+            Device(id="ac-1", name="AC", room="Living", category="airConditioner"),
         ]
         llm = FakeLLM(
             {"turn on device": {"action": "turn on", "type_hint": "Unknown"}}

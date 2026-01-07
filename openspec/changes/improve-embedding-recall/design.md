@@ -273,4 +273,6 @@ QueryIR.action → embedding → cosine_search(corpus) → candidates
 2. **embedding 重建策略**：设备列表变化时如何更新？
    - 建议：首次查询时按需构建，缓存复用
 
-3. **device.category 来源**：测试/集成环境用 fixture 注入；生产环境应来自 SmartThings `components[].categories[].name`
+3. **Device.category 字段**：
+   - `Device.type` 字段已重命名为 `Device.category`，与 SmartThings API 和 category gating 逻辑保持一致
+   - 测试/集成环境用 fixture 注入；生产环境应来自 SmartThings `components[].categories[].name`

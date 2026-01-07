@@ -99,9 +99,8 @@ class TestBuildEnrichedDoc(unittest.TestCase):
 
     def test_build_with_spec(self):
         """Builds docs from spec index with value list."""
-        device = Device(id="d1", name="Lamp", room="Living", type="Light")
+        device = Device(id="d1", name="Lamp", room="Living", category="Light")
         device.profile_id = "p1" # type: ignore
-        device.category = "Light" # type: ignore
 
         spec_index = {
             "p1": [
@@ -122,9 +121,8 @@ class TestBuildEnrichedDoc(unittest.TestCase):
 
     def test_build_with_empty_value_descriptions(self):
         """Skips empty value descriptions when building docs."""
-        device = Device(id="d1", name="Lamp", room="Living", type="Light")
+        device = Device(id="d1", name="Lamp", room="Living", category="Light")
         device.profile_id = "p1" # type: ignore
-        device.category = "Light" # type: ignore
 
         spec_index = {
             "p1": [
@@ -145,7 +143,7 @@ class TestBuildEnrichedDoc(unittest.TestCase):
 
     def test_build_fallback_without_profile(self):
         """Falls back to device metadata when spec is missing."""
-        device = Device(id="d1", name="Lamp", room="Living", type="Light")
+        device = Device(id="d1", name="Lamp", room="Living", category="Light")
 
         docs = build_enriched_doc(device, {})
 
@@ -153,7 +151,7 @@ class TestBuildEnrichedDoc(unittest.TestCase):
 
     def test_build_fallback_without_profile_no_warning(self):
         """Does not warn when profile id is missing."""
-        device = Device(id="d1", name="Lamp", room="Living", type="Light")
+        device = Device(id="d1", name="Lamp", room="Living", category="Light")
 
         logger = logging.getLogger("context_retrieval.doc_enrichment")
         handler = _LogCaptureHandler()

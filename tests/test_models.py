@@ -76,7 +76,7 @@ class TestDevice(unittest.TestCase):
             id="lamp-1",
             name="老伙计",
             room="客厅",
-            type="smartthings:switch",
+            category="smartthings:switch",
             commands=[
                 CommandSpec(id="main-switch-on", description="打开设备"),
                 CommandSpec(id="main-switch-off", description="关闭设备"),
@@ -89,7 +89,7 @@ class TestDevice(unittest.TestCase):
 
     def test_device_default_commands(self):
         """测试设备默认命令列表为空。"""
-        device = Device(id="d1", name="test", room="room", type="type")
+        device = Device(id="d1", name="test", room="room", category="type")
         self.assertEqual(device.commands, [])
 
 

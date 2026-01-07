@@ -20,7 +20,7 @@ class TestKeywordSearcher(unittest.TestCase):
                 id="lamp-1",
                 name="老伙计",
                 room="客厅",
-                type="smartthings:switch",
+                category="smartthings:switch",
                 commands=[
                     CommandSpec(id="main-switch-on", description="打开设备"),
                     CommandSpec(id="main-switch-off", description="关闭设备"),
@@ -30,7 +30,7 @@ class TestKeywordSearcher(unittest.TestCase):
                 id="lamp-2",
                 name="台灯",
                 room="卧室",
-                type="smartthings:light",
+                category="smartthings:light",
                 commands=[
                     CommandSpec(id="main-switch-on", description="打开设备"),
                 ],
@@ -39,7 +39,7 @@ class TestKeywordSearcher(unittest.TestCase):
                 id="ac-1",
                 name="大白",
                 room="客厅",
-                type="smartthings:airConditioner",
+                category="smartthings:airConditioner",
                 commands=[
                     CommandSpec(id="main-switch-on", description="打开设备"),
                     CommandSpec(id="main-switch-off", description="关闭设备"),
@@ -49,7 +49,7 @@ class TestKeywordSearcher(unittest.TestCase):
                 id="sensor-1",
                 name="温度传感器",
                 room="卧室",
-                type="smartthings:temperatureSensor",
+                category="smartthings:temperatureSensor",
                 commands=[
                     CommandSpec(id="main-temperature-get", description="获取温度"),
                 ],

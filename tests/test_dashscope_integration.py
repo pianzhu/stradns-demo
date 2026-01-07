@@ -25,9 +25,10 @@ from typing import Any
 import numpy as np
 
 from context_retrieval.category_gating import filter_by_category, map_type_to_category
-from context_retrieval.doc_enrichment import CapabilityDoc, load_spec_index
+from context_retrieval.doc_enrichment import load_spec_index
 from context_retrieval.models import Candidate, Device
 from context_retrieval.scoring import apply_room_bonus
+from context_retrieval.vector_search import CorpusEntry, build_command_corpus
 
 # Progress logging toggle (default enabled; set to 0 to disable)
 PROGRESS_ENABLED = os.getenv("DASHSCOPE_IT_PROGRESS", "1") != "0"
@@ -126,7 +127,7 @@ def build_devices_from_items(
         room = room_map.get(room_id, "") if isinstance(room_id, str) else ""
         category = _extract_category(item)
         device_type = category or "Unknown"
-        device = Device(id=device_id, name=name, room=room, type=device_type)
+        device = Device(id=device_id, name=name, room=room, category=device_type)
         profile_id = _extract_profile_id(item)
         if profile_id:
             setattr(device, "profile_id", profile_id)
@@ -134,64 +135,6 @@ def build_devices_from_items(
             setattr(device, "category", category)
         devices.append(device)
     return devices
-
-
-def _build_fallback_text(device: Device) -> str:
-    parts: list[str] = []
-    for value in (device.name, device.room, device.type):
-        if isinstance(value, str) and value.strip():
-            parts.append(value.strip())
-    return " ".join(parts)
-
-
-def build_capability_text(doc: CapabilityDoc) -> str:
-    """Build capability text from description and value descriptions."""
-    parts: list[str] = []
-    if isinstance(doc.description, str) and doc.description.strip():
-        parts.append(doc.description.strip())
-    for value_desc in doc.value_descriptions:
-        if isinstance(value_desc, str) and value_desc.strip():
-            parts.append(value_desc.strip())
-    return " ".join(parts)
-
-
-def build_command_corpus(
-    devices: list[Device],
-    spec_index: dict[str, list[CapabilityDoc]],
-) -> tuple[list[dict[str, str | None]], list[str]]:
-    entries: list[dict[str, str | None]] = []
-    texts: list[str] = []
-
-    for device in devices:
-        profile_id = getattr(device, "profile_id", None) or getattr(
-            device, "profileId", None
-        )
-        spec_docs = spec_index.get(profile_id) if profile_id else None
-
-        if not spec_docs:
-            entries.append(
-                {
-                    "device_id": device.id,
-                    "capability_id": None,
-                    "category": getattr(device, "category", None),
-                    "room": device.room,
-                }
-            )
-            texts.append(_build_fallback_text(device))
-            continue
-
-        for spec_doc in spec_docs:
-            entries.append(
-                {
-                    "device_id": device.id,
-                    "capability_id": spec_doc.id,
-                    "category": getattr(device, "category", None),
-                    "room": device.room,
-                }
-            )
-            texts.append(build_capability_text(spec_doc))
-
-    return entries, texts
 
 
 def filter_queries_by_capabilities(
@@ -209,14 +152,14 @@ def filter_queries_by_capabilities(
 
 
 def select_entries_by_device_ids(
-    entries: list[dict[str, Any]],
+    entries: list[CorpusEntry],
     embeddings: np.ndarray,
     device_ids: set[str],
-) -> tuple[list[dict[str, Any]], np.ndarray]:
+) -> tuple[list[CorpusEntry], np.ndarray]:
     if not device_ids:
         return entries, embeddings
     indices = [
-        idx for idx, entry in enumerate(entries) if entry.get("device_id") in device_ids
+        idx for idx, entry in enumerate(entries) if entry.device_id in device_ids
     ]
     if not indices:
         return entries, embeddings
@@ -353,9 +296,9 @@ class TestDashScopeEmbeddingRecall(unittest.TestCase):
         entries, texts = build_command_corpus(devices, spec_index)
 
         available_capabilities = {
-            entry["capability_id"]
+            entry.capability_id
             for entry in entries
-            if entry.get("capability_id")
+            if entry.capability_id
         }
         filtered_queries = filter_queries_by_capabilities(queries, available_capabilities) # type: ignore
 
@@ -382,7 +325,7 @@ class TestDashScopeEmbeddingRecall(unittest.TestCase):
     def _search_top_n(
         self,
         query_embedding: np.ndarray,
-        entries: list[dict[str, Any]],
+        entries: list[CorpusEntry],
         embeddings: np.ndarray,
         top_n: int = TOP_N,
     ) -> list[Candidate]:
@@ -402,9 +345,9 @@ class TestDashScopeEmbeddingRecall(unittest.TestCase):
             entry = entries[idx]
             candidates.append(
                 Candidate(
-                    entity_id=entry.get("device_id", ""),
+                    entity_id=entry.device_id,
                     entity_kind="device",
-                    capability_id=entry.get("capability_id"),
+                    capability_id=entry.capability_id,
                     vector_score=score,
                     total_score=score,
                     reasons=["semantic_match"],

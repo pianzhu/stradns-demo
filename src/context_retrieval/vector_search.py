@@ -5,6 +5,7 @@
 
 import os
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from http import HTTPStatus
 from typing import Any
 
@@ -41,10 +42,27 @@ class VectorSearcher(ABC):
         ...
 
 
+@dataclass
+class CorpusEntry:
+    """Entry in the command corpus.
+
+    Attributes:
+        device_id: Device identifier
+        capability_id: Capability identifier (None for fallback entries)
+        category: Device category (e.g., "Light", "Blind")
+        room: Device room
+    """
+
+    device_id: str
+    capability_id: str | None
+    category: str | None
+    room: str
+
+
 def build_command_corpus(
     devices: list[Device],
     spec_index: dict[str, list[CapabilityDoc]],
-) -> tuple[list[tuple[str, str | None]], list[str]]:
+) -> tuple[list[CorpusEntry], list[str]]:
     """构建命令级语料库。
 
     Args:
@@ -53,10 +71,10 @@ def build_command_corpus(
 
     Returns:
         (entries, texts) 元组
-        - entries: (device_id, capability_id) 列表
+        - entries: CorpusEntry 列表，包含 device_id, capability_id, category, room
         - texts: 富化文档列表
     """
-    entries: list[tuple[str, str | None]] = []
+    entries: list[CorpusEntry] = []
     texts: list[str] = []
 
     for device in devices:
@@ -66,14 +84,30 @@ def build_command_corpus(
         spec_docs = spec_index.get(profile_id) if profile_id else None
         docs = build_enriched_doc(device, spec_index)
 
+        category = device.category
+
         if spec_docs and len(docs) == len(spec_docs):
             for doc, spec_doc in zip(docs, spec_docs):
-                entries.append((device.id, spec_doc.id))
+                entries.append(
+                    CorpusEntry(
+                        device_id=device.id,
+                        capability_id=spec_doc.id,
+                        category=category,
+                        room=device.room,
+                    )
+                )
                 texts.append(doc)
             continue
 
         for doc in docs:
-            entries.append((device.id, None))
+            entries.append(
+                CorpusEntry(
+                    device_id=device.id,
+                    capability_id=None,
+                    category=category,
+                    room=device.room,
+                )
+            )
             texts.append(doc)
 
     return entries, texts
@@ -102,7 +136,7 @@ class DashScopeVectorSearcher(VectorSearcher):
         """
         self.spec_index = spec_index or {}
         self.model = model
-        self._entries: list[tuple[str, str | None]] = []
+        self._entries: list[CorpusEntry] = []
         self._embeddings: NDArray[np.float32] | None = None
 
         if embedding_client is not None:
@@ -162,12 +196,12 @@ class DashScopeVectorSearcher(VectorSearcher):
         candidates = []
         for idx in top_indices:
             score = float(similarities[idx])
-            device_id, capability_id = self._entries[idx]
+            entry = self._entries[idx]
             candidates.append(
                 Candidate(
-                    entity_id=device_id,
+                    entity_id=entry.device_id,
                     entity_kind="device",
-                    capability_id=capability_id,
+                    capability_id=entry.capability_id,
                     vector_score=score,
                     total_score=score,
                     reasons=["semantic_match"],

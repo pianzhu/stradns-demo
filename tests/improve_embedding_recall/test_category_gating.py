@@ -66,10 +66,10 @@ class TestFilterByCategory(unittest.TestCase):
     """Tests for device filtering by category."""
 
     def test_filter_by_type_match(self):
-        """Filters devices by type value."""
+        """Filters devices by category value."""
         devices = [
-            Device(id="d1", name="Lamp", room="Living", type="Light"),
-            Device(id="d2", name="Blind", room="Living", type="Blind"),
+            Device(id="d1", name="Lamp", room="Living", category="Light"),
+            Device(id="d2", name="Blind", room="Living", category="Blind"),
         ]
 
         filtered = filter_by_category(devices, "Light")
@@ -78,10 +78,10 @@ class TestFilterByCategory(unittest.TestCase):
         self.assertEqual(ids, {"d1"})
 
     def test_filter_by_type_substring(self):
-        """Matches category in type string."""
+        """Matches category in category string."""
         devices = [
-            Device(id="d1", name="Lamp", room="Living", type="smartthings:light"),
-            Device(id="d2", name="Blind", room="Living", type="smartthings:blind"),
+            Device(id="d1", name="Lamp", room="Living", category="smartthings:light"),
+            Device(id="d2", name="Blind", room="Living", category="smartthings:blind"),
         ]
 
         filtered = filter_by_category(devices, "Light")
@@ -91,8 +91,7 @@ class TestFilterByCategory(unittest.TestCase):
 
     def test_filter_by_explicit_category_attribute(self):
         """Uses explicit category attribute when present."""
-        device = Device(id="d1", name="Lamp", room="Living", type="unknown")
-        setattr(device, "category", "Light")
+        device = Device(id="d1", name="Lamp", room="Living", category="Light")
 
         filtered = filter_by_category([device], "Light")
         self.assertEqual([d.id for d in filtered], ["d1"])
@@ -100,8 +99,8 @@ class TestFilterByCategory(unittest.TestCase):
     def test_empty_category_returns_all(self):
         """Empty category should skip filtering."""
         devices = [
-            Device(id="d1", name="Lamp", room="Living", type="Light"),
-            Device(id="d2", name="Blind", room="Living", type="Blind"),
+            Device(id="d1", name="Lamp", room="Living", category="Light"),
+            Device(id="d2", name="Blind", room="Living", category="Blind"),
         ]
 
         filtered = filter_by_category(devices, "")
@@ -110,8 +109,8 @@ class TestFilterByCategory(unittest.TestCase):
     def test_unknown_category_returns_all(self):
         """Unknown category should skip filtering."""
         devices = [
-            Device(id="d1", name="Lamp", room="Living", type="Light"),
-            Device(id="d2", name="Blind", room="Living", type="Blind"),
+            Device(id="d1", name="Lamp", room="Living", category="Light"),
+            Device(id="d2", name="Blind", room="Living", category="Blind"),
         ]
 
         filtered = filter_by_category(devices, "UnknownCategory")
@@ -120,7 +119,7 @@ class TestFilterByCategory(unittest.TestCase):
     def test_no_match_falls_back_to_all(self):
         """Valid category with no matches should fall back to all devices."""
         devices = [
-            Device(id="d1", name="Blind", room="Living", type="Blind"),
+            Device(id="d1", name="Blind", room="Living", category="Blind"),
         ]
 
         filtered = filter_by_category(devices, "Light")

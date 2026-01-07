@@ -98,8 +98,8 @@ def _device_category_values(device: Device) -> list[str]:
                 if isinstance(name, str) and name.strip():
                     values.append(name)
 
-    if isinstance(device.type, str) and device.type.strip():
-        values.append(device.type)
+    if isinstance(device.category, str) and device.category.strip():
+        values.append(device.category)
 
     return values
 

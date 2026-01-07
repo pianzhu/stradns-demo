@@ -30,7 +30,7 @@ def _device_to_dict(device: Device) -> dict:
         "id": device.id,
         "name": _sanitize_name(device.name),
         "room": device.room,
-        "type": device.type,
+        "category": device.category,
     }
 
     if device.commands:

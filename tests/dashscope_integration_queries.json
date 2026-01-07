@@ -256,5 +256,40 @@
       "scope_include": ["客厅"],
       "type_hint": "Light"
     }
+  },
+  {
+    "query": "打开老伙计",
+    "expected_capability_ids": ["main-switch-on"],
+    "expected_fields": {
+      "type_hint": "Unknown"
+    }
+  },
+  {
+    "query": "关闭大白",
+    "expected_capability_ids": ["main-switch-off"],
+    "expected_fields": {
+      "type_hint": "Unknown"
+    }
+  },
+  {
+    "query": "启动那个东西",
+    "expected_capability_ids": ["main-switch-on"],
+    "expected_fields": {
+      "type_hint": "Unknown"
+    }
+  },
+  {
+    "query": "操作一下设备",
+    "expected_capability_ids": ["main-switch-on", "main-switch-off"],
+    "expected_fields": {
+      "type_hint": "Unknown"
+    }
+  },
+  {
+    "query": "把它打开",
+    "expected_capability_ids": ["main-switch-on"],
+    "expected_fields": {
+      "type_hint": "Unknown"
+    }
   }
 ]

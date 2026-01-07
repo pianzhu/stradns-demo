@@ -28,7 +28,7 @@ class TestCapabilityFilter(unittest.TestCase):
             id="lamp-1",
             name="客厅灯",
             room="客厅",
-            type="light",
+            category="light",
             commands=[
                 CommandSpec(id="on", description="打开设备"),
                 CommandSpec(id="off", description="关闭设备"),
@@ -38,7 +38,7 @@ class TestCapabilityFilter(unittest.TestCase):
             id="sensor-1",
             name="温度传感器",
             room="客厅",
-            type="sensor",
+            category="sensor",
             commands=[
                 CommandSpec(id="read", description="读取温度"),
             ],
@@ -47,7 +47,7 @@ class TestCapabilityFilter(unittest.TestCase):
             id="curtain-1",
             name="窗帘",
             room="客厅",
-            type="curtain",
+            category="curtain",
             commands=[
                 CommandSpec(id="open", description="打开窗帘"),
                 CommandSpec(id="close", description="关闭窗帘"),

@@ -42,7 +42,7 @@ class Device:
     id: str
     name: str
     room: str
-    type: str
+    category: str
     commands: list[CommandSpec] = field(default_factory=list)
 
 

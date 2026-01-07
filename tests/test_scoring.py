@@ -98,7 +98,7 @@ class TestMergeAndScore(unittest.TestCase):
                 id="lamp-1",
                 name="Lamp",
                 room="Living",
-                type="light",
+                category="light",
             )
         }
 
