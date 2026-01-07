@@ -87,6 +87,38 @@
   - type_hint → category 映射结果
   - 最终排序前 top-5 候选及分数
 
+## 6. 提示词、全链路验收与量词策略
+
+- [ ] 6.1 对齐 action 中文化与降级策略
+  - 更新默认 system prompt：要求 `action` 必须为中文意图短语（不包含英文字母）；无法判断时省略或返回空值
+  - 增加 action 合法性校验：当 `action` 包含英文字母时视为无效，并降级为使用原始 query 进行 embedding 检索（同时记录调试日志）
+  - 验证：更新/新增单元测试覆盖 action 校验与降级逻辑
+
+- [ ] 6.2 量词（quantifier）批量语义：Group 聚合 + 爆炸防护（需与你确认阈值与 scope_include 规则）
+  - 增加 bulk mode：`quantifier in (all, except)` 时进入批量语义路径
+  - 引入 group 概念（同组设备命令集一致）：
+    - 以 `profile_id` 对应 spec 的 `capability_id` 集合作为 command signature
+    - command signature 完全一致的设备可合并为一组（保证同组可执行同一命令）
+  - 在 bulk mode 下的检索流程：
+    - 先 `scope_exclude` 预过滤，再执行 category gating（type_hint 合法且非 Unknown）
+    - 解析/选择一个明确的 `capability_id` 作为批量执行目标（可由向量检索 top 结果推断）
+    - 扩展目标集合为“所有支持该 capability_id 的设备”，再按 command signature 聚合为 groups
+  - 爆炸防护：
+    - 定义 `MAX_BULK_DEVICES` 与 `MAX_BULK_GROUPS` 上限
+    - 超过上限时返回裁剪后的 group 列表，并给出明确 hint 提示用户缩小范围或确认继续
+  - 验证：新增单元测试覆盖分组一致性、capability_id 对组内设备的兼容性、爆炸防护触发条件
+
+- [ ] 6.3 全链路验收：按 pipeline 执行检索并输出逐用例关键日志
+  - 更新 `tests/test_dashscope_integration.py`：
+    - 新增/改造测试用例为全链路：LLM 解析 QueryIR → 调用 `pipeline.retrieve()` → 断言 top-N 命中率（以 pipeline 最终输出为准）
+    - 覆盖 bulk mode：包含 `quantifier=all/except` 的用例，验证输出 group 聚合行为与爆炸防护 hint
+    - 每条用例输出关键日志：query、QueryIR(action/type_hint/scope_include/scope_exclude/quantifier)、mapped_category、是否触发 gating、候选规模变化、Top-5 候选（含分数与理由）、expected、HIT/MISS
+  - 增强有效性校验：
+    - pipeline 最终输出默认约 5 个候选（`top_k=5`）
+    - device 候选：`device_id` 可解析到 `(id, name, room)`；`capability_id` 可映射到有效 `CommandSpec`
+    - group 候选：`group_id` 可解析到 `device_ids`；组内每个设备都可解析到 `(id, name, room)`；`capability_id` 对组内设备均有效
+  - 验证：集成测试日志可用于逐用例定位误召回/漏召回的链路环节
+
 ## 依赖关系
 
 ```
@@ -97,6 +129,10 @@
 2.2 ──────────────► 4.2
       │
 3.2 ──────────────► 4.3
+
+4.2 ──────────────► 6.1
+6.1 ──────────────► 6.2
+6.2 ──────────────► 6.3
 ```
 
 ## 可并行工作
@@ -104,3 +140,4 @@
 - 1.1 和 1.2 可并行
 - 2.1 和 2.2 可并行（依赖 1.2 完成）
 - 4.1/4.2/4.3 可并行（依赖 3.x 完成）
+- 6.1/6.2/6.3 需要按依赖顺序推进

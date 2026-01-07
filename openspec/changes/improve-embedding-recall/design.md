@@ -88,6 +88,26 @@ ALLOWED_CATEGORIES = (
 
 **选择理由**：由 LLM 直接输出 canonical category，将语言/同义词问题收敛到 prompt；代码侧只做归一化与合法性校验。
 
+### 决策 2.1：action 输出中文并在英文时降级
+
+当前 `DEFAULT_SYSTEM_PROMPT` 为英文描述，LLM 在中文 query 下可能返回英文 `action`（例如 "turn on"、"adjust"）。这会导致：
+
+- `action` 与中文 query / 中文文档语料出现语言不一致，embedding 相似度排序退化
+- 召回链路强依赖 `action` 时，出现可复现的误召回或漏召回
+
+**决策**：
+
+1. 在 system prompt 中明确约束：`action` 必须为中文意图短语（不包含英文字母），无法判断时省略或返回空值。
+2. 增加代码侧校验：当 `action` 包含英文字母时视为无效，并降级为使用 `QueryIR.raw` 作为向量检索文本（同时记录调试日志）。
+
+示例（仅表达规则，具体实现细节在 apply 阶段落地）：
+
+```python
+if action and re.search(r"[A-Za-z]", action):
+    action = None
+search_text = action or raw
+```
+
 ### 决策 3：文档富化策略
 
 **当前文档**：
@@ -204,6 +224,81 @@ if device.room in scope_include:
 
 **理由**：用户使用自定义名称时，名称本身是最强信号。
 
+### 决策 7：全链路验收以 pipeline 输出为准
+
+此前集成测试更多验证 embedding 子路径，容易出现“测试通过但 pipeline 行为不一致”的情况（例如 scope 过滤顺序、融合评分、候选结构变化）。
+
+**决策**：集成测试以 `pipeline.retrieve()` 的最终输出为准，覆盖：
+
+- `scope_exclude` 预过滤 → category gating → keyword/vector 混合召回 → 融合评分 → top-k
+- 输出有效性：候选必须能解析到真实设备信息（`device_id/name/room`）与有效 `CommandSpec`
+- 逐用例关键日志：便于定位误召回/漏召回发生在哪个阶段
+
+### 决策 8：量词（quantifier）与 Group 聚合（兼顾召回与爆炸防护）
+
+目标拆分（与你的关注点对齐）：
+
+- **检索召回质量（A）**：确保“all lights”能覆盖所有符合条件的灯设备，而不是仅返回 top-k 代表样本
+- **候选数量控制（B）**：防止“all devices”等极端 query 导致候选集合爆炸
+- **输出格式与行为（C）**：当匹配到多个设备时，以 group 作为可执行单位（同组设备具备一致命令集）
+
+#### 8.1 Bulk mode 触发条件
+
+当 `QueryIR.quantifier` 为 `all` 或 `except` 时进入 bulk mode；`one/any` 仍走现有 top-k 排序路径。
+
+#### 8.2 Group 的定义与分组键
+
+使用 group 作为“可批量执行”的最小单位，分组必须保证 **同组设备可安全执行同一个 command**。
+
+分组键使用设备的 **command signature**（来自 spec）：
+
+- 对每个设备，根据其 `profile_id` 对应的 spec 能力列表构建 `capability_id` 集合
+- 若两个设备的 `capability_id` 集合完全相同，则认为其命令集一致，可并为一组
+- `profile_id` 相同通常意味着命令集相同，但最终以 `capability_id` 集合一致性为准
+
+#### 8.3 Bulk mode 的检索流程（高召回 + 可控输出）
+
+bulk mode 的核心思想：先确定“要执行的命令”，再扩展到“所有支持该命令的目标设备”，最后用 group 压缩输出。
+
+```python
+if ir.quantifier in {"all", "except"}:
+    devices0 = apply_scope_filters(devices, ir)          # scope_exclude first
+    devices1 = category_gating(devices0, ir.type_hint)   # optional, skip if Unknown/invalid
+    cap_id = resolve_target_capability(ir, devices1)     # find the best capability_id to execute
+    targets = [d for d in devices1 if cap_id in d.capability_ids]
+    groups = group_by_command_signature(targets)
+    return top_groups_with_hints(groups, cap_id)
+```
+
+说明：
+
+- `resolve_target_capability()` 允许复用向量检索的 top results（例如取 top-1 或 top-k majority vote），但最终必须得到一个明确的 `capability_id`
+- `targets` 必须是“全量匹配集合”（保证 A：例如 all lights → 全量灯设备）
+- 输出按 group 压缩，并引入上限与提示（保证 B/C）
+
+#### 8.4 爆炸防护策略（可配置阈值 + 明确提示）
+
+需要设置两类上限（默认值待你确认，先在实现中以常量/环境变量可配置）：
+
+- `MAX_BULK_DEVICES`：bulk mode 允许的最大目标设备数
+- `MAX_BULK_GROUPS`：bulk mode 允许返回的最大 group 数
+
+当超过上限时，不直接返回巨大候选集合，而是：
+
+- 返回裁剪后的 group 列表（例如按 group size 或置信度排序取前 N）
+- 返回一个明确的 hint（例如 “too_many_targets”），提示用户缩小范围（room/category/name）或确认继续
+
+#### 8.5 scope_include 在 bulk mode 下的处理（需与你确认）
+
+现有设计将 `scope_include` 作为加权而非硬过滤，以避免遗漏自定义名称中的房间词。
+
+但在 bulk mode 下，用户通常期望范围更“严格”（例如 “all bedroom lights”）。建议采用折中策略：
+
+- 若设备 `room` 有值：`scope_include` 对 `room` 做硬过滤
+- 若设备 `room` 为空：允许使用 `name` 对 `scope_include` 做模糊匹配作为兜底
+
+该策略能在 bulk 语义下更符合直觉，同时降低漏召回风险，但需要你确认是否接受这类“兜底包含”。
+
 ## 风险 / 权衡
 
 | 风险 | 缓解措施 |
@@ -236,6 +331,7 @@ pipeline.py
 ├── retrieve()
 │   ├── [New] type_hint canonicalization + validation
 │   ├── [New] type_hint != Unknown → category gating
+│   ├── [New] action language validation (English action fallback to raw)
 │   ├── [New] Unknown/invalid → keyword-heavy fallback
 │   └── [Existing] merge scoring
 

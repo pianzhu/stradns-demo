@@ -13,20 +13,26 @@
 
 - **Category Gating**：利用 SmartThings API 返回的 category（Light/Blind/AirConditioner）在 embedding 检索前过滤候选集
 - **约束 type_hint**：更新 LLM system prompt，要求 `type_hint` 只能从 README 列举的 categories 中选择；无法判断时输出 `Unknown`
+- **约束 action 为中文**：更新 LLM system prompt，要求 `action` 必须为中文意图短语；若输出包含英文字母则视为无效并降级为使用原始 query
 - **文档富化**：通过 `profileId → spec.jsonl` 构建语义丰富的命令文档
 - **同义词归一化**：扩展 capability description 的动词同义词覆盖
 - **Fallback 策略**：当 `type_hint` 缺失或非法时，使用 keyword 模糊匹配 name/room
+- **集成测试对齐与可观测性增强**：更新 `TestDashScopeEmbeddingRecall` 以按 pipeline 顺序应用过滤，并在每条用例输出关键日志便于定位问题
+- **全链路验收与输出有效性**：集成测试以 `pipeline.retrieve()` 最终输出为准，并校验候选可解析为有效设备信息（id/name/room/CommandSpec）
+- **量词爆炸防护（Group 聚合，需讨论后落地）**：针对 `quantifier=all/except/any` 等批量语义，按相同 profile/命令集一致性聚合为 group，并定义候选集合上限、截断/提示/澄清策略，避免过多设备导致集合爆炸
 - **评估与统计**：统计 category 覆盖率/缺失率、mapping 命中率、gating 触发率，并离线对比硬 gating vs 软 gating 的召回曲线
 
 ## 影响
 
 - 受影响规范：`context-retrieval`（如存在）
 - 受影响代码：
+  - `src/context_retrieval/ir_compiler.py` - 更新默认 system prompt，约束 `action` 输出语言
   - `src/context_retrieval/pipeline.py` - 增加 gating 逻辑分支
   - `src/context_retrieval/vector_search.py` - 文档构建重构
   - `src/context_retrieval/keyword_search.py` - fallback 模糊匹配增强
   - 新增 `src/context_retrieval/category_gating.py` - category 过滤模块
   - 新增 `src/context_retrieval/doc_enrichment.py` - 文档富化模块（读取 spec.jsonl）
+  - `tests/test_dashscope_integration.py` - 调整集成测试过滤流程并增强逐用例日志输出
 - 外部依赖：
   - SmartThings API：`GET /v1/devices?locationId=...` 返回设备 category
   - `src/spec.jsonl`：profileId → capabilities 映射
