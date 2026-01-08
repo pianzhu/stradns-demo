@@ -37,6 +37,10 @@ class FakeLLM:
             return self._presets[text]
         return {"confidence": 0.0}
 
+    def parse_with_prompt(self, text: str, system_prompt: str) -> dict[str, Any]:
+        """解析文本（忽略 system prompt，便于测试注入）。"""
+        return self.parse(text)
+
 
 class DashScopeLLM:
     """基于 dashscope 的 LLM 解析器。
@@ -82,8 +86,12 @@ class DashScopeLLM:
 
     def parse(self, text: str) -> dict[str, Any]:
         """调用 dashscope 解析 QueryIR。"""
+        return self.parse_with_prompt(text, self._system_prompt)
+
+    def parse_with_prompt(self, text: str, system_prompt: str) -> dict[str, Any]:
+        """调用 dashscope 解析 JSON（可覆盖 system prompt）。"""
         messages = [
-            {"role": "system", "content": self._system_prompt},
+            {"role": "system", "content": system_prompt},
             {"role": "user", "content": text},
         ]
 
@@ -156,22 +164,22 @@ QUERY_IR_SCHEMA = {
 }
 
 # TODO optimize prompt
-DEFAULT_SYSTEM_PROMPT = f"""You are a semantic parser for a smart-home assistant. Return only ONE JSON object.
+DEFAULT_SYSTEM_PROMPT = f"""你是智能家居助手的语义解析器。只返回一个 JSON 对象，不要输出任何额外文本。
 
-Only include keys you are confident about, except:
-- Always include type_hint. If you cannot infer a category, use \"Unknown\".
+仅在你有把握时才输出字段，例外：
+- 必须始终输出 type_hint；无法判断时输出 "Unknown"。
 
-Field requirements:
-- action: a short verb/intent phrase (string)
-- name_hint: device name hint (string, optional)
-- scope_include: included rooms/areas (array of strings, optional)
-- scope_exclude: excluded rooms/areas (array of strings, optional)
-- quantifier: one/all/any/except (string enum, optional)
-- type_hint: MUST be one of: {", ".join(ALLOWED_CATEGORIES)} (string)
-- references: reference info (array of strings, optional)
-- confidence: overall confidence 0-1 (number)
+字段约束：
+- action: 中文意图短语（不包含英文字母），例如 "打开"、"关闭"、"调到50%"。无法判断时省略或输出空字符串。
+- name_hint: 设备名称提示（可选）
+- scope_include: 包含的房间/区域（可选，字符串数组）
+- scope_exclude: 排除的房间/区域（可选，字符串数组）
+- quantifier: one/all/any/except（可选）
+- type_hint: 必须是以下之一：{", ".join(ALLOWED_CATEGORIES)}
+- references: 指代信息（可选，字符串数组）
+- confidence: 总体置信度 0-1（可选）
 
-If you cannot parse the input, return {{"confidence": 0, "type_hint": "Unknown"}}."""
+如果无法解析输入，返回 {{"confidence": 0, "type_hint": "Unknown"}}。"""
 
 FALLBACK_IR = {"confidence": 0.0}
 

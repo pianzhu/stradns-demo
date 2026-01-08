@@ -2,14 +2,14 @@
 
 Uses real DashScope API (qwen-flash + text-embedding-v4) to validate:
 - LLM extraction accuracy
-- Embedding recall rate
+- Pipeline end-to-end retrieval behavior
 
 Requirements:
 - DASHSCOPE_API_KEY environment variable
 - RUN_DASHSCOPE_IT=1 environment variable
 
 Optional environment variables:
-- DASHSCOPE_TOP_N: embedding top-N, default 10
+- DASHSCOPE_PIPELINE_TOP_K: pipeline top-k, default 5
 - DASHSCOPE_MAX_QUERIES: max test cases, default unlimited
 - DASHSCOPE_LLM_MODEL: LLM model name, default qwen-flash
 - DASHSCOPE_EMBEDDING_MODEL: embedding model name, default text-embedding-v4
@@ -22,13 +22,10 @@ import unittest
 from pathlib import Path
 from typing import Any
 
-import numpy as np
-
-from context_retrieval.category_gating import filter_by_category, map_type_to_category
 from context_retrieval.doc_enrichment import load_spec_index
-from context_retrieval.models import Candidate, Device
-from context_retrieval.scoring import apply_room_bonus
-from context_retrieval.vector_search import CorpusEntry, build_command_corpus
+from context_retrieval.models import Device
+from context_retrieval.pipeline import retrieve
+from context_retrieval.state import ConversationState
 
 # Progress logging toggle (default enabled; set to 0 to disable)
 PROGRESS_ENABLED = os.getenv("DASHSCOPE_IT_PROGRESS", "1") != "0"
@@ -151,21 +148,29 @@ def filter_queries_by_capabilities(
     return filtered
 
 
-def select_entries_by_device_ids(
-    entries: list[CorpusEntry],
-    embeddings: np.ndarray,
-    device_ids: set[str],
-) -> tuple[list[CorpusEntry], np.ndarray]:
-    if not device_ids:
-        return entries, embeddings
-    indices = [
-        idx for idx, entry in enumerate(entries) if entry.device_id in device_ids
-    ]
-    if not indices:
-        return entries, embeddings
-    filtered_embeddings = embeddings[indices]
-    filtered_entries = [entries[idx] for idx in indices]
-    return filtered_entries, filtered_embeddings
+def _device_profile_id(device: Device) -> str | None:
+    profile_id = getattr(device, "profile_id", None) or getattr(device, "profileId", None)
+    if isinstance(profile_id, str) and profile_id.strip():
+        return profile_id.strip()
+    return None
+
+
+def _build_spec_lookup(spec_index: dict[str, list[Any]]) -> dict[str, set[str]]:
+    lookup: dict[str, set[str]] = {}
+    for profile_id, docs in spec_index.items():
+        lookup[profile_id] = {doc.id for doc in docs if getattr(doc, "id", None)}
+    return lookup
+
+
+def _supports(
+    device: Device,
+    capability_id: str,
+    spec_lookup: dict[str, set[str]],
+) -> bool:
+    profile_id = _device_profile_id(device)
+    if not profile_id:
+        return False
+    return capability_id in spec_lookup.get(profile_id, set())
 
 
 # Skip switch
@@ -176,7 +181,7 @@ elif not os.getenv("DASHSCOPE_API_KEY"):
     SKIP_REASON = "DASHSCOPE_API_KEY is required to enable DashScope integration tests"
 
 # Configurable params
-TOP_N = int(os.getenv("DASHSCOPE_TOP_N", "10"))
+PIPELINE_TOP_K = int(os.getenv("DASHSCOPE_PIPELINE_TOP_K", "5"))
 MAX_QUERIES = int(os.getenv("DASHSCOPE_MAX_QUERIES", "0")) or None
 LLM_MODEL = os.getenv("DASHSCOPE_LLM_MODEL", "qwen-flash")
 EMBEDDING_MODEL = os.getenv("DASHSCOPE_EMBEDDING_MODEL", "text-embedding-v4")
@@ -210,10 +215,10 @@ class TestDashScopeLLMExtraction(unittest.TestCase):
         )
 
     def test_llm_extraction_accuracy(self):
-        """Validate action coverage and scope_include accuracy."""
+        """Validate (Chinese) action coverage and scope_include accuracy."""
         _log_progress("\n[LLM] start...")
         total = 0
-        action_present = 0
+        action_valid = 0
         scope_total = 0
         scope_correct = 0
         results = []
@@ -231,8 +236,12 @@ class TestDashScopeLLMExtraction(unittest.TestCase):
                 call_cost = time.perf_counter() - call_start
 
                 action_text = result.get("action", "")
-                if isinstance(action_text, str) and action_text.strip():
-                    action_present += 1
+                if (
+                    isinstance(action_text, str)
+                    and action_text.strip()
+                    and not any("A" <= ch <= "Z" or "a" <= ch <= "z" for ch in action_text)
+                ):
+                    action_valid += 1
 
                 if expected_scope:
                     scope_total += 1
@@ -255,12 +264,12 @@ class TestDashScopeLLMExtraction(unittest.TestCase):
                     f"[LLM] {idx}/{len(cases)} error query={_short_text(query)} err={exc}"
                 )
 
-        action_coverage = action_present / total if total > 0 else 0
+        action_coverage = action_valid / total if total > 0 else 0
         scope_accuracy = scope_correct / scope_total if scope_total > 0 else 0
 
         print("\n=== LLM extraction summary ===")
         print(f"total cases: {total}")
-        print(f"action coverage: {action_coverage:.2%} ({action_present}/{total})")
+        print(f"action coverage: {action_coverage:.2%} ({action_valid}/{total})")
         print(f"scope accuracy: {scope_accuracy:.2%} ({scope_correct}/{scope_total})")
 
         self.assertGreaterEqual(
@@ -273,200 +282,177 @@ class TestDashScopeLLMExtraction(unittest.TestCase):
 
 
 @unittest.skipIf(SKIP_REASON, SKIP_REASON or "")
-class TestDashScopeEmbeddingRecall(unittest.TestCase):
-    """DashScope embedding recall integration tests."""
+class TestDashScopePipelineRetrieve(unittest.TestCase):
+    """DashScope pipeline end-to-end integration tests."""
 
     @classmethod
     def setUpClass(cls):
-        """Initialize embedding model and index."""
+        """Initialize pipeline deps and build vector index."""
+        import logging
+
+        logging.basicConfig(level=logging.INFO)
         from context_retrieval.ir_compiler import DashScopeLLM
         from context_retrieval.vector_search import DashScopeVectorSearcher
 
         start = time.perf_counter()
         cls.llm = DashScopeLLM(model=LLM_MODEL)
-        cls.embedding_model = DashScopeVectorSearcher(model=EMBEDDING_MODEL)
 
         queries = load_test_queries()
         spec_path = Path(__file__).parent.parent / "src" / "spec.jsonl"
         spec_index = load_spec_index(str(spec_path))
+        cls.spec_lookup = _build_spec_lookup(spec_index)
 
         room_map = load_room_map(ROOMS_PATH)
         device_items = load_jsonl(DEVICES_PATH)
         devices = build_devices_from_items(device_items, room_map)
-        entries, texts = build_command_corpus(devices, spec_index)
 
-        available_capabilities = {
-            entry.capability_id
-            for entry in entries
-            if entry.capability_id
-        }
-        filtered_queries = filter_queries_by_capabilities(queries, available_capabilities) # type: ignore
+        available_capabilities: set[str] = set()
+        for device in devices:
+            profile_id = _device_profile_id(device)
+            if profile_id:
+                available_capabilities |= cls.spec_lookup.get(profile_id, set())
+
+        filtered_queries = filter_queries_by_capabilities(
+            queries,
+            available_capabilities,
+        )  # type: ignore
 
         cls.devices = devices
         cls.devices_by_id = {device.id: device for device in devices}
-        cls.entries = entries
-        cls.texts = texts
         cls.queries = filtered_queries or queries
 
+        cls.vector_searcher = DashScopeVectorSearcher(
+            spec_index=spec_index,
+            model=EMBEDDING_MODEL,
+        )
+
+        index_start = time.perf_counter()
+        cls.vector_searcher.index(devices)
         _log_progress(
-            f"[Embedding] init done llm={LLM_MODEL} embedding={EMBEDDING_MODEL} "
-            f"queries={len(cls.queries)} entries={len(cls.entries)} devices={len(cls.devices)} "
+            f"[Pipeline] init done llm={LLM_MODEL} embedding={EMBEDDING_MODEL} "
+            f"queries={len(cls.queries)} devices={len(cls.devices)} "
+            f"index_elapsed={time.perf_counter() - index_start:.2f}s "
             f"elapsed={time.perf_counter() - start:.2f}s"
         )
 
-        print(f"\nBuilding embedding index for {len(cls.entries)} commands...")
-        index_start = time.perf_counter()
-        cls.embeddings = cls.embedding_model.encode(cls.texts)
-        print(
-            f"Index built, shape: {cls.embeddings.shape} "
-            f"(elapsed {time.perf_counter() - index_start:.2f}s)"
-        )
-
-    def _search_top_n(
-        self,
-        query_embedding: np.ndarray,
-        entries: list[CorpusEntry],
-        embeddings: np.ndarray,
-        top_n: int = TOP_N,
-    ) -> list[Candidate]:
-        if embeddings is None or not entries:
-            return []
-
-        query_norm = query_embedding / (np.linalg.norm(query_embedding) + 1e-8)
-        corpus_norm = embeddings / (
-            np.linalg.norm(embeddings, axis=1, keepdims=True) + 1e-8
-        )
-        similarities = corpus_norm @ query_norm
-        top_indices = np.argsort(similarities)[::-1][:top_n]
-
-        candidates: list[Candidate] = []
-        for idx in top_indices:
-            score = float(similarities[idx])
-            entry = entries[idx]
-            candidates.append(
-                Candidate(
-                    entity_id=entry.device_id,
-                    entity_kind="device",
-                    capability_id=entry.capability_id,
-                    vector_score=score,
-                    total_score=score,
-                    reasons=["semantic_match"],
-                )
-            )
-        return candidates
-
-    def _top_capability_ids(
-        self, candidates: list[Candidate], top_n: int
-    ) -> list[str]:
-        ranked = sorted(candidates, key=lambda cand: cand.total_score, reverse=True)
-        result: list[str] = []
-        seen = set()
-        for cand in ranked:
-            cap_id = cand.capability_id
-            if not isinstance(cap_id, str) or not cap_id:
-                continue
-            if cap_id in seen:
-                continue
-            seen.add(cap_id)
-            result.append(cap_id)
-            if len(result) >= top_n:
-                break
-        return result
-
-    def test_embedding_recall_rate(self):
-        """Validate embedding recall using LLM action text."""
-        _log_progress("\n[Embedding] start...")
+    def test_pipeline_recall_rate(self):
+        """Validate pipeline.retrieve() recall and output validity."""
+        _log_progress("\n[Pipeline] start...")
         total = 0
         hits = 0
+        option_hits = 0
         results = []
 
         cases = [c for c in self.queries if c.get("expected_capability_ids")]
         for idx, case in enumerate(cases, start=1):
             query = case["query"]
             expected_cap_ids = case.get("expected_capability_ids", [])
+            expected_fields = case.get("expected_fields", {}) or {}
+            expected_quantifier = expected_fields.get("quantifier")
+            expect_bulk = expected_quantifier in {"all", "except"}
             if not expected_cap_ids:
                 continue
 
             total += 1
             try:
-                llm_start = time.perf_counter()
-                ir = self.llm.parse(query)
-                llm_cost = time.perf_counter() - llm_start
-
-                action_text = ir.get("action", "")
-                type_hint = ir.get("type_hint")
-                scope_include = ir.get("scope_include", [])
-
-                search_text = action_text if action_text else query
-
-                search_start = time.perf_counter()
-                query_embedding = self.embedding_model.encode([search_text])[0]
-
-                mapped_category = map_type_to_category(type_hint)
-                apply_gating = bool(mapped_category and mapped_category != "Unknown")
-                gated_devices = (
-                    filter_by_category(self.devices, mapped_category)
-                    if apply_gating
-                    else self.devices
+                call_start = time.perf_counter()
+                result = retrieve(
+                    text=query,
+                    devices=self.devices,
+                    llm=self.llm,
+                    state=ConversationState(),
+                    top_k=PIPELINE_TOP_K,
+                    vector_searcher=self.vector_searcher,
                 )
-                gated_device_ids = {device.id for device in gated_devices}
-                gated_entries, gated_embeddings = select_entries_by_device_ids(
-                    self.entries, self.embeddings, gated_device_ids
-                )
+                call_cost = time.perf_counter() - call_start
 
-                candidates = self._search_top_n(
-                    query_embedding,
-                    gated_entries,
-                    gated_embeddings,
-                    TOP_N,
-                )
-                scope_set = {
-                    name for name in scope_include if isinstance(name, str) and name
-                }
-                candidates = apply_room_bonus(candidates, self.devices_by_id, scope_set)
-                search_cost = time.perf_counter() - search_start
+                # 候选数量受控
+                self.assertLessEqual(len(result.candidates), PIPELINE_TOP_K)
 
-                top_cap_ids = self._top_capability_ids(candidates, TOP_N)
+                # 结构有效性：device/group 引用必须可解析，且 capability_id 必须可映射
+                group_by_id = {group.id: group for group in result.groups}
+                if expect_bulk and result.hint not in {"need_clarification", "too_many_targets"}:
+                    self.assertTrue(result.groups)
+                    self.assertTrue(all(c.entity_kind == "group" for c in result.candidates))
+                for cand in result.candidates:
+                    cap_id = cand.capability_id
+                    self.assertIsInstance(cap_id, str)
+                    self.assertTrue(bool(cap_id))
+
+                    if cand.entity_kind == "device":
+                        device = self.devices_by_id.get(cand.entity_id)
+                        self.assertIsNotNone(device)
+                        self.assertTrue(_supports(device, cap_id, self.spec_lookup))  # type: ignore[arg-type]
+                    elif cand.entity_kind == "group":
+                        group = group_by_id.get(cand.entity_id)
+                        self.assertIsNotNone(group)
+                        for device_id in group.device_ids: # type: ignore
+                            device = self.devices_by_id.get(device_id)
+                            self.assertIsNotNone(device)
+                            self.assertTrue(_supports(device, cap_id, self.spec_lookup))  # type: ignore[arg-type]
+                    else:  # pragma: no cover
+                        raise AssertionError(f"unexpected entity_kind: {cand.entity_kind}")
+
+                top_cap_ids = [
+                    cand.capability_id
+                    for cand in result.candidates
+                    if isinstance(cand.capability_id, str) and cand.capability_id
+                ]
+
                 hit = any(cap_id in top_cap_ids for cap_id in expected_cap_ids)
+                option_hit = (
+                    result.hint == "need_clarification"
+                    and any(
+                        opt.capability_id in expected_cap_ids
+                        for opt in result.options
+                    )
+                )
 
                 if hit:
                     hits += 1
-                    results.append((query, "HIT", expected_cap_ids, top_cap_ids[:3]))
+                    results.append((query, "HIT", expected_cap_ids, top_cap_ids[:3], result.hint))
+                elif option_hit:
+                    option_hits += 1
+                    results.append((query, "HIT_OPTION", expected_cap_ids, [opt.capability_id for opt in result.options], result.hint))
                 else:
-                    results.append((query, "MISS", expected_cap_ids, top_cap_ids[:3]))
+                    results.append((query, "MISS", expected_cap_ids, top_cap_ids[:3], result.hint))
 
+                option_preview = ",".join(opt.capability_id for opt in result.options)
                 _log_progress(
-                    f"[Embedding] {idx}/{len(cases)} {results[-1][1]} llm={llm_cost:.2f}s "
-                    f"embed+search={search_cost:.2f}s query={_short_text(query)} "
-                    f"search_text={_short_text(search_text)}"
+                    f"[Pipeline] {idx}/{len(cases)} {results[-1][1]} elapsed={call_cost:.2f}s "
+                    f"query={_short_text(query)} hint={result.hint} "
+                    f"expected={','.join(expected_cap_ids[:2])} "
+                    f"top_caps={','.join(top_cap_ids[:3])} options={option_preview} "
+                    f"candidates={len(result.candidates)} groups={len(result.groups)}"
                 )
                 time.sleep(0.1)
 
             except Exception as exc:
-                results.append((query, "ERROR", expected_cap_ids, []))
+                results.append((query, "ERROR", expected_cap_ids, [], str(exc)))
                 _log_progress(
-                    f"[Embedding] {idx}/{len(cases)} error query={_short_text(query)} err={exc}"
+                    f"[Pipeline] {idx}/{len(cases)} error query={_short_text(query)} err={exc}"
                 )
 
-        hit_rate = hits / total if total > 0 else 0
+        effective_hit_rate = (hits + option_hits) / total if total > 0 else 0
 
-        print(f"\n=== Embedding recall summary (top-{TOP_N}) ===")
+        print(f"\n=== Pipeline recall summary (top-{PIPELINE_TOP_K}) ===")
         print(f"total cases: {total}")
         print(f"hits: {hits}")
-        print(f"hit rate: {hit_rate:.2%}")
+        print(f"hits (need_clarification options): {option_hits}")
+        print(f"effective hit rate: {effective_hit_rate:.2%}")
 
         missed = [r for r in results if r[1] == "MISS"]
         if missed:
             print(f"\nMissed cases ({len(missed)}):")
-            for query, _, expected, actual_top3 in missed[:10]:
+            for query, _, expected, actual_top3, hint in missed[:10]:
                 print(f"  query: {query}")
                 print(f"    expected: {expected}")
-                print(f"    top-3: {actual_top3}")
+                print(f"    top-3: {actual_top3} hint={hint}")
 
         self.assertGreaterEqual(
-            hit_rate,
+            effective_hit_rate,
             0.6,
-            f"top-{TOP_N} hit rate should be >= 60%, got {hit_rate:.2%}",
+            f"top-{PIPELINE_TOP_K} hit rate should be >= 60%, got {effective_hit_rate:.2%}",
         )
 
 

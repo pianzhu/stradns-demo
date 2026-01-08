@@ -30,7 +30,7 @@ print("正在调用 DashScope API...")
 try:
     response = Generation.call(
         model="qwen-flash",
-        messages=messages,
+        messages=messages, # type: ignore
     )
 
     print("\n=== 响应对象类型 ===")

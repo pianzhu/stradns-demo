@@ -4,7 +4,7 @@
 """
 
 from dataclasses import dataclass, field
-from typing import Literal
+from typing import Any, Literal
 
 
 @dataclass
@@ -84,8 +84,29 @@ class Candidate:
 
 
 @dataclass
+class CapabilityOption:
+    """Bulk mode 下的 capability 候选选项。"""
+
+    capability_id: str
+    description: str = ""
+    score: float = 0.0
+    top_scores: list[float] = field(default_factory=list)
+    probability: float = 0.0
+    support_count: int = 0
+    total_devices: int = 0
+    coverage: float = 0.0
+    examples: list[str] = field(default_factory=list)
+
+
+@dataclass
 class RetrievalResult:
     """检索结果。"""
 
     candidates: list[Candidate] = field(default_factory=list)
     hint: str | None = None
+    groups: list[Group] = field(default_factory=list)
+    batches: dict[str, list[list[str]]] = field(default_factory=dict)
+    options: list[CapabilityOption] = field(default_factory=list)
+    selected_capability_id: str | None = None
+    question: str | None = None
+    meta: dict[str, Any] = field(default_factory=dict)

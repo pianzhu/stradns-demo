@@ -89,12 +89,12 @@
 
 ## 6. 提示词、全链路验收与量词策略
 
-- [ ] 6.1 对齐 action 中文化与降级策略
+- [x] 6.1 对齐 action 中文化与降级策略
   - 更新默认 system prompt：要求 `action` 必须为中文意图短语（不包含英文字母）；无法判断时省略或返回空值
   - 增加 action 合法性校验：当 `action` 包含英文字母时视为无效，并降级为使用原始 query 进行 embedding 检索（同时记录调试日志）
   - 验证：更新/新增单元测试覆盖 action 校验与降级逻辑
 
-- [ ] 6.2 量词（quantifier）批量语义：capability 选择 + 兼容性 group + batch 分片
+- [x] 6.2 量词（quantifier）批量语义：capability 选择 + 兼容性 group + batch 分片
   - 增加 bulk mode：`quantifier in (all, except)` 时进入批量语义路径
   - capability_id 选择（先选命令，再扩展集合）：
     - 基于命令级向量召回证据聚合得到 top-N capability 选项（`N=5`）
@@ -121,7 +121,7 @@
     - 爆炸防护：定义系统上限（例如 `MAX_TARGETS` / `MAX_GROUPS`），超过上限时返回 `hint=too_many_targets` 并提示用户缩小范围或确认继续（避免返回不可控规模的候选列表）
   - 验证：新增/更新单元测试覆盖 capability 选择与低置信度触发、LLM 仲裁输出校验、分组兼容性、batch 切分行为
 
-- [ ] 6.3 全链路验收：按 pipeline 执行检索并输出逐用例关键日志
+- [x] 6.3 全链路验收：按 pipeline 执行检索并输出逐用例关键日志
   - 更新 `tests/test_dashscope_integration.py`：
     - 新增/改造测试用例为全链路：LLM 解析 QueryIR → 调用 `pipeline.retrieve()` → 断言 top-N 命中率（以 pipeline 最终输出为准）
     - 覆盖 bulk mode：包含 `quantifier=all/except` 的用例，验证输出 group 聚合行为与爆炸防护 hint

@@ -2,7 +2,7 @@
 
 ## 概述
 
-使用真实的 dashscope API（qwen-flash + text-embedding-v4）进行端到端验证，覆盖 **LLM 解析 QueryIR → 使用 QueryIR.action 做 embedding 检索** 的主路径。
+使用真实的 dashscope API（qwen-flash + text-embedding-v4）进行端到端验证，覆盖 **LLM 解析 QueryIR → pipeline.retrieve() 全链路检索** 的主路径。
 
 设备数据来源：
 - 使用 `tests/smartthings_devices.jsonl` 与 `tests/smartthings_rooms.jsonl` 构造虚拟设备与房间数据（字段可为空）
@@ -27,8 +27,11 @@ RUN_DASHSCOPE_IT=1 DASHSCOPE_MAX_QUERIES=5 PYTHONPATH=src python -m unittest tes
 # 仅运行 LLM 解析测试
 RUN_DASHSCOPE_IT=1 PYTHONPATH=src python -m unittest tests.test_dashscope_integration.TestDashScopeLLMExtraction -v
 
-# 仅运行 embedding 召回测试
-RUN_DASHSCOPE_IT=1 PYTHONPATH=src python -m unittest tests.test_dashscope_integration.TestDashScopeEmbeddingRecall -v
+# 仅运行 pipeline 全链路测试
+RUN_DASHSCOPE_IT=1 PYTHONPATH=src python -m unittest tests.test_dashscope_integration.TestDashScopePipelineRetrieve -v
+
+# 仅运行 bulk pipeline 集成测试
+RUN_DASHSCOPE_IT=1 PYTHONPATH=src python -m unittest tests.test_bulk_pipeline_integration -v
 ```
 
 ## 可配置参数
@@ -39,10 +42,11 @@ RUN_DASHSCOPE_IT=1 PYTHONPATH=src python -m unittest tests.test_dashscope_integr
 |---------|--------|------|
 | `DASHSCOPE_API_KEY` | - | dashscope API Key（必需） |
 | `RUN_DASHSCOPE_IT` | - | 设置为 `1` 启用测试（必需） |
-| `DASHSCOPE_TOP_N` | `10` | embedding 召回 top-N 数量 |
+| `DASHSCOPE_PIPELINE_TOP_K` | `5` | pipeline.retrieve() 输出 top-k |
 | `DASHSCOPE_MAX_QUERIES` | 无限制 | 最大测试用例数（用于快速试跑） |
 | `DASHSCOPE_LLM_MODEL` | `qwen-flash` | LLM 模型名称 |
 | `DASHSCOPE_EMBEDDING_MODEL` | `text-embedding-v4` | embedding 模型名称 |
+| `DASHSCOPE_BULK_IT_MAX_CASES` | 无限制 | bulk 集成测试最大用例数 |
 
 > 说明：设备数据使用本地 JSONL 夹具构造，不需要 SmartThings 相关环境变量。
 
@@ -54,31 +58,36 @@ RUN_DASHSCOPE_IT=1 PYTHONPATH=src python -m unittest tests.test_dashscope_integr
 - `expected_capability_ids`: 期望命中的命令 ID 列表
 - `expected_fields`: 期望的 QueryIR 字段（scope_include/scope_exclude/quantifier/type_hint 等）
 
+Bulk pipeline 集成测试用例定义在 `tests/dashscope_bulk_pipeline_cases.jsonl`，包含 simple/complex 用例：
+
+- `query`: 用户输入文本
+- `expected_devices`: 期望设备（支持 `房间/设备名` 或 `{room,name,category}`）
+- `expected_device_ids`: 可选设备 ID 列表
+- `expected_capability_ids`: 期望 capability 列表
+- `expected_quantifier`: 可选量词
+
 ## 测试内容
 
 ### 1. LLM 解析测试 (TestDashScopeLLMExtraction)
 
-- `test_llm_extraction_accuracy`: 验证 action 覆盖率与 scope_include 解析准确率（阈值 60%）
+- `test_llm_extraction_accuracy`: 验证 action（中文、无英文字母）覆盖率与 scope_include 解析准确率（阈值 60%）
 
-### 2. Embedding 召回测试 (TestDashScopeEmbeddingRecall)
+### 2. Pipeline 全链路测试 (TestDashScopePipelineRetrieve)
 
-- `test_embedding_recall_rate`: 使用 QueryIR.action 进行召回（主路径）
+- `test_pipeline_recall_rate`: 以 `pipeline.retrieve()` 最终输出为准验证召回与有效性（主路径）
 
-召回流程：
-1. 调用 LLM 得到 QueryIR
-2. 优先使用 `QueryIR.action`，为空则 fallback 到原始 query
-3. 执行 embedding 检索
-4. 验证期望命令 ID 出现在 top-N 中
-
-命令文本构建：
-- 使用 `description` 与 `value_list` 的参数描述
+覆盖点：
+1. LLM 解析 QueryIR（action/type_hint/scope/quantifier）
+2. scope_exclude 过滤、category gating、keyword/vector 混合召回与融合评分
+3. bulk mode（quantifier=all/except）group 聚合与爆炸防护 hint
+4. 输出有效性：device/group 候选可解析且 capability_id 必须可映射到有效 CommandSpec
 
 ## 断言阈值
 
 | 指标 | 阈值 | 说明 |
 |------|------|------|
-| action 覆盖率 | ≥ 60% | LLM 输出可用于召回的意图短语 |
+| action 覆盖率 | ≥ 60% | LLM 输出可用于召回的中文意图短语（不含英文字母） |
 | scope_include 准确率 | ≥ 60% | LLM 解析房间/范围 |
-| top-N 召回命中率 | ≥ 60% | embedding 检索命中 |
+| top-k 召回命中率 | ≥ 60% | pipeline.retrieve() 最终输出命中（含 need_clarification 的 option 命中） |
 
 阈值设置较宽松，允许模型微调/网络波动带来的偏差。

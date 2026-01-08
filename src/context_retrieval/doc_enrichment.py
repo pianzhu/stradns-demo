@@ -6,7 +6,7 @@ import json
 import logging
 from dataclasses import dataclass, field
 
-from context_retrieval.models import Device
+from context_retrieval.models import Device, ValueOption, ValueRange
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +17,9 @@ class CapabilityDoc:
 
     id: str
     description: str = ""
+    type: str | None = None
+    value_range: ValueRange | None = None
+    value_options: list[ValueOption] = field(default_factory=list)
     value_descriptions: list[str] = field(default_factory=list)
 
 
@@ -47,11 +50,20 @@ def load_spec_index(spec_path: str) -> dict[str, list[CapabilityDoc]]:
             if not isinstance(cap_id, str) or not cap_id:
                 continue
             description = cap.get("description") or ""
+            cap_type = cap.get("type")
+            if not isinstance(cap_type, str) or not cap_type.strip():
+                cap_type = None
+
+            value_range = _extract_value_range(cap)
+            value_options = _extract_value_options(cap)
             value_descriptions = _extract_value_descriptions(cap)
             docs.append(
                 CapabilityDoc(
                     id=cap_id,
                     description=description,
+                    type=cap_type,
+                    value_range=value_range,
+                    value_options=value_options,
                     value_descriptions=value_descriptions,
                 )
             )
@@ -135,6 +147,46 @@ def _extract_value_descriptions(capability: dict) -> list[str]:
         if isinstance(desc, str) and desc.strip():
             descriptions.append(desc.strip())
     return descriptions
+
+
+def _extract_value_options(capability: dict) -> list[ValueOption]:
+    options: list[ValueOption] = []
+    value_list = capability.get("value_list")
+    if not isinstance(value_list, list):
+        return options
+
+    for item in value_list:
+        if not isinstance(item, dict):
+            continue
+        value = item.get("value")
+        if not isinstance(value, str) or not value.strip():
+            continue
+        desc = item.get("description")
+        description = desc.strip() if isinstance(desc, str) else ""
+        options.append(ValueOption(value=value.strip(), description=description))
+    return options
+
+
+def _extract_value_range(capability: dict) -> ValueRange | None:
+    value_range = capability.get("value_range")
+    if not isinstance(value_range, dict):
+        return None
+
+    minimum = value_range.get("minimum")
+    maximum = value_range.get("maximum")
+    if not isinstance(minimum, (int, float)) or not isinstance(maximum, (int, float)):
+        return None
+
+    unit_value = value_range.get("unit")
+    unit = ""
+    if isinstance(unit_value, str):
+        unit = unit_value
+    elif isinstance(unit_value, list):
+        first = unit_value[0] if unit_value else None
+        if isinstance(first, str):
+            unit = first
+
+    return ValueRange(minimum=float(minimum), maximum=float(maximum), unit=unit)
 
 
 def _ensure_list(value: object) -> list[dict]:

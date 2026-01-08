@@ -125,8 +125,36 @@ class TestRetrieve(unittest.TestCase):
         ids = {c.entity_id for c in result.candidates}
         self.assertIn("lamp-2", ids)
 
+    def test_vector_search_falls_back_to_raw_when_action_has_latin(self):
+        """当 action 包含英文字母时，向量检索降级为使用 raw query。"""
+        devices = [
+            Device(id="lamp-1", name="Lamp", room="Living", category="light"),
+            Device(id="lamp-2", name="Lamp2", room="Living", category="light"),
+        ]
+        llm = FakeLLM({"打开客厅的灯": {"action": "turn on"}})
+        stub_vector = StubVectorSearcher(
+            stub_results={
+                # 若错误使用 action，会命中 lamp-1
+                "turn on": [("lamp-1", 0.9)],
+                # 正确降级使用 raw，应命中 lamp-2
+                "打开客厅的灯": [("lamp-2", 0.9)],
+            }
+        )
+
+        result = retrieve(
+            text="打开客厅的灯",
+            devices=devices,
+            llm=llm,
+            state=ConversationState(),
+            vector_searcher=stub_vector,
+        )
+
+        ids = {c.entity_id for c in result.candidates}
+        self.assertIn("lamp-2", ids)
+        self.assertNotIn("lamp-1", ids)
+
     def test_retrieve_applies_category_gating(self):
-        """Applies category gating before vector indexing."""
+        """Applies category gating before vector search."""
         devices = [
             Device(id="lamp-1", name="Lamp", room="Living", category="light"),
             Device(id="ac-1", name="AC", room="Living", category="airConditioner"),
@@ -142,7 +170,7 @@ class TestRetrieve(unittest.TestCase):
             vector_searcher=recorder,
         )
 
-        self.assertEqual(recorder.indexed_ids, ["lamp-1"])
+        self.assertEqual(recorder.last_device_ids, {"lamp-1"})
         self.assertTrue(all(c.entity_id == "lamp-1" for c in result.candidates))
 
     def test_retrieve_skips_category_gating_for_unknown(self):
@@ -164,7 +192,7 @@ class TestRetrieve(unittest.TestCase):
             vector_searcher=recorder,
         )
 
-        self.assertEqual(recorder.indexed_ids, ["lamp-1", "ac-1"])
+        self.assertEqual(recorder.last_device_ids, {"lamp-1", "ac-1"})
 
     def test_retrieve_fallback_weights_without_type_hint(self):
         """Falls back to keyword-heavy weights without type hints."""
