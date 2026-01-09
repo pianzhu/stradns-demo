@@ -1,0 +1,989 @@
+[
+  {
+    "id": "s-001",
+    "complexity": "simple",
+    "query": "打开客厅主灯",
+    "expected_fields": {
+      "action": "打开",
+      "scope_include": [
+        "客厅"
+      ],
+      "target_name": "主灯",
+      "target_type": "Light"
+    },
+    "expected_devices": [
+      "客厅/主灯"
+    ],
+    "expected_capability_ids": [
+      "main-switch-on"
+    ],
+    "expected_quantifier": null
+  },
+  {
+    "id": "s-002",
+    "complexity": "simple",
+    "query": "关闭客厅落地灯",
+    "expected_fields": {
+      "action": "关闭",
+      "scope_include": [
+        "客厅"
+      ],
+      "target_name": "落地灯",
+      "target_type": "Light"
+    },
+    "expected_devices": [
+      "客厅/落地灯"
+    ],
+    "expected_capability_ids": [
+      "main-switch-off"
+    ],
+    "expected_quantifier": null
+  },
+  {
+    "id": "s-003",
+    "complexity": "simple",
+    "query": "打开卧室床头灯",
+    "expected_fields": {
+      "action": "打开",
+      "scope_include": [
+        "卧室"
+      ],
+      "target_name": "床头灯",
+      "target_type": "Light"
+    },
+    "expected_devices": [
+      "卧室/床头灯"
+    ],
+    "expected_capability_ids": [
+      "main-switch-on"
+    ],
+    "expected_quantifier": null
+  },
+  {
+    "id": "s-004",
+    "complexity": "simple",
+    "query": "关闭卧室吸顶灯",
+    "expected_fields": {
+      "action": "关闭",
+      "scope_include": [
+        "卧室"
+      ],
+      "target_name": "吸顶灯",
+      "target_type": "Light"
+    },
+    "expected_devices": [
+      "卧室/吸顶灯"
+    ],
+    "expected_capability_ids": [
+      "main-switch-off"
+    ],
+    "expected_quantifier": null
+  },
+  {
+    "id": "s-005",
+    "complexity": "simple",
+    "query": "打开厨房吊灯",
+    "expected_fields": {
+      "action": "打开",
+      "scope_include": [
+        "厨房"
+      ],
+      "target_name": "吊灯",
+      "target_type": "Light"
+    },
+    "expected_devices": [
+      "厨房/吊灯"
+    ],
+    "expected_capability_ids": [
+      "main-switch-on"
+    ],
+    "expected_quantifier": null
+  },
+  {
+    "id": "s-006",
+    "complexity": "simple",
+    "query": "关闭厨房台灯",
+    "expected_fields": {
+      "action": "关闭",
+      "scope_include": [
+        "厨房"
+      ],
+      "target_name": "台灯",
+      "target_type": "Light"
+    },
+    "expected_devices": [
+      "厨房/台灯"
+    ],
+    "expected_capability_ids": [
+      "main-switch-off"
+    ],
+    "expected_quantifier": null
+  },
+  {
+    "id": "s-007",
+    "complexity": "simple",
+    "query": "打开书房台灯",
+    "expected_fields": {
+      "action": "打开",
+      "scope_include": [
+        "书房"
+      ],
+      "target_name": "台灯",
+      "target_type": "Light"
+    },
+    "expected_devices": [
+      "书房/台灯"
+    ],
+    "expected_capability_ids": [
+      "main-switch-on"
+    ],
+    "expected_quantifier": null
+  },
+  {
+    "id": "s-008",
+    "complexity": "simple",
+    "query": "打开阳台灯带",
+    "expected_fields": {
+      "action": "打开",
+      "scope_include": [
+        "阳台"
+      ],
+      "target_name": "灯带",
+      "target_type": "Light"
+    },
+    "expected_devices": [
+      "阳台/灯带"
+    ],
+    "expected_capability_ids": [
+      "main-switch-on"
+    ],
+    "expected_quantifier": null
+  },
+  {
+    "id": "s-009",
+    "complexity": "simple",
+    "query": "打开客厅窗帘",
+    "expected_fields": {
+      "action": "打开",
+      "scope_include": [
+        "客厅"
+      ],
+      "target_name": "窗帘",
+      "target_type": "Blind"
+    },
+    "expected_devices": [
+      "客厅/窗帘"
+    ],
+    "expected_capability_ids": [
+      "main-windowShade-open"
+    ],
+    "expected_quantifier": null
+  },
+  {
+    "id": "s-010",
+    "complexity": "simple",
+    "query": "关闭卧室窗帘",
+    "expected_fields": {
+      "action": "关闭",
+      "scope_include": [
+        "卧室"
+      ],
+      "target_name": "窗帘",
+      "target_type": "Blind"
+    },
+    "expected_devices": [
+      "卧室/窗帘"
+    ],
+    "expected_capability_ids": [
+      "main-windowShade-close"
+    ],
+    "expected_quantifier": null
+  },
+  {
+    "id": "s-011",
+    "complexity": "simple",
+    "query": "打开书房百叶窗",
+    "expected_fields": {
+      "action": "打开",
+      "scope_include": [
+        "书房"
+      ],
+      "target_name": "百叶窗",
+      "target_type": "Blind"
+    },
+    "expected_devices": [
+      "书房/百叶窗"
+    ],
+    "expected_capability_ids": [
+      "main-windowShade-open"
+    ],
+    "expected_quantifier": null
+  },
+  {
+    "id": "s-012",
+    "complexity": "simple",
+    "query": "打开客厅空调",
+    "expected_fields": {
+      "action": "打开",
+      "scope_include": [
+        "客厅"
+      ],
+      "target_name": "空调",
+      "target_type": "AirConditioner"
+    },
+    "expected_devices": [
+      "客厅/空调"
+    ],
+    "expected_capability_ids": [
+      "main-switch-on"
+    ],
+    "expected_quantifier": null
+  },
+  {
+    "id": "s-013",
+    "complexity": "simple",
+    "query": "关闭卧室空调",
+    "expected_fields": {
+      "action": "关闭",
+      "scope_include": [
+        "卧室"
+      ],
+      "target_name": "空调",
+      "target_type": "AirConditioner"
+    },
+    "expected_devices": [
+      "卧室/空调"
+    ],
+    "expected_capability_ids": [
+      "main-switch-off"
+    ],
+    "expected_quantifier": null
+  },
+  {
+    "id": "s-014",
+    "complexity": "simple",
+    "query": "把书房空调调到26度",
+    "expected_fields": {
+      "scope_include": [
+        "书房"
+      ],
+      "target_name": "空调",
+      "target_type": "AirConditioner"
+    },
+    "expected_devices": [
+      "书房/空调"
+    ],
+    "expected_capability_ids": [
+      "main-thermostatCoolingSetpoint-setCoolingSetpoint"
+    ],
+    "expected_quantifier": null
+  },
+  {
+    "id": "s-015",
+    "complexity": "simple",
+    "query": "把客厅风扇风速调到40%",
+    "expected_fields": {
+      "scope_include": [
+        "客厅"
+      ],
+      "target_name": "风扇",
+      "target_type": "Fan"
+    },
+    "expected_devices": [
+      "客厅/风扇"
+    ],
+    "expected_capability_ids": [
+      "main-fanSpeedPercent-setPercent"
+    ],
+    "expected_quantifier": null
+  },
+  {
+    "id": "s-016",
+    "complexity": "simple",
+    "query": "把卧室风扇风速调到60%",
+    "expected_fields": {
+      "scope_include": [
+        "卧室"
+      ],
+      "target_name": "风扇",
+      "target_type": "Fan"
+    },
+    "expected_devices": [
+      "卧室/风扇"
+    ],
+    "expected_capability_ids": [
+      "main-fanSpeedPercent-setPercent"
+    ],
+    "expected_quantifier": null
+  },
+  {
+    "id": "s-017",
+    "complexity": "simple",
+    "query": "打开客厅电视",
+    "expected_fields": {
+      "action": "打开",
+      "scope_include": [
+        "客厅"
+      ],
+      "target_name": "电视",
+      "target_type": "Television"
+    },
+    "expected_devices": [
+      "客厅/电视"
+    ],
+    "expected_capability_ids": [
+      "main-switch-on"
+    ],
+    "expected_quantifier": null
+  },
+  {
+    "id": "s-018",
+    "complexity": "simple",
+    "query": "关闭卧室电视",
+    "expected_fields": {
+      "action": "关闭",
+      "scope_include": [
+        "卧室"
+      ],
+      "target_name": "电视",
+      "target_type": "Television"
+    },
+    "expected_devices": [
+      "卧室/电视"
+    ],
+    "expected_capability_ids": [
+      "main-switch-off"
+    ],
+    "expected_quantifier": null
+  },
+  {
+    "id": "s-019",
+    "complexity": "simple",
+    "query": "把客厅电视音量调到30%",
+    "expected_fields": {
+      "scope_include": [
+        "客厅"
+      ],
+      "target_name": "电视",
+      "target_type": "Television"
+    },
+    "expected_devices": [
+      "客厅/电视"
+    ],
+    "expected_capability_ids": [
+      "main-audioVolume-setVolume"
+    ],
+    "expected_quantifier": null
+  },
+  {
+    "id": "s-020",
+    "complexity": "simple",
+    "query": "打开客厅音响",
+    "expected_fields": {
+      "action": "打开",
+      "scope_include": [
+        "客厅"
+      ],
+      "target_name": "音响",
+      "target_type": "NetworkAudio"
+    },
+    "expected_devices": [
+      "客厅/音响"
+    ],
+    "expected_capability_ids": [
+      "main-switch-on"
+    ],
+    "expected_quantifier": null
+  },
+  {
+    "id": "s-021",
+    "complexity": "simple",
+    "query": "把书房音箱静音",
+    "expected_fields": {
+      "scope_include": [
+        "书房"
+      ],
+      "target_name": "音箱",
+      "target_type": "NetworkAudio"
+    },
+    "expected_devices": [
+      "书房/音箱"
+    ],
+    "expected_capability_ids": [
+      "main-audioMute-mute"
+    ],
+    "expected_quantifier": null
+  },
+  {
+    "id": "s-022",
+    "complexity": "simple",
+    "query": "开始阳台洗衣机烘干",
+    "expected_fields": {
+      "scope_include": [
+        "阳台"
+      ],
+      "target_name": "洗衣机",
+      "target_type": "Washer"
+    },
+    "expected_devices": [
+      "阳台/洗衣机"
+    ],
+    "expected_capability_ids": [
+      "main-samsungce.dryerOperatingState-start"
+    ],
+    "expected_quantifier": null
+  },
+  {
+    "id": "s-023",
+    "complexity": "simple",
+    "query": "打开厨房墙壁开关",
+    "expected_fields": {
+      "action": "打开",
+      "scope_include": [
+        "厨房"
+      ],
+      "target_name": "墙壁开关",
+      "target_type": "Switch"
+    },
+    "expected_devices": [
+      "厨房/墙壁开关"
+    ],
+    "expected_capability_ids": [
+      "main-switch-on"
+    ],
+    "expected_quantifier": null
+  },
+  {
+    "id": "s-024",
+    "complexity": "simple",
+    "query": "关闭卧室门口开关",
+    "expected_fields": {
+      "action": "关闭",
+      "scope_include": [
+        "卧室"
+      ],
+      "target_name": "门口开关",
+      "target_type": "Switch"
+    },
+    "expected_devices": [
+      "卧室/门口开关"
+    ],
+    "expected_capability_ids": [
+      "main-switch-off"
+    ],
+    "expected_quantifier": null
+  },
+  {
+    "id": "s-025",
+    "complexity": "simple",
+    "query": "打开客厅智能插座",
+    "expected_fields": {
+      "action": "打开",
+      "scope_include": [
+        "客厅"
+      ],
+      "target_name": "智能插座",
+      "target_type": "SmartPlug"
+    },
+    "expected_devices": [
+      "客厅/智能插座"
+    ],
+    "expected_capability_ids": [
+      "main-switch-on"
+    ],
+    "expected_quantifier": null
+  },
+  {
+    "id": "s-026",
+    "complexity": "simple",
+    "query": "关闭书房智能插座",
+    "expected_fields": {
+      "action": "关闭",
+      "scope_include": [
+        "书房"
+      ],
+      "target_name": "智能插座",
+      "target_type": "SmartPlug"
+    },
+    "expected_devices": [
+      "书房/智能插座"
+    ],
+    "expected_capability_ids": [
+      "main-switch-off"
+    ],
+    "expected_quantifier": null
+  },
+  {
+    "id": "s-027",
+    "complexity": "simple",
+    "query": "打开卧室充电器",
+    "expected_fields": {
+      "action": "打开",
+      "scope_include": [
+        "卧室"
+      ],
+      "target_name": "充电器",
+      "target_type": "Charger"
+    },
+    "expected_devices": [
+      "卧室/充电器"
+    ],
+    "expected_capability_ids": [
+      "main-switch-on"
+    ],
+    "expected_quantifier": null
+  },
+  {
+    "id": "s-028",
+    "complexity": "simple",
+    "query": "打开客厅网关",
+    "expected_fields": {
+      "action": "打开",
+      "scope_include": [
+        "客厅"
+      ],
+      "target_name": "网关",
+      "target_type": "Hub"
+    },
+    "expected_devices": [
+      "客厅/网关"
+    ],
+    "expected_capability_ids": [
+      "main-switch-on"
+    ],
+    "expected_quantifier": null
+  },
+  {
+    "id": "s-029",
+    "complexity": "simple",
+    "query": "打开阳台传感器",
+    "expected_fields": {
+      "action": "打开",
+      "scope_include": [
+        "阳台"
+      ],
+      "target_name": "传感器",
+      "target_type": "Unknown"
+    },
+    "expected_devices": [
+      "阳台/传感器"
+    ],
+    "expected_capability_ids": [
+      "main-switch-on"
+    ],
+    "expected_quantifier": null
+  },
+  {
+    "id": "s-030",
+    "complexity": "simple",
+    "query": "关闭客厅壁灯",
+    "expected_fields": {
+      "action": "关闭",
+      "scope_include": [
+        "客厅"
+      ],
+      "target_name": "壁灯",
+      "target_type": "Light"
+    },
+    "expected_devices": [
+      "客厅/壁灯"
+    ],
+    "expected_capability_ids": [
+      "main-switch-off"
+    ],
+    "expected_quantifier": null
+  },
+  {
+    "id": "c-001",
+    "complexity": "complex",
+    "query": "把所有灯都打开",
+    "expected_fields": {
+      "target_quantifier": "all",
+      "target_name": "*",
+      "target_type": "Light"
+    },
+    "expected_devices": [
+      "客厅/主灯",
+      "卧室/床头灯",
+      "阳台/灯带"
+    ],
+    "expected_capability_ids": [
+      "main-switch-on"
+    ],
+    "expected_quantifier": "all"
+  },
+  {
+    "id": "c-002",
+    "complexity": "complex",
+    "query": "把所有灯调到50%",
+    "expected_fields": {
+      "target_quantifier": "all",
+      "target_name": "*",
+      "target_type": "Light"
+    },
+    "expected_devices": [
+      "客厅/主灯",
+      "厨房/吊灯"
+    ],
+    "expected_capability_ids": [
+      "main-switchLevel-setLevel"
+    ],
+    "expected_quantifier": "all"
+  },
+  {
+    "id": "c-003",
+    "complexity": "complex",
+    "query": "关闭除了卧室以外的灯",
+    "expected_fields": {
+      "action": "关闭",
+      "scope_exclude": [
+        "卧室"
+      ],
+      "target_quantifier": "except",
+      "target_name": "*",
+      "target_type": "Light"
+    },
+    "expected_devices": [
+      "客厅/主灯",
+      "厨房/吊灯"
+    ],
+    "expected_capability_ids": [
+      "main-switch-off"
+    ],
+    "expected_quantifier": "except"
+  },
+  {
+    "id": "c-004",
+    "complexity": "complex",
+    "query": "把客厅和卧室的窗帘都打开",
+    "expected_fields": {
+      "scope_include": [
+        "客厅",
+        "卧室"
+      ],
+      "target_quantifier": "all",
+      "target_name": "*",
+      "target_type": "Blind"
+    },
+    "expected_devices": [
+      "客厅/窗帘",
+      "卧室/窗帘"
+    ],
+    "expected_capability_ids": [
+      "main-windowShade-open"
+    ],
+    "expected_quantifier": "all"
+  },
+  {
+    "id": "c-005",
+    "complexity": "complex",
+    "query": "把所有窗帘关上",
+    "expected_fields": {
+      "target_quantifier": "all",
+      "target_name": "*",
+      "target_type": "Blind"
+    },
+    "expected_devices": [
+      "客厅/窗帘",
+      "书房/百叶窗"
+    ],
+    "expected_capability_ids": [
+      "main-windowShade-close"
+    ],
+    "expected_quantifier": "all"
+  },
+  {
+    "id": "c-006",
+    "complexity": "complex",
+    "query": "把书房百叶窗遮光调到30%",
+    "expected_fields": {
+      "scope_include": [
+        "书房"
+      ],
+      "target_name": "百叶窗",
+      "target_type": "Blind"
+    },
+    "expected_devices": [
+      "书房/百叶窗"
+    ],
+    "expected_capability_ids": [
+      "main-windowShadeLevel-setShadeLevel"
+    ],
+    "expected_quantifier": null
+  },
+  {
+    "id": "c-007",
+    "complexity": "complex",
+    "query": "把客厅窗帘遮光调到50%",
+    "expected_fields": {
+      "scope_include": [
+        "客厅"
+      ],
+      "target_name": "窗帘",
+      "target_type": "Blind"
+    },
+    "expected_devices": [
+      "客厅/窗帘"
+    ],
+    "expected_capability_ids": [
+      "main-windowShadeLevel-setShadeLevel"
+    ],
+    "expected_quantifier": null
+  },
+  {
+    "id": "c-008",
+    "complexity": "complex",
+    "query": "把所有空调调到26度",
+    "expected_fields": {
+      "target_quantifier": "all",
+      "target_name": "*",
+      "target_type": "AirConditioner"
+    },
+    "expected_devices": [
+      "客厅/空调",
+      "卧室/空调"
+    ],
+    "expected_capability_ids": [
+      "main-thermostatCoolingSetpoint-setCoolingSetpoint"
+    ],
+    "expected_quantifier": "all"
+  },
+  {
+    "id": "c-009",
+    "complexity": "complex",
+    "query": "把客厅和书房的空调都打开",
+    "expected_fields": {
+      "scope_include": [
+        "客厅",
+        "书房"
+      ],
+      "target_quantifier": "all",
+      "target_name": "*",
+      "target_type": "AirConditioner"
+    },
+    "expected_devices": [
+      "客厅/空调",
+      "书房/空调"
+    ],
+    "expected_capability_ids": [
+      "main-switch-on"
+    ],
+    "expected_quantifier": "all"
+  },
+  {
+    "id": "c-010",
+    "complexity": "complex",
+    "query": "把客厅和书房的空调都关闭",
+    "expected_fields": {
+      "scope_include": [
+        "客厅",
+        "书房"
+      ],
+      "target_quantifier": "all",
+      "target_name": "*",
+      "target_type": "AirConditioner"
+    },
+    "expected_devices": [
+      "客厅/空调",
+      "书房/空调"
+    ],
+    "expected_capability_ids": [
+      "main-switch-off"
+    ],
+    "expected_quantifier": "all"
+  },
+  {
+    "id": "c-011",
+    "complexity": "complex",
+    "query": "把所有风扇风速调到70%",
+    "expected_fields": {
+      "target_quantifier": "all",
+      "target_name": "*",
+      "target_type": "Fan"
+    },
+    "expected_devices": [
+      "客厅/风扇",
+      "卧室/风扇"
+    ],
+    "expected_capability_ids": [
+      "main-fanSpeedPercent-setPercent"
+    ],
+    "expected_quantifier": "all"
+  },
+  {
+    "id": "c-012",
+    "complexity": "complex",
+    "query": "把客厅风扇设为自然风",
+    "expected_fields": {
+      "scope_include": [
+        "客厅"
+      ],
+      "target_name": "风扇",
+      "target_type": "Fan"
+    },
+    "expected_devices": [
+      "客厅/风扇"
+    ],
+    "expected_capability_ids": [
+      "main-windMode-setWindMode"
+    ],
+    "expected_quantifier": null
+  },
+  {
+    "id": "c-013",
+    "complexity": "complex",
+    "query": "把卧室风扇设置为摆风",
+    "expected_fields": {
+      "scope_include": [
+        "卧室"
+      ],
+      "target_name": "风扇",
+      "target_type": "Fan"
+    },
+    "expected_devices": [
+      "卧室/风扇"
+    ],
+    "expected_capability_ids": [
+      "main-fanOscillationMode-setFanOscillationMode"
+    ],
+    "expected_quantifier": null
+  },
+  {
+    "id": "c-014",
+    "complexity": "complex",
+    "query": "把客厅电视和卧室电视音量都调到20%",
+    "expected_fields": {
+      "scope_include": [
+        "客厅",
+        "卧室"
+      ],
+      "target_quantifier": "all",
+      "target_name": "*",
+      "target_type": "Television"
+    },
+    "expected_devices": [
+      "客厅/电视",
+      "卧室/电视"
+    ],
+    "expected_capability_ids": [
+      "main-audioVolume-setVolume"
+    ],
+    "expected_quantifier": "all"
+  },
+  {
+    "id": "c-015",
+    "complexity": "complex",
+    "query": "让所有电视静音",
+    "expected_fields": {
+      "target_quantifier": "all",
+      "target_name": "*",
+      "target_type": "Television"
+    },
+    "expected_devices": [
+      "客厅/电视",
+      "卧室/电视"
+    ],
+    "expected_capability_ids": [
+      "main-audioMute-mute"
+    ],
+    "expected_quantifier": "all"
+  },
+  {
+    "id": "c-016",
+    "complexity": "complex",
+    "query": "取消所有音响静音",
+    "expected_fields": {
+      "target_quantifier": "all",
+      "target_name": "*",
+      "target_type": "NetworkAudio"
+    },
+    "expected_devices": [
+      "客厅/音响",
+      "书房/音箱"
+    ],
+    "expected_capability_ids": [
+      "main-audioMute-unmute"
+    ],
+    "expected_quantifier": "all"
+  },
+  {
+    "id": "c-017",
+    "complexity": "complex",
+    "query": "打开客厅和书房的智能插座",
+    "expected_fields": {
+      "action": "打开",
+      "scope_include": [
+        "客厅",
+        "书房"
+      ],
+      "target_quantifier": "all",
+      "target_name": "*",
+      "target_type": "SmartPlug"
+    },
+    "expected_devices": [
+      "客厅/智能插座",
+      "书房/智能插座"
+    ],
+    "expected_capability_ids": [
+      "main-switch-on"
+    ],
+    "expected_quantifier": "all"
+  },
+  {
+    "id": "c-018",
+    "complexity": "complex",
+    "query": "关闭所有插座",
+    "expected_fields": {
+      "action": "关闭",
+      "target_quantifier": "all",
+      "target_name": "*",
+      "target_type": "SmartPlug"
+    },
+    "expected_devices": [
+      "客厅/智能插座",
+      "书房/智能插座"
+    ],
+    "expected_capability_ids": [
+      "main-switch-off"
+    ],
+    "expected_quantifier": "all"
+  },
+  {
+    "id": "c-019",
+    "complexity": "complex",
+    "query": "让阳台洗衣机暂停烘干",
+    "expected_fields": {
+      "scope_include": [
+        "阳台"
+      ],
+      "target_name": "洗衣机",
+      "target_type": "Washer"
+    },
+    "expected_devices": [
+      "阳台/洗衣机"
+    ],
+    "expected_capability_ids": [
+      "main-samsungce.dryerOperatingState-pause"
+    ],
+    "expected_quantifier": null
+  },
+  {
+    "id": "c-020",
+    "complexity": "complex",
+    "query": "取消阳台洗衣机烘干",
+    "expected_fields": {
+      "scope_include": [
+        "阳台"
+      ],
+      "target_name": "洗衣机",
+      "target_type": "Washer"
+    },
+    "expected_devices": [
+      "阳台/洗衣机"
+    ],
+    "expected_capability_ids": [
+      "main-samsungce.dryerOperatingState-cancel"
+    ],
+    "expected_quantifier": null
+  }
+]

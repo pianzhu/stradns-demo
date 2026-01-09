@@ -90,6 +90,12 @@ class DashScopeLLM:
 
     def parse_with_prompt(self, text: str, system_prompt: str) -> dict[str, Any]:
         """调用 dashscope 解析 JSON（可覆盖 system prompt）。"""
+        content = self.generate_with_prompt(text, system_prompt)
+        data = self._safe_json_loads(content)
+        return data
+
+    def generate_with_prompt(self, text: str, system_prompt: str) -> str:
+        """调用 dashscope 返回原始文本（可覆盖 system prompt）。"""
         messages = [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": text},
@@ -101,9 +107,7 @@ class DashScopeLLM:
             result_format="message",  # 使用 message 格式以获取 choices 结构
         )
 
-        content = self._extract_content(response)
-        data = self._safe_json_loads(content)
-        return data
+        return self._extract_content(response)
 
     def _extract_content(self, response: Any) -> str:
         """从 dashscope 响应中提取文本内容。

@@ -11,6 +11,7 @@ Requirements:
 Optional environment variables:
 - DASHSCOPE_PIPELINE_TOP_K: pipeline top-k, default 5
 - DASHSCOPE_MAX_QUERIES: max test cases, default unlimited
+- DASHSCOPE_CMD_PARSER_MAX_CASES: max command parser cases, default unlimited
 - DASHSCOPE_LLM_MODEL: LLM model name, default qwen-flash
 - DASHSCOPE_EMBEDDING_MODEL: embedding model name, default text-embedding-v4
 """
@@ -22,6 +23,8 @@ import unittest
 from pathlib import Path
 from typing import Any
 
+from command_parser import CommandParserConfig, parse_command_output
+from command_parser.prompt import DEFAULT_SYSTEM_PROMPT
 from context_retrieval.doc_enrichment import load_spec_index
 from context_retrieval.models import Device
 from context_retrieval.pipeline import retrieve
@@ -32,6 +35,7 @@ PROGRESS_ENABLED = os.getenv("DASHSCOPE_IT_PROGRESS", "1") != "0"
 
 FIXTURE_DIR = Path(__file__).parent
 QUERY_PATH = FIXTURE_DIR / "dashscope_integration_queries.json"
+CMD_PARSER_CASES_PATH = FIXTURE_DIR / "dashscope_command_parser_cases.json"
 ROOMS_PATH = FIXTURE_DIR / "smartthings_rooms.jsonl"
 DEVICES_PATH = FIXTURE_DIR / "smartthings_devices.jsonl"
 
@@ -183,6 +187,7 @@ elif not os.getenv("DASHSCOPE_API_KEY"):
 # Configurable params
 PIPELINE_TOP_K = int(os.getenv("DASHSCOPE_PIPELINE_TOP_K", "5"))
 MAX_QUERIES = int(os.getenv("DASHSCOPE_MAX_QUERIES", "0")) or None
+CMD_PARSER_MAX_CASES = int(os.getenv("DASHSCOPE_CMD_PARSER_MAX_CASES", "0")) or None
 LLM_MODEL = os.getenv("DASHSCOPE_LLM_MODEL", "qwen-flash")
 EMBEDDING_MODEL = os.getenv("DASHSCOPE_EMBEDDING_MODEL", "text-embedding-v4")
 
@@ -194,6 +199,54 @@ def load_test_queries() -> list[dict[str, Any]]:
     if MAX_QUERIES:
         queries = queries[:MAX_QUERIES]
     return queries
+
+
+def load_command_parser_cases() -> list[dict[str, Any]]:
+    """Load command parser integration cases."""
+    with open(CMD_PARSER_CASES_PATH, "r", encoding="utf-8") as handle:
+        cases = json.load(handle)
+    if CMD_PARSER_MAX_CASES:
+        cases = cases[:CMD_PARSER_MAX_CASES]
+    return cases
+
+
+def _matches_expected_fields(command, expected_fields: dict[str, Any]) -> bool:
+    if not expected_fields:
+        return True
+
+    action = expected_fields.get("action")
+    if isinstance(action, str) and action and command.action != action:
+        return False
+
+    expected_include = expected_fields.get("scope_include")
+    if isinstance(expected_include, list) and expected_include:
+        actual_include = set(command.scope.include)
+        if not set(expected_include) <= actual_include:
+            return False
+
+    expected_exclude = expected_fields.get("scope_exclude")
+    if isinstance(expected_exclude, list) and expected_exclude:
+        actual_exclude = set(command.scope.exclude)
+        if not set(expected_exclude) <= actual_exclude:
+            return False
+
+    target_name = expected_fields.get("target_name")
+    if isinstance(target_name, str) and target_name and command.target.name != target_name:
+        return False
+
+    target_type = expected_fields.get("target_type")
+    if isinstance(target_type, str) and target_type and command.target.type_hint != target_type:
+        return False
+
+    target_quantifier = expected_fields.get("target_quantifier")
+    if (
+        isinstance(target_quantifier, str)
+        and target_quantifier
+        and command.target.quantifier != target_quantifier
+    ):
+        return False
+
+    return True
 
 
 @unittest.skipIf(SKIP_REASON, SKIP_REASON or "")
@@ -279,6 +332,105 @@ class TestDashScopeLLMExtraction(unittest.TestCase):
             self.assertGreaterEqual(
                 scope_accuracy, 0.6, f"scope accuracy should be >= 60%, got {scope_accuracy:.2%}"
             )
+
+
+@unittest.skipIf(SKIP_REASON, SKIP_REASON or "")
+class TestDashScopeCommandParserContract(unittest.TestCase):
+    """DashScope command parser contract integration tests."""
+
+    @classmethod
+    def setUpClass(cls):
+        """Initialize LLM client."""
+        from context_retrieval.ir_compiler import DashScopeLLM
+
+        start = time.perf_counter()
+        cls.llm = DashScopeLLM(model=LLM_MODEL)
+        cls.cases = load_command_parser_cases()
+        _log_progress(
+            f"[CmdParser] init done model={LLM_MODEL} cases={len(cls.cases)} "
+            f"(DASHSCOPE_CMD_PARSER_MAX_CASES={CMD_PARSER_MAX_CASES or 'ALL'}) "
+            f"elapsed={time.perf_counter() - start:.2f}s"
+        )
+
+    def test_command_parser_contract(self):
+        """Validate LLM output is parsable and matches expected fields."""
+        _log_progress("\n[CmdParser] start...")
+        total = 0
+        parsed_ok = 0
+        matched = 0
+        results = []
+
+        for idx, case in enumerate(self.cases, start=1):
+            query = case.get("query", "")
+            expected_fields = case.get("expected_fields", {}) or {}
+
+            total += 1
+            try:
+                call_start = time.perf_counter()
+                raw_output = self.llm.generate_with_prompt(
+                    query,
+                    DEFAULT_SYSTEM_PROMPT,
+                )
+                call_cost = time.perf_counter() - call_start
+
+                parsed = parse_command_output(
+                    raw_output,
+                    config=CommandParserConfig(),
+                )
+
+                if not parsed.is_unknown:
+                    parsed_ok += 1
+
+                hit = any(
+                    _matches_expected_fields(cmd, expected_fields)
+                    for cmd in parsed.commands
+                )
+                if hit:
+                    matched += 1
+                    status = "HIT"
+                else:
+                    status = "MISS"
+
+                results.append((query, status, expected_fields, parsed.commands))
+                _log_progress(
+                    f"[CmdParser] {idx}/{len(self.cases)} {status} elapsed={call_cost:.2f}s "
+                    f"query={_short_text(str(query))} commands={len(parsed.commands)}"
+                )
+                time.sleep(0.1)
+
+            except Exception as exc:
+                results.append((query, "ERROR", expected_fields, str(exc)))
+                _log_progress(
+                    f"[CmdParser] {idx}/{len(self.cases)} error query={_short_text(str(query))} "
+                    f"err={exc}"
+                )
+
+        parsed_rate = parsed_ok / total if total > 0 else 0
+        match_rate = matched / total if total > 0 else 0
+
+        print("\n=== Command parser contract summary ===")
+        print(f"total cases: {total}")
+        print(f"parsed ok rate: {parsed_rate:.2%} ({parsed_ok}/{total})")
+        print(f"match rate: {match_rate:.2%} ({matched}/{total})")
+
+        misses = [r for r in results if r[1] == "MISS"]
+        if misses:
+            print(f"\nMissed cases ({len(misses)}):")
+            for query, _, expected, parsed_cmds in misses[:10]:
+                print(f"  query: {query}")
+                print(f"    expected: {expected}")
+                print(f"    parsed: {[cmd.raw for cmd in parsed_cmds]}")
+
+        self.assertGreaterEqual(
+            parsed_rate,
+            0.6,
+            f"parsed ok rate should be >= 60%, got {parsed_rate:.2%}",
+        )
+        self.assertGreaterEqual(
+            match_rate,
+            0.6,
+            f"match rate should be >= 60%, got {match_rate:.2%}",
+        )
 
 
 @unittest.skipIf(SKIP_REASON, SKIP_REASON or "")

@@ -27,6 +27,9 @@ RUN_DASHSCOPE_IT=1 DASHSCOPE_MAX_QUERIES=5 PYTHONPATH=src python -m unittest tes
 # 仅运行 LLM 解析测试
 RUN_DASHSCOPE_IT=1 PYTHONPATH=src python -m unittest tests.test_dashscope_integration.TestDashScopeLLMExtraction -v
 
+# 仅运行 command parser 输出契约测试
+RUN_DASHSCOPE_IT=1 PYTHONPATH=src python -m unittest tests.test_dashscope_integration.TestDashScopeCommandParserContract -v
+
 # 仅运行 pipeline 全链路测试
 RUN_DASHSCOPE_IT=1 PYTHONPATH=src python -m unittest tests.test_dashscope_integration.TestDashScopePipelineRetrieve -v
 
@@ -47,6 +50,7 @@ RUN_DASHSCOPE_IT=1 PYTHONPATH=src python -m unittest tests.test_bulk_pipeline_in
 | `DASHSCOPE_LLM_MODEL` | `qwen-flash` | LLM 模型名称 |
 | `DASHSCOPE_EMBEDDING_MODEL` | `text-embedding-v4` | embedding 模型名称 |
 | `DASHSCOPE_BULK_IT_MAX_CASES` | 无限制 | bulk 集成测试最大用例数 |
+| `DASHSCOPE_CMD_PARSER_MAX_CASES` | 无限制 | command parser 集成测试最大用例数 |
 
 > 说明：设备数据使用本地 JSONL 夹具构造，不需要 SmartThings 相关环境变量。
 
@@ -66,6 +70,11 @@ Bulk pipeline 集成测试用例定义在 `tests/dashscope_bulk_pipeline_cases.j
 - `expected_capability_ids`: 期望 capability 列表
 - `expected_quantifier`: 可选量词
 
+Command parser 集成测试用例定义在 `tests/dashscope_command_parser_cases.json`，由 bulk 用例派生：
+
+- `query`: 用户输入文本
+- `expected_fields`: 期望的解析字段（action/scope/target 槽位）
+
 ## 测试内容
 
 ### 1. LLM 解析测试 (TestDashScopeLLMExtraction)
@@ -81,6 +90,11 @@ Bulk pipeline 集成测试用例定义在 `tests/dashscope_bulk_pipeline_cases.j
 2. scope_exclude 过滤、category gating、keyword/vector 混合召回与融合评分
 3. bulk mode（quantifier=all/except）group 聚合与爆炸防护 hint
 4. 输出有效性：device/group 候选可解析且 capability_id 必须可映射到有效 CommandSpec
+
+### 3. Command parser 输出契约测试 (TestDashScopeCommandParserContract)
+
+- 严格 JSON array<string> 输出与结构解析
+- 至少一条命令匹配派生用例中的 expected_fields
 
 ## 断言阈值
 
