@@ -16,8 +16,6 @@
 ### C. 与 Plan 模式的默认组合（推荐）
 
 - 新功能 / 行为变更 / 需求不够明确：先用 `brainstorming` 对齐意图、约束与验收标准，再进入 Plan 模式收敛方案。
-- 遇到 bug / 测试失败 / 非预期行为：先用 `systematic-debugging` 做根因分析，再提出修复。
-- 在声称“完成/已修复/测试通过”前：用 `verification-before-completion` 先给出可验证证据。
 
 ---
 ## 0 · 关于用户与你的角色

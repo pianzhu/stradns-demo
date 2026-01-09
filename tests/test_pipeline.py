@@ -5,6 +5,7 @@ import unittest
 from unittest import mock
 from context_retrieval.pipeline import retrieve
 from context_retrieval.models import Device, CommandSpec, RetrievalResult
+from context_retrieval.doc_enrichment import CapabilityDoc
 from context_retrieval.ir_compiler import FakeLLM
 from context_retrieval.state import ConversationState
 from context_retrieval.vector_search import StubVectorSearcher
@@ -223,6 +224,81 @@ class TestRetrieve(unittest.TestCase):
         self.assertIn("mapped_category=Light", joined)
         self.assertIn("gating_before=", joined)
         self.assertIn("gating_after=", joined)
+
+    def test_retrieve_infers_name_hint_and_capability(self):
+        """Infers name_hint from raw query and assigns capability for keyword-only candidates."""
+        charger = Device(id="charger-1", name="Charger", room="Bedroom", category="Charger")
+        setattr(charger, "profile_id", "profile-charger")
+
+        light = Device(id="lamp-1", name="Lamp", room="Bedroom", category="Light")
+        setattr(light, "profile_id", "profile-light")
+
+        llm = FakeLLM(
+            {
+                "turn on Charger": {
+                    "action": "turn on",
+                    "type_hint": "Unknown",
+                }
+            }
+        )
+
+        spec_index = {
+            "profile-charger": [
+                CapabilityDoc(id="main-switch-on", description="turn on"),
+                CapabilityDoc(id="main-switch-off", description="turn off"),
+            ]
+        }
+        vector_searcher = StubVectorSearcher(
+            stub_results={},
+            spec_index=spec_index,
+        )
+
+        result = retrieve(
+            text="turn on Charger",
+            devices=[charger, light],
+            llm=llm,
+            state=ConversationState(),
+            vector_searcher=vector_searcher,
+        )
+
+        self.assertTrue(result.candidates)
+        self.assertEqual(result.candidates[0].entity_id, "charger-1")
+        self.assertEqual(result.candidates[0].capability_id, "main-switch-on")
+
+    def test_retrieve_forces_capability_guess_for_numeric_queries(self):
+        """For numeric commands, prefer spec-based capability guessing over vector-picked capability ids."""
+        fan = Device(id="fan-1", name="风扇", room="客厅", category="Fan")
+        fan.profile_id = "profile-fan"  # type: ignore[attr-defined]
+
+        query = "把客厅风扇风速调到40%"
+        llm = FakeLLM({query: {"type_hint": "Unknown"}})
+
+        spec_index = {
+            "profile-fan": [
+                CapabilityDoc(id="cap-speed", description="风扇速度"),
+                CapabilityDoc(id="cap-osc", description="风扇摆动模式"),
+            ]
+        }
+        vector_searcher = StubVectorSearcher(
+            stub_results={
+                query: [
+                    ("fan-1", "cap-osc", 0.99),
+                ]
+            },
+            spec_index=spec_index,
+        )
+
+        result = retrieve(
+            text=query,
+            devices=[fan],
+            llm=llm,
+            state=ConversationState(),
+            vector_searcher=vector_searcher,
+        )
+
+        self.assertTrue(result.candidates)
+        self.assertEqual(result.candidates[0].entity_id, "fan-1")
+        self.assertEqual(result.candidates[0].capability_id, "cap-speed")
 
 
 if __name__ == "__main__":

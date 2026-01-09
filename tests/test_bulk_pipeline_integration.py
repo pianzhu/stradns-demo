@@ -297,16 +297,36 @@ class TestDashScopeBulkPipelineIntegration(unittest.TestCase):
             query = case.get("query", "")
             complexity = case.get("complexity", "unknown")
             expected_caps = set(case.get("expected_capability_ids") or [])
+            notes = case.get("notes", "")
 
             try:
-                expected_devices = resolve_expected_devices(
-                    case,
-                    self.room_name_to_ids,
-                    self.room_name_category_to_ids,
-                    self.room_name_ambiguous,
-                )
-                if not expected_devices:
-                    raise ValueError("expected devices is empty")
+                if not isinstance(notes, str):
+                    raise ValueError("notes must be a string")
+
+                raw_expected_ids = case.get("expected_device_ids")
+                if not isinstance(raw_expected_ids, list) or not raw_expected_ids:
+                    raise ValueError("expected_device_ids is required and must be a non-empty list")
+
+                expected_devices = {
+                    device_id for device_id in raw_expected_ids
+                    if isinstance(device_id, str) and device_id
+                }
+                if len(expected_devices) != len(raw_expected_ids):
+                    raise ValueError("expected_device_ids must contain non-empty strings only")
+
+                if "expected_devices" in case:
+                    resolved_from_descriptors = resolve_expected_devices(
+                        {"expected_devices": case.get("expected_devices") or []},
+                        self.room_name_to_ids,
+                        self.room_name_category_to_ids,
+                        self.room_name_ambiguous,
+                    )
+                    if resolved_from_descriptors != expected_devices:
+                        raise ValueError(
+                            f"expected_device_ids mismatch expected_devices: ids={sorted(expected_devices)} "
+                            f"expected_devices={sorted(resolved_from_descriptors)}"
+                        )
+
                 if not expected_caps:
                     raise ValueError("expected_capability_ids is empty")
 

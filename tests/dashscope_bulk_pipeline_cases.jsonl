@@ -1,50 +1,50 @@
-{"id": "s-001", "complexity": "simple", "query": "打开客厅主灯", "expected_devices": ["客厅/主灯"], "expected_capability_ids": ["main-switch-on"]}
-{"id": "s-002", "complexity": "simple", "query": "关闭客厅落地灯", "expected_devices": ["客厅/落地灯"], "expected_capability_ids": ["main-switch-off"]}
-{"id": "s-003", "complexity": "simple", "query": "打开卧室床头灯", "expected_devices": ["卧室/床头灯"], "expected_capability_ids": ["main-switch-on"]}
-{"id": "s-004", "complexity": "simple", "query": "关闭卧室吸顶灯", "expected_devices": ["卧室/吸顶灯"], "expected_capability_ids": ["main-switch-off"]}
-{"id": "s-005", "complexity": "simple", "query": "打开厨房吊灯", "expected_devices": ["厨房/吊灯"], "expected_capability_ids": ["main-switch-on"]}
-{"id": "s-006", "complexity": "simple", "query": "关闭厨房台灯", "expected_devices": ["厨房/台灯"], "expected_capability_ids": ["main-switch-off"]}
-{"id": "s-007", "complexity": "simple", "query": "打开书房台灯", "expected_devices": ["书房/台灯"], "expected_capability_ids": ["main-switch-on"]}
-{"id": "s-008", "complexity": "simple", "query": "打开阳台灯带", "expected_devices": ["阳台/灯带"], "expected_capability_ids": ["main-switch-on"]}
-{"id": "s-009", "complexity": "simple", "query": "打开客厅窗帘", "expected_devices": ["客厅/窗帘"], "expected_capability_ids": ["main-windowShade-open"]}
-{"id": "s-010", "complexity": "simple", "query": "关闭卧室窗帘", "expected_devices": ["卧室/窗帘"], "expected_capability_ids": ["main-windowShade-close"]}
-{"id": "s-011", "complexity": "simple", "query": "打开书房百叶窗", "expected_devices": ["书房/百叶窗"], "expected_capability_ids": ["main-windowShade-open"]}
-{"id": "s-012", "complexity": "simple", "query": "打开客厅空调", "expected_devices": ["客厅/空调"], "expected_capability_ids": ["main-switch-on"]}
-{"id": "s-013", "complexity": "simple", "query": "关闭卧室空调", "expected_devices": ["卧室/空调"], "expected_capability_ids": ["main-switch-off"]}
-{"id": "s-014", "complexity": "simple", "query": "把书房空调调到26度", "expected_devices": ["书房/空调"], "expected_capability_ids": ["main-thermostatCoolingSetpoint-setCoolingSetpoint"]}
-{"id": "s-015", "complexity": "simple", "query": "把客厅风扇风速调到40%", "expected_devices": ["客厅/风扇"], "expected_capability_ids": ["main-fanSpeedPercent-setPercent"]}
-{"id": "s-016", "complexity": "simple", "query": "把卧室风扇风速调到60%", "expected_devices": ["卧室/风扇"], "expected_capability_ids": ["main-fanSpeedPercent-setPercent"]}
-{"id": "s-017", "complexity": "simple", "query": "打开客厅电视", "expected_devices": ["客厅/电视"], "expected_capability_ids": ["main-switch-on"]}
-{"id": "s-018", "complexity": "simple", "query": "关闭卧室电视", "expected_devices": ["卧室/电视"], "expected_capability_ids": ["main-switch-off"]}
-{"id": "s-019", "complexity": "simple", "query": "把客厅电视音量调到30%", "expected_devices": ["客厅/电视"], "expected_capability_ids": ["main-audioVolume-setVolume"]}
-{"id": "s-020", "complexity": "simple", "query": "打开客厅音响", "expected_devices": ["客厅/音响"], "expected_capability_ids": ["main-switch-on"]}
-{"id": "s-021", "complexity": "simple", "query": "把书房音箱静音", "expected_devices": ["书房/音箱"], "expected_capability_ids": ["main-audioMute-mute"]}
-{"id": "s-022", "complexity": "simple", "query": "开始阳台洗衣机烘干", "expected_devices": ["阳台/洗衣机"], "expected_capability_ids": ["main-samsungce.dryerOperatingState-start"]}
-{"id": "s-023", "complexity": "simple", "query": "打开厨房墙壁开关", "expected_devices": ["厨房/墙壁开关"], "expected_capability_ids": ["main-switch-on"]}
-{"id": "s-024", "complexity": "simple", "query": "关闭卧室门口开关", "expected_devices": ["卧室/门口开关"], "expected_capability_ids": ["main-switch-off"]}
-{"id": "s-025", "complexity": "simple", "query": "打开客厅智能插座", "expected_devices": ["客厅/智能插座"], "expected_capability_ids": ["main-switch-on"]}
-{"id": "s-026", "complexity": "simple", "query": "关闭书房智能插座", "expected_devices": ["书房/智能插座"], "expected_capability_ids": ["main-switch-off"]}
-{"id": "s-027", "complexity": "simple", "query": "打开卧室充电器", "expected_devices": ["卧室/充电器"], "expected_capability_ids": ["main-switch-on"]}
-{"id": "s-028", "complexity": "simple", "query": "打开客厅网关", "expected_devices": ["客厅/网关"], "expected_capability_ids": ["main-switch-on"]}
-{"id": "s-029", "complexity": "simple", "query": "打开阳台传感器", "expected_devices": ["阳台/传感器"], "expected_capability_ids": ["main-switch-on"]}
-{"id": "s-030", "complexity": "simple", "query": "关闭客厅壁灯", "expected_devices": ["客厅/壁灯"], "expected_capability_ids": ["main-switch-off"]}
-{"id": "c-001", "complexity": "complex", "query": "把所有灯都打开", "expected_devices": ["客厅/主灯", "卧室/床头灯", "阳台/灯带"], "expected_capability_ids": ["main-switch-on"], "expected_quantifier": "all"}
-{"id": "c-002", "complexity": "complex", "query": "把所有灯调到50%", "expected_devices": ["客厅/主灯", "厨房/吊灯"], "expected_capability_ids": ["main-switchLevel-setLevel"], "expected_quantifier": "all"}
-{"id": "c-003", "complexity": "complex", "query": "关闭除了卧室以外的灯", "expected_devices": ["客厅/主灯", "厨房/吊灯"], "expected_capability_ids": ["main-switch-off"], "expected_quantifier": "except"}
-{"id": "c-004", "complexity": "complex", "query": "把客厅和卧室的窗帘都打开", "expected_devices": ["客厅/窗帘", "卧室/窗帘"], "expected_capability_ids": ["main-windowShade-open"], "expected_quantifier": "all"}
-{"id": "c-005", "complexity": "complex", "query": "把所有窗帘关上", "expected_devices": ["客厅/窗帘", "书房/百叶窗"], "expected_capability_ids": ["main-windowShade-close"], "expected_quantifier": "all"}
-{"id": "c-006", "complexity": "complex", "query": "把书房百叶窗遮光调到30%", "expected_devices": ["书房/百叶窗"], "expected_capability_ids": ["main-windowShadeLevel-setShadeLevel"]}
-{"id": "c-007", "complexity": "complex", "query": "把客厅窗帘遮光调到50%", "expected_devices": ["客厅/窗帘"], "expected_capability_ids": ["main-windowShadeLevel-setShadeLevel"]}
-{"id": "c-008", "complexity": "complex", "query": "把所有空调调到26度", "expected_devices": ["客厅/空调", "卧室/空调"], "expected_capability_ids": ["main-thermostatCoolingSetpoint-setCoolingSetpoint"], "expected_quantifier": "all"}
-{"id": "c-009", "complexity": "complex", "query": "把客厅和书房的空调都打开", "expected_devices": ["客厅/空调", "书房/空调"], "expected_capability_ids": ["main-switch-on"], "expected_quantifier": "all"}
-{"id": "c-010", "complexity": "complex", "query": "把客厅和书房的空调都关闭", "expected_devices": ["客厅/空调", "书房/空调"], "expected_capability_ids": ["main-switch-off"], "expected_quantifier": "all"}
-{"id": "c-011", "complexity": "complex", "query": "把所有风扇风速调到70%", "expected_devices": ["客厅/风扇", "卧室/风扇"], "expected_capability_ids": ["main-fanSpeedPercent-setPercent"], "expected_quantifier": "all"}
-{"id": "c-012", "complexity": "complex", "query": "把客厅风扇设为自然风", "expected_devices": ["客厅/风扇"], "expected_capability_ids": ["main-windMode-setWindMode"]}
-{"id": "c-013", "complexity": "complex", "query": "把卧室风扇设置为摆风", "expected_devices": ["卧室/风扇"], "expected_capability_ids": ["main-fanOscillationMode-setFanOscillationMode"]}
-{"id": "c-014", "complexity": "complex", "query": "把客厅电视和卧室电视音量都调到20%", "expected_devices": ["客厅/电视", "卧室/电视"], "expected_capability_ids": ["main-audioVolume-setVolume"], "expected_quantifier": "all"}
-{"id": "c-015", "complexity": "complex", "query": "让所有电视静音", "expected_devices": ["客厅/电视", "卧室/电视"], "expected_capability_ids": ["main-audioMute-mute"], "expected_quantifier": "all"}
-{"id": "c-016", "complexity": "complex", "query": "取消所有音响静音", "expected_devices": ["客厅/音响", "书房/音箱"], "expected_capability_ids": ["main-audioMute-unmute"], "expected_quantifier": "all"}
-{"id": "c-017", "complexity": "complex", "query": "打开客厅和书房的智能插座", "expected_devices": ["客厅/智能插座", "书房/智能插座"], "expected_capability_ids": ["main-switch-on"], "expected_quantifier": "all"}
-{"id": "c-018", "complexity": "complex", "query": "关闭所有插座", "expected_devices": ["客厅/智能插座", "书房/智能插座"], "expected_capability_ids": ["main-switch-off"], "expected_quantifier": "all"}
-{"id": "c-019", "complexity": "complex", "query": "让阳台洗衣机暂停烘干", "expected_devices": ["阳台/洗衣机"], "expected_capability_ids": ["main-samsungce.dryerOperatingState-pause"]}
-{"id": "c-020", "complexity": "complex", "query": "取消阳台洗衣机烘干", "expected_devices": ["阳台/洗衣机"], "expected_capability_ids": ["main-samsungce.dryerOperatingState-cancel"]}
+{"id": "s-001", "complexity": "simple", "query": "打开客厅主灯", "expected_devices": ["客厅/主灯"], "expected_device_ids": ["device-light-001"], "expected_capability_ids": ["main-switch-on"], "notes": ""}
+{"id": "s-002", "complexity": "simple", "query": "关闭客厅落地灯", "expected_devices": ["客厅/落地灯"], "expected_device_ids": ["device-light-002"], "expected_capability_ids": ["main-switch-off"], "notes": ""}
+{"id": "s-003", "complexity": "simple", "query": "打开卧室床头灯", "expected_devices": ["卧室/床头灯"], "expected_device_ids": ["device-light-004"], "expected_capability_ids": ["main-switch-on"], "notes": ""}
+{"id": "s-004", "complexity": "simple", "query": "关闭卧室吸顶灯", "expected_devices": ["卧室/吸顶灯"], "expected_device_ids": ["device-light-005"], "expected_capability_ids": ["main-switch-off"], "notes": ""}
+{"id": "s-005", "complexity": "simple", "query": "打开厨房吊灯", "expected_devices": ["厨房/吊灯"], "expected_device_ids": ["device-light-006"], "expected_capability_ids": ["main-switch-on"], "notes": ""}
+{"id": "s-006", "complexity": "simple", "query": "关闭厨房台灯", "expected_devices": ["厨房/台灯"], "expected_device_ids": ["device-light-007"], "expected_capability_ids": ["main-switch-off"], "notes": ""}
+{"id": "s-007", "complexity": "simple", "query": "打开书房台灯", "expected_devices": ["书房/台灯"], "expected_device_ids": ["device-light-008"], "expected_capability_ids": ["main-switch-on"], "notes": ""}
+{"id": "s-008", "complexity": "simple", "query": "打开阳台灯带", "expected_devices": ["阳台/灯带"], "expected_device_ids": ["device-light-010"], "expected_capability_ids": ["main-switch-on"], "notes": ""}
+{"id": "s-009", "complexity": "simple", "query": "打开客厅窗帘", "expected_devices": ["客厅/窗帘"], "expected_device_ids": ["device-blind-001"], "expected_capability_ids": ["main-windowShade-open"], "notes": ""}
+{"id": "s-010", "complexity": "simple", "query": "关闭卧室窗帘", "expected_devices": ["卧室/窗帘"], "expected_device_ids": ["device-blind-002"], "expected_capability_ids": ["main-windowShade-close"], "notes": ""}
+{"id": "s-011", "complexity": "simple", "query": "打开书房百叶窗", "expected_devices": ["书房/百叶窗"], "expected_device_ids": ["device-blind-003"], "expected_capability_ids": ["main-windowShade-open"], "notes": ""}
+{"id": "s-012", "complexity": "simple", "query": "打开客厅空调", "expected_devices": ["客厅/空调"], "expected_device_ids": ["device-ac-001"], "expected_capability_ids": ["main-switch-on"], "notes": ""}
+{"id": "s-013", "complexity": "simple", "query": "关闭卧室空调", "expected_devices": ["卧室/空调"], "expected_device_ids": ["device-ac-002"], "expected_capability_ids": ["main-switch-off"], "notes": ""}
+{"id": "s-014", "complexity": "simple", "query": "把书房空调调到26度", "expected_devices": ["书房/空调"], "expected_device_ids": ["device-ac-003"], "expected_capability_ids": ["main-thermostatCoolingSetpoint-setCoolingSetpoint"], "notes": ""}
+{"id": "s-015", "complexity": "simple", "query": "把客厅风扇风速调到40%", "expected_devices": ["客厅/风扇"], "expected_device_ids": ["device-fan-001"], "expected_capability_ids": ["main-fanSpeedPercent-setPercent"], "notes": ""}
+{"id": "s-016", "complexity": "simple", "query": "把卧室风扇风速调到60%", "expected_devices": ["卧室/风扇"], "expected_device_ids": ["device-fan-002"], "expected_capability_ids": ["main-fanSpeedPercent-setPercent"], "notes": ""}
+{"id": "s-017", "complexity": "simple", "query": "打开客厅电视", "expected_devices": ["客厅/电视"], "expected_device_ids": ["device-tv-001"], "expected_capability_ids": ["main-switch-on"], "notes": ""}
+{"id": "s-018", "complexity": "simple", "query": "关闭卧室电视", "expected_devices": ["卧室/电视"], "expected_device_ids": ["device-tv-002"], "expected_capability_ids": ["main-switch-off"], "notes": ""}
+{"id": "s-019", "complexity": "simple", "query": "把客厅电视音量调到30%", "expected_devices": ["客厅/电视"], "expected_device_ids": ["device-tv-001"], "expected_capability_ids": ["main-audioVolume-setVolume"], "notes": ""}
+{"id": "s-020", "complexity": "simple", "query": "打开客厅音响", "expected_devices": ["客厅/音响"], "expected_device_ids": ["device-audio-001"], "expected_capability_ids": ["main-switch-on"], "notes": ""}
+{"id": "s-021", "complexity": "simple", "query": "把书房音箱静音", "expected_devices": ["书房/音箱"], "expected_device_ids": ["device-audio-002"], "expected_capability_ids": ["main-audioMute-mute"], "notes": ""}
+{"id": "s-022", "complexity": "simple", "query": "开始阳台洗衣机烘干", "expected_devices": ["阳台/洗衣机"], "expected_device_ids": ["device-washer-001"], "expected_capability_ids": ["main-samsungce.dryerOperatingState-start"], "notes": ""}
+{"id": "s-023", "complexity": "simple", "query": "打开厨房墙壁开关", "expected_devices": ["厨房/墙壁开关"], "expected_device_ids": ["device-switch-001"], "expected_capability_ids": ["main-switch-on"], "notes": ""}
+{"id": "s-024", "complexity": "simple", "query": "关闭卧室门口开关", "expected_devices": ["卧室/门口开关"], "expected_device_ids": ["device-switch-002"], "expected_capability_ids": ["main-switch-off"], "notes": ""}
+{"id": "s-025", "complexity": "simple", "query": "打开客厅智能插座", "expected_devices": ["客厅/智能插座"], "expected_device_ids": ["device-plug-001"], "expected_capability_ids": ["main-switch-on"], "notes": ""}
+{"id": "s-026", "complexity": "simple", "query": "关闭书房智能插座", "expected_devices": ["书房/智能插座"], "expected_device_ids": ["device-plug-002"], "expected_capability_ids": ["main-switch-off"], "notes": ""}
+{"id": "s-027", "complexity": "simple", "query": "打开卧室充电器", "expected_devices": ["卧室/充电器"], "expected_device_ids": ["device-charger-001"], "expected_capability_ids": ["main-switch-on"], "notes": ""}
+{"id": "s-028", "complexity": "simple", "query": "打开客厅网关", "expected_devices": ["客厅/网关"], "expected_device_ids": ["device-hub-001"], "expected_capability_ids": ["main-switch-on"], "notes": ""}
+{"id": "s-029", "complexity": "simple", "query": "打开阳台传感器", "expected_devices": ["阳台/传感器"], "expected_device_ids": ["device-other-001"], "expected_capability_ids": ["main-switch-on"], "notes": ""}
+{"id": "s-030", "complexity": "simple", "query": "关闭客厅壁灯", "expected_devices": ["客厅/壁灯"], "expected_device_ids": ["device-light-003"], "expected_capability_ids": ["main-switch-off"], "notes": ""}
+{"id": "c-001", "complexity": "complex", "query": "把所有灯都打开", "expected_devices": ["客厅/主灯", "卧室/床头灯", "阳台/灯带"], "expected_device_ids": ["device-light-001", "device-light-004", "device-light-010"], "expected_capability_ids": ["main-switch-on"], "expected_quantifier": "all", "notes": ""}
+{"id": "c-002", "complexity": "complex", "query": "把所有灯调到50%", "expected_devices": ["客厅/主灯", "厨房/吊灯"], "expected_device_ids": ["device-light-001", "device-light-006"], "expected_capability_ids": ["main-switchLevel-setLevel"], "expected_quantifier": "all", "notes": ""}
+{"id": "c-003", "complexity": "complex", "query": "关闭除了卧室以外的灯", "expected_devices": ["客厅/主灯", "厨房/吊灯"], "expected_device_ids": ["device-light-001", "device-light-006"], "expected_capability_ids": ["main-switch-off"], "expected_quantifier": "except", "notes": ""}
+{"id": "c-004", "complexity": "complex", "query": "把客厅和卧室的窗帘都打开", "expected_devices": ["客厅/窗帘", "卧室/窗帘"], "expected_device_ids": ["device-blind-001", "device-blind-002"], "expected_capability_ids": ["main-windowShade-open"], "expected_quantifier": "all", "notes": ""}
+{"id": "c-005", "complexity": "complex", "query": "把所有窗帘关上", "expected_devices": ["客厅/窗帘", "书房/百叶窗"], "expected_device_ids": ["device-blind-001", "device-blind-003"], "expected_capability_ids": ["main-windowShade-close"], "expected_quantifier": "all", "notes": ""}
+{"id": "c-006", "complexity": "complex", "query": "把书房百叶窗遮光调到30%", "expected_devices": ["书房/百叶窗"], "expected_device_ids": ["device-blind-003"], "expected_capability_ids": ["main-windowShadeLevel-setShadeLevel"], "notes": ""}
+{"id": "c-007", "complexity": "complex", "query": "把客厅窗帘遮光调到50%", "expected_devices": ["客厅/窗帘"], "expected_device_ids": ["device-blind-001"], "expected_capability_ids": ["main-windowShadeLevel-setShadeLevel"], "notes": ""}
+{"id": "c-008", "complexity": "complex", "query": "把所有空调调到26度", "expected_devices": ["客厅/空调", "卧室/空调"], "expected_device_ids": ["device-ac-001", "device-ac-002"], "expected_capability_ids": ["main-thermostatCoolingSetpoint-setCoolingSetpoint"], "expected_quantifier": "all", "notes": ""}
+{"id": "c-009", "complexity": "complex", "query": "把客厅和书房的空调都打开", "expected_devices": ["客厅/空调", "书房/空调"], "expected_device_ids": ["device-ac-001", "device-ac-003"], "expected_capability_ids": ["main-switch-on"], "expected_quantifier": "all", "notes": ""}
+{"id": "c-010", "complexity": "complex", "query": "把客厅和书房的空调都关闭", "expected_devices": ["客厅/空调", "书房/空调"], "expected_device_ids": ["device-ac-001", "device-ac-003"], "expected_capability_ids": ["main-switch-off"], "expected_quantifier": "all", "notes": ""}
+{"id": "c-011", "complexity": "complex", "query": "把所有风扇风速调到70%", "expected_devices": ["客厅/风扇", "卧室/风扇"], "expected_device_ids": ["device-fan-001", "device-fan-002"], "expected_capability_ids": ["main-fanSpeedPercent-setPercent"], "expected_quantifier": "all", "notes": ""}
+{"id": "c-012", "complexity": "complex", "query": "把客厅风扇设为自然风", "expected_devices": ["客厅/风扇"], "expected_device_ids": ["device-fan-001"], "expected_capability_ids": ["main-windMode-setWindMode"], "notes": ""}
+{"id": "c-013", "complexity": "complex", "query": "把卧室风扇设置为摆风", "expected_devices": ["卧室/风扇"], "expected_device_ids": ["device-fan-002"], "expected_capability_ids": ["main-fanOscillationMode-setFanOscillationMode"], "notes": ""}
+{"id": "c-014", "complexity": "complex", "query": "把客厅电视和卧室电视音量都调到20%", "expected_devices": ["客厅/电视", "卧室/电视"], "expected_device_ids": ["device-tv-001", "device-tv-002"], "expected_capability_ids": ["main-audioVolume-setVolume"], "expected_quantifier": "all", "notes": ""}
+{"id": "c-015", "complexity": "complex", "query": "让所有电视静音", "expected_devices": ["客厅/电视", "卧室/电视"], "expected_device_ids": ["device-tv-001", "device-tv-002"], "expected_capability_ids": ["main-audioMute-mute"], "expected_quantifier": "all", "notes": ""}
+{"id": "c-016", "complexity": "complex", "query": "取消所有音响静音", "expected_devices": ["客厅/音响", "书房/音箱"], "expected_device_ids": ["device-audio-001", "device-audio-002"], "expected_capability_ids": ["main-audioMute-unmute"], "expected_quantifier": "all", "notes": ""}
+{"id": "c-017", "complexity": "complex", "query": "打开客厅和书房的智能插座", "expected_devices": ["客厅/智能插座", "书房/智能插座"], "expected_device_ids": ["device-plug-001", "device-plug-002"], "expected_capability_ids": ["main-switch-on"], "expected_quantifier": "all", "notes": ""}
+{"id": "c-018", "complexity": "complex", "query": "关闭所有插座", "expected_devices": ["客厅/智能插座", "书房/智能插座"], "expected_device_ids": ["device-plug-001", "device-plug-002"], "expected_capability_ids": ["main-switch-off"], "expected_quantifier": "all", "notes": ""}
+{"id": "c-019", "complexity": "complex", "query": "让阳台洗衣机暂停烘干", "expected_devices": ["阳台/洗衣机"], "expected_device_ids": ["device-washer-001"], "expected_capability_ids": ["main-samsungce.dryerOperatingState-pause"], "notes": ""}
+{"id": "c-020", "complexity": "complex", "query": "取消阳台洗衣机烘干", "expected_devices": ["阳台/洗衣机"], "expected_device_ids": ["device-washer-001"], "expected_capability_ids": ["main-samsungce.dryerOperatingState-cancel"], "notes": ""}
