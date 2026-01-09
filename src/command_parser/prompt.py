@@ -17,10 +17,24 @@ DEFAULT_SYSTEM_PROMPT = f"""你是智能家居指令的语义解析器。你的�
 - 未提及输出 *。
 - 提及多个房间用英文逗号 ,：如 客厅,卧室。
 - 排除房间用 !房间（可多个）：如 *,!卧室,!书房。若只输出 !卧室 也允许，表示默认包含所有房间再排除卧室。
+- 重要：若只是“同一动作 + 同一 TARGET + 多个房间”，必须合并成 **一条** 命令，并把房间都写进 SCOPE；不要为每个房间重复输出多条命令。
 
 3) TARGET（语义升华槽位）
 - TARGET 必须为：NAME#TYPE#Q[#N]
-  - NAME：**必须用中文**。设备具体名称（如"主灯"/"床头灯"/"吸顶灯"/"空调"/"窗帘"）；若用户仅按类型泛指（如"灯/空调/风扇/窗帘"而非具体名称）输出 *；指代"它/那个/上一个/刚才的"输出 @last。NAME 不得包含 # 或 -（遇到则用空格替换）。
+  - NAME：**必须用中文**。优先保留用户原话中**房间之外**的完整目标短语（保留修饰词），如"墙壁开关"/"床头灯"/"传感器"。
+    - 当用户仅按类型泛指且未点名具体设备时：NAME 输出该类型的中文名（不要输出 *），并与 TYPE 一致：
+      - Light → 灯
+      - AirConditioner → 空调
+      - Blind → 窗帘
+      - Fan → 风扇
+      - Switch → 开关
+      - SmartPlug → 插座
+      - Television → 电视
+      - NetworkAudio → 音响
+      - Washer → 洗衣机
+      - Charger → 充电器
+      - Hub → 网关
+    - 易错点：NAME 不要随意丢字或过度归一化；例如"墙壁开关"不能简化为"开关"；"阳台传感器"应解析为 SCOPE=阳台，NAME=传感器。
   - TYPE：必须且只能从闭集选择（无法判断用 Unknown）：
     {", ".join(ALLOWED_CATEGORIES)}
   - Q：量词，必须为 one/all/any/except
@@ -28,11 +42,17 @@ DEFAULT_SYSTEM_PROMPT = f"""你是智能家居指令的语义解析器。你的�
     - 任意/随便/哪个都行/几个 → any
     - 除了X以外/除X都 → except
     - 否则 → one
-    - 重要默认：当 NAME=*（泛指类型）且未明确量词时，Q 默认输出 all
+    - 重要默认：当用户按类型泛指且未明确量词时，Q 默认输出 all
   - N：仅当用户明确数量时输出整数（两/俩/2→2），否则不输出该段。
 
 拆分规则（必须遵守）
-- 多动作必拆分；多目标（列举多个设备名）必拆分为多条命令；按原句顺序输出。
+- 多动作必拆分；多目标（列举多个设备名，如"主灯和落地灯"）必拆分为多条命令；按原句顺序输出。
+- 多房间（如"客厅和卧室的窗帘都打开"）不是“多目标”，不要按房间拆成多条命令；用 SCOPE=客厅,卧室 表达。
+
+输出前自检（必须）
+- 输出是合法 JSON 数组，且数组元素全为字符串。
+- 每条命令都恰好包含 2 个字符 "-"（三段式），TARGET 至少包含 NAME#TYPE#Q 三段。
+- SCOPE 多房间只用英文逗号 "," 分隔，不要用"和/或/、"。
 
 无法解析时输出：["UNKNOWN-*-*#Unknown#one"]
 
@@ -42,7 +62,19 @@ DEFAULT_SYSTEM_PROMPT = f"""你是智能家居指令的语义解析器。你的�
 
 示例 2（泛指 + 排除房间 + except 量词）：
 输入：关闭除卧室以外的灯
-输出：["关闭-*,!卧室-*#Light#except"]
+输出：["关闭-*,!卧室-灯#Light#except"]
+
+示例 3（NAME 保留修饰词）：
+输入：打开厨房墙壁开关
+输出：["打开-厨房-墙壁开关#Switch#one"]
+
+示例 4（不在闭集类型则 Unknown）：
+输入：打开阳台传感器
+输出：["打开-阳台-传感器#Unknown#one"]
+
+示例 5（多房间合并，不拆多条命令）：
+输入：把卧室和客厅的窗帘都打开
+输出：["打开-卧室,客厅-窗帘#Blind#all"]
 """
 
 PROMPT_REGRESSION_CASES = [
@@ -132,6 +164,11 @@ PROMPT_REGRESSION_CASES = [
         "expected": ["打开-厨房-墙壁开关#Switch#one"],
         "tags": ["single", "specific_name", "switch"],
     },
+    {
+        "input": "打开阳台传感器",
+        "expected": ["打开-阳台-传感器#Unknown#one"],
+        "tags": ["single", "specific_name", "unknown_type"],
+    },
 
     # ===== 参数设置示例 =====
     {
@@ -196,81 +233,86 @@ PROMPT_REGRESSION_CASES = [
         "tags": ["multi_target", "specific_name"],
     },
 
-    # ===== 泛指类型（NAME=*） =====
+    # ===== 泛指类型（NAME=类型中文名） =====
     {
         "input": "打开所有灯",
-        "expected": ["打开-*-*#Light#all"],
+        "expected": ["打开-*-灯#Light#all"],
         "tags": ["generic", "all_quantifier"],
     },
     {
         "input": "关闭所有空调",
-        "expected": ["关闭-*-*#AirConditioner#all"],
+        "expected": ["关闭-*-空调#AirConditioner#all"],
         "tags": ["generic", "all_quantifier"],
     },
     {
         "input": "把所有窗帘打开",
-        "expected": ["打开-*-*#Blind#all"],
+        "expected": ["打开-*-窗帘#Blind#all"],
         "tags": ["generic", "all_quantifier"],
     },
     {
         "input": "把所有灯调到50%",
-        "expected": ["设置亮度=50%-*-*#Light#all"],
+        "expected": ["设置亮度=50%-*-灯#Light#all"],
         "tags": ["generic", "all_quantifier", "parameter"],
     },
     {
         "input": "把所有空调调到26度",
-        "expected": ["设置温度=26C-*-*#AirConditioner#all"],
+        "expected": ["设置温度=26C-*-空调#AirConditioner#all"],
         "tags": ["generic", "all_quantifier", "parameter"],
     },
 
     # ===== 多房间组合 =====
     {
         "input": "打开客厅和卧室的灯",
-        "expected": ["打开-客厅,卧室-*#Light#all"],
+        "expected": ["打开-客厅,卧室-灯#Light#all"],
         "tags": ["multi_room", "all_quantifier"],
     },
     {
         "input": "关闭客厅和书房的空调",
-        "expected": ["关闭-客厅,书房-*#AirConditioner#all"],
+        "expected": ["关闭-客厅,书房-空调#AirConditioner#all"],
         "tags": ["multi_room", "all_quantifier"],
     },
     {
         "input": "把客厅和卧室的窗帘都打开",
-        "expected": ["打开-客厅,卧室-*#Blind#all"],
+        "expected": ["打开-客厅,卧室-窗帘#Blind#all"],
+        "tags": ["multi_room", "all_quantifier"],
+    },
+    {
+        "input": "把卧室和客厅的窗帘都打开",
+        "expected": ["打开-卧室,客厅-窗帘#Blind#all"],
         "tags": ["multi_room", "all_quantifier"],
     },
 
     # ===== 排除房间（except 量词） =====
     {
         "input": "打开除卧室以外的灯",
-        "expected": ["打开-*,!卧室-*#Light#except"],
+        "expected": ["打开-*,!卧室-灯#Light#except"],
         "tags": ["except", "exclude_room"],
     },
     {
         "input": "关闭除了客厅以外的空调",
-        "expected": ["关闭-*,!客厅-*#AirConditioner#except"],
+        "expected": ["关闭-*,!客厅-空调#AirConditioner#except"],
         "tags": ["except", "exclude_room"],
     },
     {
         "input": "把除书房和卧室以外的灯都关了",
-        "expected": ["关闭-*,!书房,!卧室-*#Light#except"],
+        "expected": ["关闭-*,!书房,!卧室-灯#Light#except"],
         "tags": ["except", "exclude_multiple_rooms"],
     },
 
     # ===== 任意量词 + 数量 =====
     {
         "input": "打开两盏灯",
-        "expected": ["打开-*-*#Light#any#2"],
+        "expected": ["打开-*-灯#Light#any#2"],
         "tags": ["any_n", "any_quantifier", "count"],
     },
     {
         "input": "关闭三个插座",
-        "expected": ["关闭-*-*#SmartPlug#any#3"],
+        "expected": ["关闭-*-插座#SmartPlug#any#3"],
         "tags": ["any_n", "any_quantifier", "count"],
     },
     {
         "input": "随便打开一个灯",
-        "expected": ["打开-*-*#Light#any#1"],
+        "expected": ["打开-*-灯#Light#any#1"],
         "tags": ["any_n", "any_quantifier", "count"],
     },
 
@@ -304,8 +346,8 @@ PROMPT_REGRESSION_CASES = [
     {
         "input": "打开客厅和卧室的所有灯并调到50%",
         "expected": [
-            "打开-客厅,卧室-*#Light#all",
-            "设置亮度=50%-客厅,卧室-*#Light#all",
+            "打开-客厅,卧室-灯#Light#all",
+            "设置亮度=50%-客厅,卧室-灯#Light#all",
         ],
         "tags": ["complex", "multi_action", "multi_room"],
     },

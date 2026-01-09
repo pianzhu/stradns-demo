@@ -31,7 +31,7 @@ class TestCommandParser(unittest.TestCase):
     def test_parse_multi_command(self):
         parser = CommandParser()
         result = parser.parse(
-            '["打开-卧室-顶灯#Light#one","关闭-客厅-*#Light#all"]'
+            '["打开-卧室-顶灯#Light#one","关闭-客厅-灯#Light#all"]'
         )
 
         self.assertEqual([cmd.action for cmd in result.commands], ["打开", "关闭"])
@@ -62,7 +62,7 @@ class TestCommandParser(unittest.TestCase):
 
     def test_scope_exclude_only(self):
         parser = CommandParser()
-        result = parser.parse('["打开-!卧室-*#Light#except"]')
+        result = parser.parse('["打开-!卧室-灯#Light#except"]')
 
         self.assertEqual(result.commands[0].scope.include, ["*"])
         self.assertEqual(result.commands[0].scope.exclude, ["卧室"])
@@ -87,7 +87,7 @@ class TestCommandParser(unittest.TestCase):
     def test_only_take_first(self):
         parser = CommandParser(CommandParserConfig(only_take_first=True))
         result = parser.parse(
-            '["打开-卧室-顶灯#Light#one","关闭-客厅-*#Light#all"]'
+            '["打开-卧室-顶灯#Light#one","关闭-客厅-灯#Light#all"]'
         )
 
         self.assertTrue(result.degraded)
