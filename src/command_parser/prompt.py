@@ -12,6 +12,12 @@ DEFAULT_SYSTEM_PROMPT = f"""你是智能家居指令的语义解析器。你的�
 - ACTION 必须是"一个动作尽量只做一件事"，不得包含字符"-"。
 - 例：打开、关闭、查询状态、设置亮度=50%、设置温度=26C。
 - 若一句话包含多个动作（即使针对同一设备，如"打开并调到50%"），必须拆成多条命令分别输出。
+- 重要：ACTION 不是闭集。只要能理解用户意图，就必须输出对应 ACTION；不要因为该动作未出现在示例里就输出 UNKNOWN。
+- 常见规范化（尽量使用以下 canonical 形式，便于下游检索与执行）：
+  - 静音/把声音关掉/关闭声音 → 静音
+  - 取消静音/解除静音/打开声音 → 取消静音
+  - 调到/设为/改为/设置某个数值 → 设置<属性>=<值>（保留单位或百分号），如：设置风速=70%、设置音量=30%、设置遮光=50%
+  - 取消/关掉/灭掉/关闭 <某某灯> → 关闭（目标仍写在 TARGET）
 
 2) SCOPE（房间/区域）
 - 未提及输出 *。
@@ -51,6 +57,7 @@ DEFAULT_SYSTEM_PROMPT = f"""你是智能家居指令的语义解析器。你的�
 
 输出前自检（必须）
 - 输出是合法 JSON 数组，且数组元素全为字符串。
+- 严禁输出 Markdown / 代码块（例如 ```json），严禁输出解释性文字。
 - 每条命令都恰好包含 2 个字符 "-"（三段式），TARGET 至少包含 NAME#TYPE#Q 三段。
 - SCOPE 多房间只用英文逗号 "," 分隔，不要用"和/或/、"。
 
@@ -75,6 +82,18 @@ DEFAULT_SYSTEM_PROMPT = f"""你是智能家居指令的语义解析器。你的�
 示例 5（多房间合并，不拆多条命令）：
 输入：把卧室和客厅的窗帘都打开
 输出：["打开-卧室,客厅-窗帘#Blind#all"]
+
+示例 6（静音：未提及房间则 SCOPE=*）：
+输入：让电视静音
+输出：["静音-*-电视#Television#all"]
+
+示例 7（风速：调到/设置 → 设置风速=<百分比>）：
+输入：把风扇风速调到70%
+输出：["设置风速=70%-*-风扇#Fan#all"]
+
+示例 8（“取消某某灯”按关闭处理）：
+输入：取消音响静音灯
+输出：["关闭-*-音响静音灯#Light#one"]
 """
 
 PROMPT_REGRESSION_CASES = [
@@ -185,6 +204,11 @@ PROMPT_REGRESSION_CASES = [
         "input": "把卧室风扇风速调到70%",
         "expected": ["设置风速=70%-卧室-风扇#Fan#one"],
         "tags": ["parameter", "fan_speed"],
+    },
+    {
+        "input": "把风扇风速调到70%",
+        "expected": ["设置风速=70%-*-风扇#Fan#all"],
+        "tags": ["parameter", "fan_speed", "generic", "all_quantifier"],
     },
     {
         "input": "把客厅电视音量调到30%",
@@ -359,9 +383,19 @@ PROMPT_REGRESSION_CASES = [
         "tags": ["special_action", "mute"],
     },
     {
+        "input": "让电视静音",
+        "expected": ["静音-*-电视#Television#all"],
+        "tags": ["special_action", "mute", "generic", "all_quantifier"],
+    },
+    {
         "input": "取消书房音箱静音",
         "expected": ["取消静音-书房-音箱#NetworkAudio#one"],
         "tags": ["special_action", "unmute"],
+    },
+    {
+        "input": "取消音响静音灯",
+        "expected": ["关闭-*-音响静音灯#Light#one"],
+        "tags": ["special_action", "cancel_light"],
     },
     {
         "input": "把客厅风扇设为自然风",
