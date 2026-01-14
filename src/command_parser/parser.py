@@ -15,6 +15,8 @@ logger = logging.getLogger(__name__)
 UNKNOWN_COMMAND = "UNKNOWN-*-*#Unknown#one"
 VALID_QUANTIFIERS = {"one", "all", "any", "except"}
 _CONTROL_CHARS_RE = re.compile(r"[\r\n\t]")
+_DELIMITER_SANITIZE_RE = re.compile(r"[#-]+")
+_WHITESPACE_RE = re.compile(r"\s+")
 _ALLOWED_TYPE_SET = set(ALLOWED_CATEGORIES)
 
 
@@ -127,10 +129,14 @@ def parse_command_output(
     if raw_text.strip():
         try:
             parsed = json.loads(raw_text)
-            if isinstance(parsed, list) and all(isinstance(item, str) for item in parsed):
-                commands_raw = parsed
+            if isinstance(parsed, list):
+                commands_raw, parsed_errors, parsed_degraded = _coerce_command_entries(parsed)
+                if parsed_errors:
+                    errors.extend(parsed_errors)
+                if parsed_degraded:
+                    degraded = True
             else:
-                errors.append("json_not_array_of_strings")
+                errors.append("json_not_array")
         except json.JSONDecodeError:
             errors.append("json_decode_error")
             json_failed = True
@@ -182,6 +188,149 @@ def parse_command_output(
         errors=errors,
         degraded=degraded,
     )
+
+
+def _coerce_command_entries(
+    items: list[object],
+) -> tuple[list[str], list[str], bool]:
+    errors: list[str] = []
+    degraded = False
+    commands: list[str] = []
+
+    for item in items:
+        if isinstance(item, str):
+            commands.append(item)
+            continue
+        if isinstance(item, dict):
+            command, command_errors = _command_object_to_string(item)
+            if command is None:
+                errors.extend(command_errors)
+                degraded = True
+                continue
+            if command_errors:
+                errors.extend(command_errors)
+                degraded = True
+            commands.append(command)
+            continue
+        errors.append("json_item_invalid")
+        degraded = True
+
+    if not items:
+        errors.append("json_array_empty")
+        degraded = True
+
+    return commands, errors, degraded
+
+
+def _command_object_to_string(
+    item: dict[str, object],
+) -> tuple[str | None, list[str]]:
+    errors: list[str] = []
+
+    action = _coerce_text(item.get("a"))
+    if not action:
+        errors.append("object_action_missing")
+        action = "UNKNOWN"
+    action = _sanitize_text_segment(action)
+    if not action:
+        errors.append("object_action_empty")
+        action = "UNKNOWN"
+
+    if not _has_value(item.get("s")):
+        errors.append("object_scope_missing")
+    scope_raw = _coerce_scope_value(item.get("s"))
+    scope = _sanitize_scope(scope_raw)
+    if not scope:
+        errors.append("object_scope_empty")
+        scope = "*"
+
+    name = _coerce_text(item.get("n"))
+    if not name:
+        errors.append("object_name_missing")
+        name = "*"
+    name = _sanitize_text_segment(name)
+    if not name:
+        errors.append("object_name_empty")
+        name = "*"
+
+    type_raw = _coerce_text(item.get("t"))
+    mapped_type = map_type_to_category(type_raw) if type_raw else None
+    if mapped_type is None or mapped_type not in _ALLOWED_TYPE_SET:
+        mapped_type = "Unknown"
+        errors.append("object_type_invalid")
+
+    quantifier_raw = _coerce_text(item.get("q")).lower()
+    if not quantifier_raw:
+        errors.append("object_quantifier_missing")
+        quantifier_raw = "one"
+    if quantifier_raw not in VALID_QUANTIFIERS:
+        errors.append("object_quantifier_invalid")
+        quantifier_raw = "one"
+
+    number = _coerce_positive_int(item.get("c"))
+    if number is None and _has_value(item.get("c")):
+        errors.append("object_number_invalid")
+
+    command = f"{action}-{scope}-{name}#{mapped_type}#{quantifier_raw}"
+    if number is not None:
+        command = f"{command}#{number}"
+
+    return command, errors
+
+
+def _sanitize_text_segment(value: str) -> str:
+    cleaned = _DELIMITER_SANITIZE_RE.sub(" ", value)
+    cleaned = _WHITESPACE_RE.sub(" ", cleaned).strip()
+    return cleaned
+
+
+def _sanitize_scope(scope_raw: str) -> str:
+    parts = [part.strip() for part in scope_raw.split(",") if part.strip()]
+    if not parts:
+        return "*"
+    sanitized_parts = []
+    for part in parts:
+        prefix = "!" if part.startswith("!") else ""
+        name = part[1:] if prefix else part
+        name = _sanitize_text_segment(name)
+        if not name:
+            continue
+        sanitized_parts.append(f"{prefix}{name}")
+    if not sanitized_parts:
+        return "*"
+    return ",".join(sanitized_parts)
+
+
+def _coerce_text(value: object) -> str:
+    return value.strip() if isinstance(value, str) else ""
+
+
+def _coerce_scope_value(value: object) -> str:
+    if isinstance(value, list):
+        parts = [str(item).strip() for item in value if str(item).strip()]
+        return ",".join(parts) if parts else "*"
+    if isinstance(value, str):
+        return value.strip() or "*"
+    return "*"
+
+
+def _coerce_positive_int(value: object) -> int | None:
+    if isinstance(value, int):
+        return value if value > 0 else None
+    if isinstance(value, str):
+        raw = value.strip()
+        if raw.isdigit():
+            number = int(raw)
+            return number if number > 0 else None
+    return None
+
+
+def _has_value(value: object) -> bool:
+    if value is None:
+        return False
+    if isinstance(value, str):
+        return bool(value.strip())
+    return True
 
 
 def _parse_command_string(raw_command: str) -> tuple[ParsedCommand | None, list[str]]:

@@ -188,7 +188,7 @@ elif not os.getenv("DASHSCOPE_API_KEY"):
 PIPELINE_TOP_K = int(os.getenv("DASHSCOPE_PIPELINE_TOP_K", "5"))
 MAX_QUERIES = int(os.getenv("DASHSCOPE_MAX_QUERIES", "0")) or None
 CMD_PARSER_MAX_CASES = int(os.getenv("DASHSCOPE_CMD_PARSER_MAX_CASES", "0")) or None
-LLM_MODEL = os.getenv("DASHSCOPE_LLM_MODEL", "qwen-flash")
+LLM_MODEL = os.getenv("DASHSCOPE_LLM_MODEL", "qwen-plus")
 EMBEDDING_MODEL = os.getenv("DASHSCOPE_EMBEDDING_MODEL", "text-embedding-v4")
 
 

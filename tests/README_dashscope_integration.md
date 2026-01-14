@@ -93,7 +93,8 @@ Command parser 集成测试用例定义在 `tests/dashscope_command_parser_cases
 
 ### 3. Command parser 输出契约测试 (TestDashScopeCommandParserContract)
 
-- 严格 JSON array<string> 输出与结构解析
+- 严格 JSON array<object> 输出与结构解析（字段 a/s/n/t/q/c）
+- 解析器兼容 array<string>（桥接到旧三段式）
 - 至少一条命令匹配派生用例中的 expected_fields
 
 ## 断言阈值

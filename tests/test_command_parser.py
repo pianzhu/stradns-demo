@@ -28,6 +28,23 @@ class TestCommandParser(unittest.TestCase):
         self.assertEqual(cmd.target.quantifier, "one")
         self.assertIsNone(cmd.target.number)
 
+    def test_parse_object_command(self):
+        parser = CommandParser()
+        result = parser.parse(
+            '[{"a":"打开","s":"卧室","n":"顶灯","t":"Light","q":"one"}]'
+        )
+
+        self.assertFalse(result.degraded)
+        self.assertEqual(len(result.commands), 1)
+        cmd = result.commands[0]
+        self.assertEqual(cmd.action, "打开")
+        self.assertEqual(cmd.scope.include, ["卧室"])
+        self.assertEqual(cmd.scope.exclude, [])
+        self.assertEqual(cmd.target.name, "顶灯")
+        self.assertEqual(cmd.target.type_hint, "Light")
+        self.assertEqual(cmd.target.quantifier, "one")
+        self.assertIsNone(cmd.target.number)
+
     def test_parse_multi_command(self):
         parser = CommandParser()
         result = parser.parse(
@@ -114,11 +131,17 @@ class TestPromptRegressionCases(unittest.TestCase):
 
         self.assertTrue(required.issubset(tags))
 
-    def test_cases_are_list_of_strings(self):
+    def test_cases_are_list_of_objects(self):
         for case in PROMPT_REGRESSION_CASES:
             expected = case["expected"]
             self.assertIsInstance(expected, list)
-            self.assertTrue(all(isinstance(item, str) for item in expected))
+            self.assertTrue(all(isinstance(item, dict) for item in expected))
+            for item in expected:
+                self.assertTrue(
+                    set(item.keys()) <= {"a", "s", "n", "t", "q", "c"}
+                )
+                for key in ("a", "s", "n", "t", "q"):
+                    self.assertIn(key, item)
 
 
 if __name__ == "__main__":
