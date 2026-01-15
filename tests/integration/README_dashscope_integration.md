@@ -5,7 +5,7 @@
 使用真实的 dashscope API（qwen-flash + text-embedding-v4）进行端到端验证，覆盖 **LLM 解析 QueryIR → pipeline.retrieve() 全链路检索** 的主路径。
 
 设备数据来源：
-- 使用 `tests/smartthings_devices.jsonl` 与 `tests/smartthings_rooms.jsonl` 构造虚拟设备与房间数据（字段可为空）
+- 使用 `tests/integration/smartthings_devices.jsonl` 与 `tests/integration/smartthings_rooms.jsonl` 构造虚拟设备与房间数据（字段可为空）
 - 不依赖 SmartThings Token 或真实设备接口
 
 ## 运行条件
@@ -19,22 +19,22 @@
 
 ```bash
 # 基础运行
-RUN_DASHSCOPE_IT=1 PYTHONPATH=src python -m unittest tests.test_dashscope_integration -v
+RUN_DASHSCOPE_IT=1 PYTHONPATH=src python -m unittest tests.integration.test_dashscope_integration -v
 
 # 快速试跑（限制用例数）
-RUN_DASHSCOPE_IT=1 DASHSCOPE_MAX_QUERIES=5 PYTHONPATH=src python -m unittest tests.test_dashscope_integration -v
+RUN_DASHSCOPE_IT=1 DASHSCOPE_MAX_QUERIES=5 PYTHONPATH=src python -m unittest tests.integration.test_dashscope_integration -v
 
 # 仅运行 LLM 解析测试
-RUN_DASHSCOPE_IT=1 PYTHONPATH=src python -m unittest tests.test_dashscope_integration.TestDashScopeLLMExtraction -v
+RUN_DASHSCOPE_IT=1 PYTHONPATH=src python -m unittest tests.integration.test_dashscope_integration.TestDashScopeLLMExtraction -v
 
 # 仅运行 command parser 输出契约测试
-RUN_DASHSCOPE_IT=1 PYTHONPATH=src python -m unittest tests.test_dashscope_integration.TestDashScopeCommandParserContract -v
+RUN_DASHSCOPE_IT=1 PYTHONPATH=src python -m unittest tests.integration.test_dashscope_integration.TestDashScopeCommandParserContract -v
 
 # 仅运行 pipeline 全链路测试
-RUN_DASHSCOPE_IT=1 PYTHONPATH=src python -m unittest tests.test_dashscope_integration.TestDashScopePipelineRetrieve -v
+RUN_DASHSCOPE_IT=1 PYTHONPATH=src python -m unittest tests.integration.test_dashscope_integration.TestDashScopePipelineRetrieve -v
 
 # 仅运行 bulk pipeline 集成测试
-RUN_DASHSCOPE_IT=1 PYTHONPATH=src python -m unittest tests.test_bulk_pipeline_integration -v
+RUN_DASHSCOPE_IT=1 PYTHONPATH=src python -m unittest tests.integration.test_bulk_pipeline_integration -v
 ```
 
 ## 可配置参数
@@ -56,13 +56,13 @@ RUN_DASHSCOPE_IT=1 PYTHONPATH=src python -m unittest tests.test_bulk_pipeline_in
 
 ## 测试用例
 
-测试用例定义在 `tests/dashscope_integration_queries.json`，包含 34 条真实中文 query，每条用例包含：
+测试用例定义在 `tests/integration/dashscope_integration_queries.json`，包含 34 条真实中文 query，每条用例包含：
 
 - `query`: 用户输入文本
 - `expected_capability_ids`: 期望命中的命令 ID 列表
 - `expected_fields`: 期望的 QueryIR 字段（scope_include/scope_exclude/quantifier/type_hint 等）
 
-Bulk pipeline 集成测试用例定义在 `tests/dashscope_bulk_pipeline_cases.jsonl`，包含 simple/complex 用例：
+Bulk pipeline 集成测试用例定义在 `tests/integration/dashscope_bulk_pipeline_cases.jsonl`，包含 simple/complex 用例：
 
 - `query`: 用户输入文本
 - `expected_devices`: 期望设备（支持 `房间/设备名` 或 `{room,name,category}`）
@@ -70,7 +70,7 @@ Bulk pipeline 集成测试用例定义在 `tests/dashscope_bulk_pipeline_cases.j
 - `expected_capability_ids`: 期望 capability 列表
 - `expected_quantifier`: 可选量词
 
-Command parser 集成测试用例定义在 `tests/dashscope_command_parser_cases.json`，由 bulk 用例派生：
+Command parser 集成测试用例定义在 `tests/integration/dashscope_command_parser_cases.json`，由 bulk 用例派生：
 
 - `query`: 用户输入文本
 - `expected_fields`: 期望的解析字段（action/scope/target 槽位）

@@ -450,7 +450,7 @@ class TestDashScopePipelineRetrieve(unittest.TestCase):
         cls.llm = DashScopeLLM(model=LLM_MODEL)
 
         queries = load_test_queries()
-        spec_path = Path(__file__).parent.parent / "src" / "spec.jsonl"
+        spec_path = Path(__file__).parent.parent.parent / "src" / "spec.jsonl"
         spec_index = load_spec_index(str(spec_path))
         cls.spec_lookup = _build_spec_lookup(spec_index)
 

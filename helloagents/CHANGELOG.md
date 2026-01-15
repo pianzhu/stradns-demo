@@ -11,3 +11,4 @@
 
 ### 变更
 - command_parser 兼容对象数组输出并更新回归用例与文档
+- 调整 tests 目录结构，单元测试迁移至 tests/unit，集成测试与夹具迁移至 tests/integration

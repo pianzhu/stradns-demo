@@ -269,7 +269,7 @@ class TestDashScopeBulkPipelineIntegration(unittest.TestCase):
             cls.label_by_id,
         ) = build_device_indexes(cls.devices)
 
-        spec_path = Path(__file__).parent.parent / "src" / "spec.jsonl"
+        spec_path = Path(__file__).parent.parent.parent / "src" / "spec.jsonl"
         spec_index = load_spec_index(str(spec_path))
         cls.vector_searcher = DashScopeVectorSearcher(
             spec_index=spec_index,

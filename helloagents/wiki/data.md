@@ -16,5 +16,5 @@
 | name | string | 名称 |
 | content | string | 规格内容 |
 
-### tests/*.jsonl / tests/*.json
+### tests/integration/*.jsonl / tests/integration/*.json
 **描述:** 集成测试与回归用例。
