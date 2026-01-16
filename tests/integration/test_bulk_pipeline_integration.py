@@ -331,7 +331,7 @@ class TestDashScopeBulkPipelineIntegration(unittest.TestCase):
                     raise ValueError("expected_capability_ids is empty")
 
                 call_start = time.perf_counter()
-                result = retrieve(
+                multi = retrieve(
                     text=query,
                     devices=self.devices,
                     llm=self.llm,
@@ -342,37 +342,68 @@ class TestDashScopeBulkPipelineIntegration(unittest.TestCase):
                 call_cost = time.perf_counter() - call_start
 
                 actual_devices: set[str] = set()
-                if result.groups:
-                    for group in result.groups:
-                        actual_devices.update(group.device_ids)
-                else:
-                    for cand in result.candidates:
-                        if cand.entity_kind == "device":
-                            actual_devices.add(cand.entity_id)
+                candidate_caps: set[str] = set()
+                option_caps: set[str] = set()
+                selected_caps: set[str] = set()
+                hint = "no_command"
+                question = None
+                groups_preview: list[str] = []
+                batches_preview: list[str] = []
 
-                candidate_caps = {
-                    cand.capability_id
-                    for cand in result.candidates
-                    if isinstance(cand.capability_id, str) and cand.capability_id
-                }
-                option_caps = {
-                    opt.capability_id
-                    for opt in result.options
-                    if isinstance(opt.capability_id, str) and opt.capability_id
-                }
-                selected_cap = result.selected_capability_id
-                actual_caps = {selected_cap} if selected_cap else candidate_caps
+                if multi.commands:
+                    hints = []
+                    for cmd_result in multi.commands:
+                        result = cmd_result.result
+                        hints.append(result.hint or "-")
+                        if result.question and not question:
+                            question = result.question
+
+                        if result.groups:
+                            for group in result.groups:
+                                actual_devices.update(group.device_ids)
+                            groups_preview.extend(
+                                f"{group.id}:{len(group.device_ids)}"
+                                for group in result.groups[:5]
+                            )
+                            batches_preview.extend(
+                                f"{gid}:{len(batches)}"
+                                for gid, batches in list(result.batches.items())[:5]
+                            )
+                        else:
+                            for cand in result.candidates:
+                                if cand.entity_kind == "device":
+                                    actual_devices.add(cand.entity_id)
+
+                        candidate_caps.update(
+                            {
+                                cand.capability_id
+                                for cand in result.candidates
+                                if isinstance(cand.capability_id, str) and cand.capability_id
+                            }
+                        )
+                        option_caps.update(
+                            {
+                                opt.capability_id
+                                for opt in result.options
+                                if isinstance(opt.capability_id, str) and opt.capability_id
+                            }
+                        )
+                        if result.selected_capability_id:
+                            selected_caps.add(result.selected_capability_id)
+
+                    hint = ",".join(hints)
+
+                actual_caps = selected_caps or candidate_caps
 
                 device_missing = expected_devices - actual_devices
                 cap_missing = expected_caps - actual_caps
 
                 status = "PASS"
-                hint = result.hint
                 clarify_ok = False
-                if hint in {"need_clarification", "too_many_targets"}:
-                    clarify_ok = bool(result.question) or expected_caps <= option_caps
-                    if selected_cap:
-                        clarify_ok = clarify_ok or expected_caps <= {selected_cap}
+                if "need_clarification" in hint or "too_many_targets" in hint:
+                    clarify_ok = bool(question) or expected_caps <= option_caps
+                    if selected_caps:
+                        clarify_ok = clarify_ok or expected_caps <= selected_caps
                     status = "CLARIFY_PASS" if clarify_ok else "FAIL"
                 else:
                     if device_missing or cap_missing:
@@ -389,14 +420,6 @@ class TestDashScopeBulkPipelineIntegration(unittest.TestCase):
                     for device_id in sorted(actual_devices)
                 ]
 
-                group_preview = [
-                    f"{group.id}:{len(group.device_ids)}"
-                    for group in result.groups[:5]
-                ]
-                batches_preview = [
-                    f"{gid}:{len(batches)}"
-                    for gid, batches in list(result.batches.items())[:5]
-                ]
                 option_preview = ",".join(list(option_caps)[:5])
 
                 _log_progress(
@@ -412,7 +435,7 @@ class TestDashScopeBulkPipelineIntegration(unittest.TestCase):
                 )
                 _log_progress(
                     f"  expected_caps={sorted(expected_caps)} actual_caps={sorted(actual_caps)} "
-                    f"options={option_preview} selected={selected_cap}"
+                    f"options={option_preview} selected={sorted(selected_caps)}"
                 )
                 if device_missing:
                     missing_labels = [
@@ -422,10 +445,10 @@ class TestDashScopeBulkPipelineIntegration(unittest.TestCase):
                     _log_progress(f"  missing_devices={missing_labels}")
                 if cap_missing:
                     _log_progress(f"  missing_caps={sorted(cap_missing)}")
-                if result.question:
-                    _log_progress(f"  question={result.question}")
-                if group_preview:
-                    _log_progress(f"  groups={group_preview} batches={batches_preview}")
+                if question:
+                    _log_progress(f"  question={question}")
+                if groups_preview:
+                    _log_progress(f"  groups={groups_preview} batches={batches_preview}")
 
                 if status == "FAIL":
                     failed_cases.append((case_id, f"missing_devices={len(device_missing)} missing_caps={len(cap_missing)}"))

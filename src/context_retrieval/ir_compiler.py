@@ -1,6 +1,6 @@
 """LLM 语义编译器。
 
-调用大模型将自然语言解析为 QueryIR（JSON）。
+负责命令映射与 LLM 适配。
 """
 
 import json
@@ -8,19 +8,27 @@ import os
 import re
 from typing import Any, Protocol
 
-from context_retrieval.category_gating import ALLOWED_CATEGORIES
+from command_parser import ParsedCommand
 from context_retrieval.models import QueryIR
 
 
 class LLMClient(Protocol):
     """LLM 客户端协议。"""
 
+    def generate_with_prompt(self, text: str, system_prompt: str) -> str:
+        """生成文本（带 system prompt）。"""
+        ...
+
     def parse(self, text: str) -> dict[str, Any]:
         """解析文本，返回 JSON 格式的 QueryIR。"""
         ...
 
+    def parse_with_prompt(self, text: str, system_prompt: str) -> dict[str, Any]:
+        """解析文本（可覆盖 system prompt）。"""
+        ...
 
-class FakeLLM:
+
+class FakeLLM(LLMClient):
     """用于测试和离线 demo 的假 LLM。"""
 
     def __init__(self, preset_responses: dict[str, dict[str, Any]] | None = None):
@@ -34,15 +42,27 @@ class FakeLLM:
     def parse(self, text: str) -> dict[str, Any]:
         """解析文本，返回预设响应或 fallback。"""
         if text in self._presets:
-            return self._presets[text]
+            preset = self._presets[text]
+            if isinstance(preset, dict):
+                return preset
         return {"confidence": 0.0}
 
     def parse_with_prompt(self, text: str, system_prompt: str) -> dict[str, Any]:
         """解析文本（忽略 system prompt，便于测试注入）。"""
         return self.parse(text)
 
+    def generate_with_prompt(self, text: str, system_prompt: str) -> str:
+        """返回预设的命令数组文本。"""
+        if text in self._presets:
+            preset = self._presets[text]
+            if isinstance(preset, str):
+                return preset
+            if isinstance(preset, (list, dict)):
+                return json.dumps(preset, ensure_ascii=False)
+        return "[]"
 
-class DashScopeLLM:
+
+class DashScopeLLM(LLMClient):
     """基于 dashscope 的 LLM 解析器。
 
     通过 qwen 模型返回符合 QueryIR schema 的 JSON。
@@ -64,7 +84,7 @@ class DashScopeLLM:
             system_prompt: 可选自定义 system prompt
         """
         self.model = model
-        self._system_prompt = system_prompt or DEFAULT_SYSTEM_PROMPT
+        self._system_prompt = system_prompt or ""
 
         if generation_client is not None:
             self._generation = generation_client
@@ -152,62 +172,48 @@ class DashScopeLLM:
         return FALLBACK_IR
 
 
-# JSON schema 供真实 LLM 使用（参考）
-QUERY_IR_SCHEMA = {
-    "type": "object",
-    "properties": {
-        "action": {"type": "string"},
-        "name_hint": {"type": "string"},
-        "scope_include": {"type": "array", "items": {"type": "string"}},
-        "scope_exclude": {"type": "array", "items": {"type": "string"}},
-        "quantifier": {"type": "string", "enum": ["one", "all", "any", "except"]},
-        "type_hint": {"type": "string", "enum": list(ALLOWED_CATEGORIES)},
-        "references": {"type": "array", "items": {"type": "string"}},
-        "confidence": {"type": "number"},
-    },
-}
-
-# TODO optimize prompt
-DEFAULT_SYSTEM_PROMPT = f"""你是智能家居助手的语义解析器。只返回一个 JSON 对象，不要输出任何额外文本。
-
-仅在你有把握时才输出字段，例外：
-- 必须始终输出 type_hint；无法判断时输出 "Unknown"。
-
-字段约束：
-- action: 中文意图短语（不包含英文字母），例如 "打开"、"关闭"、"调到50%"。无法判断时省略或输出空字符串。
-- name_hint: 设备名称提示（可选）
-- scope_include: 包含的房间/区域（可选，字符串数组）
-- scope_exclude: 排除的房间/区域（可选，字符串数组）
-- quantifier: one/all/any/except（可选）
-- type_hint: 必须是以下之一：{", ".join(ALLOWED_CATEGORIES)}
-- references: 指代信息（可选，字符串数组）
-- confidence: 总体置信度 0-1（可选）
-
-如果无法解析输入，返回 {{"confidence": 0, "type_hint": "Unknown"}}。"""
-
 FALLBACK_IR = {"confidence": 0.0}
 
 
-def compile_ir(text: str, llm: LLMClient) -> QueryIR:
-    """将自然语言编译为 QueryIR。
+def compile_ir(command: ParsedCommand, raw_text: str) -> QueryIR:
+    """将命令映射为 QueryIR。
 
     Args:
-        text: 用户输入文本
-        llm: LLM 客户端，实现 parse 方法
+        command: command_parser 输出的结构化命令
+        raw_text: 原始用户输入
 
     Returns:
         QueryIR 结构化表示
     """
-    data = llm.parse(text)
+    action = command.action.strip()
+    if not action or action == "UNKNOWN":
+        action = None
 
-    return QueryIR(
-        raw=text,
-        name_hint=data.get("name_hint"),
-        action=data.get("action"),
-        scope_include=set(data.get("scope_include", [])),
-        scope_exclude=set(data.get("scope_exclude", [])),
-        quantifier=data.get("quantifier", "one"),
-        type_hint=data.get("type_hint"),
-        references=data.get("references", []),
-        confidence=data.get("confidence", 1.0),
+    name_hint = command.target.name.strip()
+    references: list[str] = []
+    if name_hint == "@last":
+        references.append("last-mentioned")
+        name_hint = ""
+
+    if not name_hint or name_hint == "*":
+        name_hint = None
+
+    scope_include = set(command.scope.include)
+    if "*" in scope_include:
+        scope_include = set()
+
+    ir = QueryIR(
+        raw=raw_text,
+        name_hint=name_hint,
+        action=action,
+        scope_include=scope_include,
+        scope_exclude=set(command.scope.exclude),
+        quantifier=command.target.quantifier,
+        type_hint=command.target.type_hint,
+        references=references,
     )
+
+    if command.target.number is not None:
+        ir.meta["count"] = command.target.number
+
+    return ir

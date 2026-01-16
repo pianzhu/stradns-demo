@@ -285,29 +285,39 @@ class TestDashScopeLLMExtraction(unittest.TestCase):
             total += 1
             try:
                 call_start = time.perf_counter()
-                result = self.llm.parse(query)
+                raw_output = self.llm.generate_with_prompt(
+                    query,
+                    DEFAULT_SYSTEM_PROMPT,
+                )
                 call_cost = time.perf_counter() - call_start
+                parsed = parse_command_output(raw_output, config=CommandParserConfig())
+                commands = parsed.commands
 
-                action_text = result.get("action", "")
-                if (
-                    isinstance(action_text, str)
-                    and action_text.strip()
-                    and not any("A" <= ch <= "Z" or "a" <= ch <= "z" for ch in action_text)
+                actions = [
+                    cmd.action
+                    for cmd in commands
+                    if isinstance(cmd.action, str) and cmd.action.strip() and cmd.action != "UNKNOWN"
+                ]
+                if any(
+                    not any("A" <= ch <= "Z" or "a" <= ch <= "z" for ch in action)
+                    for action in actions
                 ):
                     action_valid += 1
 
                 if expected_scope:
                     scope_total += 1
-                    actual_scope = result.get("scope_include", [])
                     expected_set = set(expected_scope)
-                    actual_set = set(actual_scope)
-                    if expected_set <= actual_set or expected_set == actual_set:
+                    scope_hit = any(
+                        expected_set <= set(cmd.scope.include)
+                        for cmd in commands
+                    )
+                    if scope_hit:
                         scope_correct += 1
 
-                results.append((query, action_text, expected_scope))
+                results.append((query, actions, expected_scope))
                 _log_progress(
                     f"[LLM] {idx}/{len(cases)} ok elapsed={call_cost:.2f}s "
-                    f"query={_short_text(query)} action={_short_text(str(action_text))}"
+                    f"query={_short_text(query)} actions={_short_text(str(actions[:2]))}"
                 )
                 time.sleep(0.1)
 
@@ -500,8 +510,6 @@ class TestDashScopePipelineRetrieve(unittest.TestCase):
             query = case["query"]
             expected_cap_ids = case.get("expected_capability_ids", [])
             expected_fields = case.get("expected_fields", {}) or {}
-            expected_quantifier = expected_fields.get("quantifier")
-            expect_bulk = expected_quantifier in {"all", "except"}
             if not expected_cap_ids:
                 continue
 
@@ -518,64 +526,93 @@ class TestDashScopePipelineRetrieve(unittest.TestCase):
                 )
                 call_cost = time.perf_counter() - call_start
 
-                # 候选数量受控
-                self.assertLessEqual(len(result.candidates), PIPELINE_TOP_K)
+                if not result.commands:
+                    results.append((query, "MISS", expected_cap_ids, [], "no_command"))
+                    _log_progress(
+                        f"[Pipeline] {idx}/{len(cases)} MISS elapsed={call_cost:.2f}s "
+                        f"query={_short_text(query)} hint=no_command "
+                        f"expected={','.join(expected_cap_ids[:2])}"
+                    )
+                    continue
 
-                # 结构有效性：device/group 引用必须可解析，且 capability_id 必须可映射
-                group_by_id = {group.id: group for group in result.groups}
-                if expect_bulk and result.hint not in {"need_clarification", "too_many_targets"}:
-                    self.assertTrue(result.groups)
-                    self.assertTrue(all(c.entity_kind == "group" for c in result.candidates))
-                for cand in result.candidates:
-                    cap_id = cand.capability_id
-                    self.assertIsInstance(cap_id, str)
-                    self.assertTrue(bool(cap_id))
+                any_hit = False
+                any_option_hit = False
+                top_cap_ids_all: list[str] = []
+                option_caps_all: list[str] = []
+                hint_summary: list[str] = []
 
-                    if cand.entity_kind == "device":
-                        device = self.devices_by_id.get(cand.entity_id)
-                        self.assertIsNotNone(device)
-                        self.assertTrue(_supports(device, cap_id, self.spec_lookup))  # type: ignore[arg-type]
-                    elif cand.entity_kind == "group":
-                        group = group_by_id.get(cand.entity_id)
-                        self.assertIsNotNone(group)
-                        for device_id in group.device_ids: # type: ignore
-                            device = self.devices_by_id.get(device_id)
+                for cmd_result in result.commands:
+                    sub = cmd_result.result
+
+                    # 候选数量受控
+                    self.assertLessEqual(len(sub.candidates), PIPELINE_TOP_K)
+
+                    # 结构有效性：device/group 引用必须可解析，且 capability_id 必须可映射
+                    group_by_id = {group.id: group for group in sub.groups}
+                    if cmd_result.ir.quantifier in {"all", "except"} and sub.hint not in {
+                        "need_clarification",
+                        "too_many_targets",
+                    }:
+                        self.assertTrue(sub.groups)
+                        self.assertTrue(all(c.entity_kind == "group" for c in sub.candidates))
+                    for cand in sub.candidates:
+                        cap_id = cand.capability_id
+                        self.assertIsInstance(cap_id, str)
+                        self.assertTrue(bool(cap_id))
+
+                        if cand.entity_kind == "device":
+                            device = self.devices_by_id.get(cand.entity_id)
                             self.assertIsNotNone(device)
                             self.assertTrue(_supports(device, cap_id, self.spec_lookup))  # type: ignore[arg-type]
-                    else:  # pragma: no cover
-                        raise AssertionError(f"unexpected entity_kind: {cand.entity_kind}")
+                        elif cand.entity_kind == "group":
+                            group = group_by_id.get(cand.entity_id)
+                            self.assertIsNotNone(group)
+                            for device_id in group.device_ids: # type: ignore
+                                device = self.devices_by_id.get(device_id)
+                                self.assertIsNotNone(device)
+                                self.assertTrue(_supports(device, cap_id, self.spec_lookup))  # type: ignore[arg-type]
+                        else:  # pragma: no cover
+                            raise AssertionError(f"unexpected entity_kind: {cand.entity_kind}")
 
-                top_cap_ids = [
-                    cand.capability_id
-                    for cand in result.candidates
-                    if isinstance(cand.capability_id, str) and cand.capability_id
-                ]
+                    top_cap_ids = [
+                        cand.capability_id
+                        for cand in sub.candidates
+                        if isinstance(cand.capability_id, str) and cand.capability_id
+                    ]
 
-                hit = any(cap_id in top_cap_ids for cap_id in expected_cap_ids)
-                option_hit = (
-                    result.hint == "need_clarification"
-                    and any(
-                        opt.capability_id in expected_cap_ids
-                        for opt in result.options
+                    hit = any(cap_id in top_cap_ids for cap_id in expected_cap_ids)
+                    if sub.selected_capability_id in expected_cap_ids:
+                        hit = True
+                    option_hit = (
+                        sub.hint == "need_clarification"
+                        and any(
+                            opt.capability_id in expected_cap_ids
+                            for opt in sub.options
+                        )
                     )
-                )
 
-                if hit:
+                    any_hit = any_hit or hit
+                    any_option_hit = any_option_hit or option_hit
+                    top_cap_ids_all.extend(top_cap_ids)
+                    option_caps_all.extend([opt.capability_id for opt in sub.options])
+                    hint_summary.append(sub.hint or "-")
+
+                if any_hit:
                     hits += 1
-                    results.append((query, "HIT", expected_cap_ids, top_cap_ids[:3], result.hint))
-                elif option_hit:
+                    results.append((query, "HIT", expected_cap_ids, top_cap_ids_all[:3], ",".join(hint_summary)))
+                elif any_option_hit:
                     option_hits += 1
-                    results.append((query, "HIT_OPTION", expected_cap_ids, [opt.capability_id for opt in result.options], result.hint))
+                    results.append((query, "HIT_OPTION", expected_cap_ids, option_caps_all[:3], ",".join(hint_summary)))
                 else:
-                    results.append((query, "MISS", expected_cap_ids, top_cap_ids[:3], result.hint))
+                    results.append((query, "MISS", expected_cap_ids, top_cap_ids_all[:3], ",".join(hint_summary)))
 
-                option_preview = ",".join(opt.capability_id for opt in result.options)
+                option_preview = ",".join(option_caps_all[:3])
                 _log_progress(
                     f"[Pipeline] {idx}/{len(cases)} {results[-1][1]} elapsed={call_cost:.2f}s "
-                    f"query={_short_text(query)} hint={result.hint} "
+                    f"query={_short_text(query)} hint={results[-1][4]} "
                     f"expected={','.join(expected_cap_ids[:2])} "
-                    f"top_caps={','.join(top_cap_ids[:3])} options={option_preview} "
-                    f"candidates={len(result.candidates)} groups={len(result.groups)}"
+                    f"top_caps={','.join(top_cap_ids_all[:3])} options={option_preview} "
+                    f"commands={len(result.commands)}"
                 )
                 time.sleep(0.1)
 

@@ -7,7 +7,7 @@ from unittest import mock
 from context_retrieval.doc_enrichment import CapabilityDoc
 from context_retrieval.ir_compiler import FakeLLM
 from context_retrieval.models import Device, ValueRange
-from context_retrieval.pipeline import retrieve
+from context_retrieval.pipeline import retrieve_single
 from context_retrieval.state import ConversationState
 from context_retrieval.vector_search import StubVectorSearcher
 
@@ -34,11 +34,9 @@ class TestBulkMode(unittest.TestCase):
         devices = [_device("d1", "p1"), _device("d2", "p1")]
         llm = FakeLLM(
             {
-                "打开所有灯": {
-                    "action": "打开",
-                    "quantifier": "all",
-                    "type_hint": "Light",
-                }
+                "打开所有灯": [
+                    {"a": "打开", "s": "*", "n": "灯", "t": "Light", "q": "all"}
+                ]
             }
         )
         spec_index = {
@@ -57,7 +55,7 @@ class TestBulkMode(unittest.TestCase):
             spec_index=spec_index,
         )
 
-        result = retrieve(
+        result = retrieve_single(
             text="打开所有灯",
             devices=devices,
             llm=llm,
@@ -74,11 +72,9 @@ class TestBulkMode(unittest.TestCase):
         devices = [_device("d1", "p1"), _device("d2", "p1")]
         llm = ArbitrationLLM(
             preset_responses={
-                "打开所有灯": {
-                    "action": "打开",
-                    "quantifier": "all",
-                    "type_hint": "Light",
-                }
+                "打开所有灯": [
+                    {"a": "打开", "s": "*", "n": "灯", "t": "Light", "q": "all"}
+                ]
             },
             arbitration_response={"choice_index": 0},
         )
@@ -99,7 +95,7 @@ class TestBulkMode(unittest.TestCase):
         )
 
         with mock.patch.dict(os.environ, {"ENABLE_BULK_ARBITRATION_LLM": "1"}):
-            result = retrieve(
+            result = retrieve_single(
                 text="打开所有灯",
                 devices=devices,
                 llm=llm,
@@ -120,11 +116,9 @@ class TestBulkMode(unittest.TestCase):
         devices = [_device("d1", "p1"), _device("d2", "p1")]
         llm = ArbitrationLLM(
             preset_responses={
-                "打开所有灯": {
-                    "action": "打开",
-                    "quantifier": "all",
-                    "type_hint": "Light",
-                }
+                "打开所有灯": [
+                    {"a": "打开", "s": "*", "n": "灯", "t": "Light", "q": "all"}
+                ]
             },
             arbitration_response={"choice_index": 99},
         )
@@ -145,7 +139,7 @@ class TestBulkMode(unittest.TestCase):
         )
 
         with mock.patch.dict(os.environ, {"ENABLE_BULK_ARBITRATION_LLM": "1"}):
-            result = retrieve(
+            result = retrieve_single(
                 text="打开所有灯",
                 devices=devices,
                 llm=llm,
@@ -161,11 +155,9 @@ class TestBulkMode(unittest.TestCase):
         devices = [_device("d1", "p1"), _device("d2", "p1")]
         llm = ArbitrationLLM(
             preset_responses={
-                "打开所有灯": {
-                    "action": "打开",
-                    "quantifier": "all",
-                    "type_hint": "Light",
-                }
+                "打开所有灯": [
+                    {"a": "打开", "s": "*", "n": "灯", "t": "Light", "q": "all"}
+                ]
             },
             arbitration_response={"question": "你要打开还是关闭？"},
         )
@@ -186,7 +178,7 @@ class TestBulkMode(unittest.TestCase):
         )
 
         with mock.patch.dict(os.environ, {"ENABLE_BULK_ARBITRATION_LLM": "1"}):
-            result = retrieve(
+            result = retrieve_single(
                 text="打开所有灯",
                 devices=devices,
                 llm=llm,
@@ -202,11 +194,9 @@ class TestBulkMode(unittest.TestCase):
         devices = [_device("d1", "p1"), _device("d2", "p2")]
         llm = FakeLLM(
             {
-                "把所有灯调到50": {
-                    "action": "调到50",
-                    "quantifier": "all",
-                    "type_hint": "Light",
-                }
+                "把所有灯调到50": [
+                    {"a": "设置亮度=50%", "s": "*", "n": "灯", "t": "Light", "q": "all"}
+                ]
             }
         )
         spec_index = {
@@ -238,7 +228,7 @@ class TestBulkMode(unittest.TestCase):
             spec_index=spec_index,
         )
 
-        result = retrieve(
+        result = retrieve_single(
             text="把所有灯调到50",
             devices=devices,
             llm=llm,
@@ -255,11 +245,9 @@ class TestBulkMode(unittest.TestCase):
         devices = [_device(f"d{i}", "p1") for i in range(45)]
         llm = FakeLLM(
             {
-                "打开所有灯": {
-                    "action": "打开",
-                    "quantifier": "all",
-                    "type_hint": "Light",
-                }
+                "打开所有灯": [
+                    {"a": "打开", "s": "*", "n": "灯", "t": "Light", "q": "all"}
+                ]
             }
         )
         spec_index = {"p1": [CapabilityDoc(id="cap-on", description="打开")]}
@@ -270,7 +258,7 @@ class TestBulkMode(unittest.TestCase):
             spec_index=spec_index,
         )
 
-        result = retrieve(
+        result = retrieve_single(
             text="打开所有灯",
             devices=devices,
             llm=llm,
@@ -287,11 +275,9 @@ class TestBulkMode(unittest.TestCase):
         devices = [_device(f"d{i}", "p1") for i in range(201)]
         llm = FakeLLM(
             {
-                "打开所有灯": {
-                    "action": "打开",
-                    "quantifier": "all",
-                    "type_hint": "Light",
-                }
+                "打开所有灯": [
+                    {"a": "打开", "s": "*", "n": "灯", "t": "Light", "q": "all"}
+                ]
             }
         )
         spec_index = {"p1": [CapabilityDoc(id="cap-on", description="打开")]}
@@ -302,7 +288,7 @@ class TestBulkMode(unittest.TestCase):
             spec_index=spec_index,
         )
 
-        result = retrieve(
+        result = retrieve_single(
             text="打开所有灯",
             devices=devices,
             llm=llm,
@@ -317,4 +303,3 @@ class TestBulkMode(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

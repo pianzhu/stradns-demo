@@ -2,7 +2,7 @@
 
 ## 概述
 
-使用真实的 dashscope API（qwen-flash + text-embedding-v4）进行端到端验证，覆盖 **LLM 解析 QueryIR → pipeline.retrieve() 全链路检索** 的主路径。
+使用真实的 dashscope API（qwen-flash + text-embedding-v4）进行端到端验证，覆盖 **LLM 输出命令数组 → command_parser → pipeline.retrieve()** 的主路径。
 
 设备数据来源：
 - 使用 `tests/integration/smartthings_devices.jsonl` 与 `tests/integration/smartthings_rooms.jsonl` 构造虚拟设备与房间数据（字段可为空）
@@ -60,7 +60,7 @@ RUN_DASHSCOPE_IT=1 PYTHONPATH=src python -m unittest tests.integration.test_bulk
 
 - `query`: 用户输入文本
 - `expected_capability_ids`: 期望命中的命令 ID 列表
-- `expected_fields`: 期望的 QueryIR 字段（scope_include/scope_exclude/quantifier/type_hint 等）
+- `expected_fields`: 期望的命令/QueryIR 字段（scope_include/scope_exclude/quantifier/type_hint 等）
 
 Bulk pipeline 集成测试用例定义在 `tests/integration/dashscope_bulk_pipeline_cases.jsonl`，包含 simple/complex 用例：
 
@@ -79,14 +79,14 @@ Command parser 集成测试用例定义在 `tests/integration/dashscope_command_
 
 ### 1. LLM 解析测试 (TestDashScopeLLMExtraction)
 
-- `test_llm_extraction_accuracy`: 验证 action（中文、无英文字母）覆盖率与 scope_include 解析准确率（阈值 60%）
+- `test_llm_extraction_accuracy`: 验证命令数组解析后的 action（中文、无英文字母）覆盖率与 scope_include 解析准确率（阈值 60%）
 
 ### 2. Pipeline 全链路测试 (TestDashScopePipelineRetrieve)
 
 - `test_pipeline_recall_rate`: 以 `pipeline.retrieve()` 最终输出为准验证召回与有效性（主路径）
 
 覆盖点：
-1. LLM 解析 QueryIR（action/type_hint/scope/quantifier）
+1. LLM 输出命令数组并解析（action/type_hint/scope/quantifier）
 2. scope_exclude 过滤、category gating、keyword/vector 混合召回与融合评分
 3. bulk mode（quantifier=all/except）group 聚合与爆炸防护 hint
 4. 输出有效性：device/group 候选可解析且 capability_id 必须可映射到有效 CommandSpec
@@ -94,7 +94,6 @@ Command parser 集成测试用例定义在 `tests/integration/dashscope_command_
 ### 3. Command parser 输出契约测试 (TestDashScopeCommandParserContract)
 
 - 严格 JSON array<object> 输出与结构解析（字段 a/s/n/t/q/c）
-- 解析器兼容 array<string>（桥接到旧三段式）
 - 至少一条命令匹配派生用例中的 expected_fields
 
 ## 断言阈值

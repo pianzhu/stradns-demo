@@ -3,7 +3,7 @@
 import logging
 import unittest
 from unittest import mock
-from context_retrieval.pipeline import retrieve
+from context_retrieval.pipeline import retrieve, retrieve_single
 from context_retrieval.models import Device, CommandSpec, RetrievalResult
 from context_retrieval.doc_enrichment import CapabilityDoc
 from context_retrieval.ir_compiler import FakeLLM
@@ -38,30 +38,47 @@ class TestRetrieve(unittest.TestCase):
         self.devices = [self.lamp, self.bedroom_lamp]
 
         self.llm = FakeLLM({
-            "打开老伙计": {
-                "action": "打开",
-                "name_hint": "老伙计",
-            },
-            "关闭卧室的灯": {
-                "action": "关闭",
-                "scope_include": ["卧室"],
-            },
+            "打开老伙计": [
+                {"a": "打开", "s": "*", "n": "老伙计", "t": "Light", "q": "one"}
+            ],
+            "关闭卧室的灯": [
+                {"a": "关闭", "s": "卧室", "n": "灯", "t": "Light", "q": "all"}
+            ],
         })
         self.state = ConversationState()
 
-    def test_retrieve_returns_result(self):
-        """retrieve 返回 RetrievalResult。"""
+    def test_retrieve_returns_multi_result(self):
+        """retrieve 返回 MultiRetrievalResult。"""
         result = retrieve(
             text="打开老伙计",
             devices=self.devices,
             llm=self.llm,
             state=self.state,
         )
-        self.assertIsInstance(result, RetrievalResult)
+        self.assertEqual(len(result.commands), 1)
+        self.assertIsInstance(result.commands[0].result, RetrievalResult)
+
+    def test_retrieve_multi_command_order(self):
+        """多命令保持顺序输出。"""
+        llm = FakeLLM(
+            {
+                "打开老伙计并关闭卧室灯": [
+                    {"a": "打开", "s": "客厅", "n": "老伙计", "t": "Light", "q": "one"},
+                    {"a": "关闭", "s": "卧室", "n": "灯", "t": "Light", "q": "all"},
+                ]
+            }
+        )
+        result = retrieve(
+            text="打开老伙计并关闭卧室灯",
+            devices=self.devices,
+            llm=llm,
+            state=ConversationState(),
+        )
+        self.assertEqual([cmd.command.action for cmd in result.commands], ["打开", "关闭"])
 
     def test_retrieve_finds_device_by_name(self):
         """根据名称找到设备。"""
-        result = retrieve(
+        result = retrieve_single(
             text="打开老伙计",
             devices=self.devices,
             llm=self.llm,
@@ -72,7 +89,7 @@ class TestRetrieve(unittest.TestCase):
 
     def test_retrieve_with_room_scope(self):
         """Scope include should not filter candidates."""
-        result = retrieve(
+        result = retrieve_single(
             text="关闭卧室的灯",
             devices=self.devices,
             llm=self.llm,
@@ -84,11 +101,8 @@ class TestRetrieve(unittest.TestCase):
 
     def test_retrieve_does_not_drop_scope_include_devices(self):
         """Scope include should not filter candidates."""
-        scope_text = next(
-            key for key, value in self.llm._presets.items()
-            if "scope_include" in value
-        )
-        result = retrieve(
+        scope_text = "关闭卧室的灯"
+        result = retrieve_single(
             text=scope_text,
             devices=self.devices,
             llm=self.llm,
@@ -100,7 +114,7 @@ class TestRetrieve(unittest.TestCase):
 
     def test_retrieve_updates_state(self):
         """检索后更新会话状态。"""
-        result = retrieve(
+        result = retrieve_single(
             text="打开老伙计",
             devices=self.devices,
             llm=self.llm,
@@ -115,10 +129,17 @@ class TestRetrieve(unittest.TestCase):
         stub_vector = StubVectorSearcher(
             stub_results={"用向量检索": [("lamp-2", 0.9)]}
         )
-        result = retrieve(
+        llm = FakeLLM(
+            {
+                "用向量检索": [
+                    {"a": "打开", "s": "*", "n": "灯", "t": "Light", "q": "all"}
+                ]
+            }
+        )
+        result = retrieve_single(
             text="用向量检索",
             devices=self.devices,
-            llm=self.llm,
+            llm=llm,
             state=self.state,
             vector_searcher=stub_vector,
         )
@@ -132,7 +153,13 @@ class TestRetrieve(unittest.TestCase):
             Device(id="lamp-1", name="Lamp", room="Living", category="light"),
             Device(id="lamp-2", name="Lamp2", room="Living", category="light"),
         ]
-        llm = FakeLLM({"打开客厅的灯": {"action": "turn on"}})
+        llm = FakeLLM(
+            {
+                "打开客厅的灯": [
+                    {"a": "turn on", "s": "客厅", "n": "灯", "t": "Light", "q": "all"}
+                ]
+            }
+        )
         stub_vector = StubVectorSearcher(
             stub_results={
                 # 若错误使用 action，会命中 lamp-1
@@ -142,7 +169,7 @@ class TestRetrieve(unittest.TestCase):
             }
         )
 
-        result = retrieve(
+        result = retrieve_single(
             text="打开客厅的灯",
             devices=devices,
             llm=llm,
@@ -160,10 +187,12 @@ class TestRetrieve(unittest.TestCase):
             Device(id="lamp-1", name="Lamp", room="Living", category="light"),
             Device(id="ac-1", name="AC", room="Living", category="airConditioner"),
         ]
-        llm = FakeLLM({"turn on light": {"action": "turn on", "type_hint": "Light"}})
+        llm = FakeLLM(
+            {"turn on light": [{"a": "turn on", "s": "*", "n": "灯", "t": "Light", "q": "all"}]}
+        )
         recorder = StubVectorSearcher()
 
-        result = retrieve(
+        result = retrieve_single(
             text="turn on light",
             devices=devices,
             llm=llm,
@@ -181,11 +210,11 @@ class TestRetrieve(unittest.TestCase):
             Device(id="ac-1", name="AC", room="Living", category="airConditioner"),
         ]
         llm = FakeLLM(
-            {"turn on device": {"action": "turn on", "type_hint": "Unknown"}}
+            {"turn on device": [{"a": "turn on", "s": "*", "n": "设备", "t": "Unknown", "q": "all"}]}
         )
         recorder = StubVectorSearcher()
 
-        retrieve(
+        retrieve_single(
             text="turn on device",
             devices=devices,
             llm=llm,
@@ -197,10 +226,12 @@ class TestRetrieve(unittest.TestCase):
 
     def test_retrieve_fallback_weights_without_type_hint(self):
         """Falls back to keyword-heavy weights without type hints."""
-        llm = FakeLLM({"turn on device": {"action": "turn on"}})
+        llm = FakeLLM(
+            {"turn on device": [{"a": "turn on", "s": "*", "n": "设备", "t": "Unknown", "q": "all"}]}
+        )
         with mock.patch("context_retrieval.pipeline.merge_and_score") as merge_mock:
             merge_mock.return_value = []
-            retrieve(
+            retrieve_single(
                 text="turn on device",
                 devices=self.devices,
                 llm=llm,
@@ -212,9 +243,11 @@ class TestRetrieve(unittest.TestCase):
 
     def test_pipeline_logs_gating_and_scores(self):
         """Logs gating details for debugging."""
-        llm = FakeLLM({"turn on light": {"action": "turn on", "type_hint": "Light"}})
+        llm = FakeLLM(
+            {"turn on light": [{"a": "turn on", "s": "*", "n": "灯", "t": "Light", "q": "all"}]}
+        )
         with self.assertLogs("context_retrieval.pipeline", level=logging.INFO) as ctx:
-            retrieve(
+            retrieve_single(
                 text="turn on light",
                 devices=self.devices,
                 llm=llm,
@@ -235,10 +268,15 @@ class TestRetrieve(unittest.TestCase):
 
         llm = FakeLLM(
             {
-                "turn on Charger": {
-                    "action": "turn on",
-                    "type_hint": "Unknown",
-                }
+                "turn on Charger": [
+                    {
+                        "a": "turn on",
+                        "s": "*",
+                        "n": "Charger",
+                        "t": "Unknown",
+                        "q": "one",
+                    }
+                ]
             }
         )
 
@@ -253,7 +291,7 @@ class TestRetrieve(unittest.TestCase):
             spec_index=spec_index,
         )
 
-        result = retrieve(
+        result = retrieve_single(
             text="turn on Charger",
             devices=[charger, light],
             llm=llm,
@@ -271,7 +309,13 @@ class TestRetrieve(unittest.TestCase):
         fan.profile_id = "profile-fan"  # type: ignore[attr-defined]
 
         query = "把客厅风扇风速调到40%"
-        llm = FakeLLM({query: {"type_hint": "Unknown"}})
+        llm = FakeLLM(
+            {
+                query: [
+                    {"a": "设置风速=40%", "s": "客厅", "n": "风扇", "t": "Unknown", "q": "one"}
+                ]
+            }
+        )
 
         spec_index = {
             "profile-fan": [
@@ -288,7 +332,7 @@ class TestRetrieve(unittest.TestCase):
             spec_index=spec_index,
         )
 
-        result = retrieve(
+        result = retrieve_single(
             text=query,
             devices=[fan],
             llm=llm,

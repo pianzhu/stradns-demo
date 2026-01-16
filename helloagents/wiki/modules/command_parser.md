@@ -6,23 +6,25 @@
 ## 模块概述
 - **职责:** 解析 JSON 输出、校验字段、降级与兜底
 - **状态:** ✅稳定
-- **最后更新:** 2026-01-14
+- **最后更新:** 2026-01-16
 
 ## 规范
 
 ### 需求: 指令解析协议
 **模块:** command_parser
-解析大模型输出，支持对象数组与旧字符串数组的兼容解析与降级处理。
+解析大模型输出，仅接受 JSON 对象数组并提供降级处理。
 
 #### 场景: 结构化输出解析
-输入为 JSON 数组（对象字段 a/s/n/t/q/c 或旧字符串），输出为 ParsedCommand 列表。
+输入为 JSON 数组（对象字段 a/s/n/t/q/c），输出为 ParsedCommand 列表。
+- `s` 支持通配 `*`、逗号分隔、多排除 `!`
 - 若条目非法，记录错误并降级
 - 若全部无效，输出 UNKNOWN 兜底
+- action 为 UNKNOWN 时视为未知输出并标记降级
 
 ## API接口
 ### parse_command_output
 **描述:** 解析原始输出为结构化命令
-**输入:** 字符串输出
+**输入:** 字符串输出（JSON array<object>）
 **输出:** ParseResult
 
 ## 数据模型
@@ -40,3 +42,4 @@
 ## 变更历史
 - 初始化知识库
 - [202601142341_command-parser-object-bridge](../../history/2026-01/202601142341_command-parser-object-bridge/) - 提示词对象输出兼容与测试更新
+- [202601150335_command-pipeline-refactor](../../history/2026-01/202601150335_command-pipeline-refactor/) - 移除字符串桥接，直接解析对象数组

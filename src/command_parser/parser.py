@@ -20,6 +20,13 @@ _WHITESPACE_RE = re.compile(r"\s+")
 _ALLOWED_TYPE_SET = set(ALLOWED_CATEGORIES)
 
 
+def _is_unknown_command(command: "ParsedCommand") -> bool:
+    if command.raw == UNKNOWN_COMMAND:
+        return True
+    action = command.action.strip()
+    return action.upper() == "UNKNOWN"
+
+
 @dataclass
 class TargetSlot:
     name: str
@@ -51,7 +58,7 @@ class ParseResult:
 
     @property
     def is_unknown(self) -> bool:
-        return len(self.commands) == 1 and self.commands[0].raw == UNKNOWN_COMMAND
+        return len(self.commands) == 1 and _is_unknown_command(self.commands[0])
 
 
 @dataclass
@@ -76,7 +83,6 @@ class ParserMetrics:
 
 @dataclass
 class CommandParserConfig:
-    allow_legacy_input: bool = False
     only_take_first: bool = False
     max_log_chars: int = 400
 
@@ -124,32 +130,28 @@ def parse_command_output(
     if not raw_text.strip():
         errors.append("output_empty")
 
-    commands_raw: list[str] | None = None
-    json_failed = False
+    commands_raw: list[object] | None = None
     if raw_text.strip():
         try:
             parsed = json.loads(raw_text)
             if isinstance(parsed, list):
-                commands_raw, parsed_errors, parsed_degraded = _coerce_command_entries(parsed)
-                if parsed_errors:
-                    errors.extend(parsed_errors)
-                if parsed_degraded:
-                    degraded = True
+                commands_raw = parsed
             else:
                 errors.append("json_not_array")
         except json.JSONDecodeError:
             errors.append("json_decode_error")
-            json_failed = True
-
-    if commands_raw is None and config.allow_legacy_input and json_failed and raw_text.strip():
-        commands_raw = [raw_text.strip()]
-        errors.append("legacy_input_used")
-        degraded = True
 
     commands: list[ParsedCommand] = []
-    if commands_raw:
+    if commands_raw is not None:
+        if not commands_raw:
+            errors.append("json_array_empty")
+            degraded = True
         for entry in commands_raw:
-            parsed_command, command_errors = _parse_command_string(entry)
+            if not isinstance(entry, dict):
+                errors.append("json_item_invalid")
+                degraded = True
+                continue
+            parsed_command, command_errors = _parse_command_object(entry)
             if parsed_command is None:
                 errors.extend(command_errors)
                 degraded = True
@@ -169,7 +171,13 @@ def parse_command_output(
         errors.append("fallback_unknown")
         commands = [_build_unknown_command()]
 
-    unknown = len(commands) == 1 and commands[0].raw == UNKNOWN_COMMAND
+    has_unknown = any(_is_unknown_command(command) for command in commands)
+    if has_unknown:
+        degraded = True
+        if "fallback_unknown" not in errors:
+            errors.append("unknown_action")
+
+    unknown = len(commands) == 1 and _is_unknown_command(commands[0])
     metrics.record(degraded=degraded, unknown=unknown)
 
     _log_parse_result(
@@ -190,41 +198,9 @@ def parse_command_output(
     )
 
 
-def _coerce_command_entries(
-    items: list[object],
-) -> tuple[list[str], list[str], bool]:
-    errors: list[str] = []
-    degraded = False
-    commands: list[str] = []
-
-    for item in items:
-        if isinstance(item, str):
-            commands.append(item)
-            continue
-        if isinstance(item, dict):
-            command, command_errors = _command_object_to_string(item)
-            if command is None:
-                errors.extend(command_errors)
-                degraded = True
-                continue
-            if command_errors:
-                errors.extend(command_errors)
-                degraded = True
-            commands.append(command)
-            continue
-        errors.append("json_item_invalid")
-        degraded = True
-
-    if not items:
-        errors.append("json_array_empty")
-        degraded = True
-
-    return commands, errors, degraded
-
-
-def _command_object_to_string(
+def _parse_command_object(
     item: dict[str, object],
-) -> tuple[str | None, list[str]]:
+) -> tuple[ParsedCommand | None, list[str]]:
     errors: list[str] = []
 
     action = _coerce_text(item.get("a"))
@@ -236,13 +212,8 @@ def _command_object_to_string(
         errors.append("object_action_empty")
         action = "UNKNOWN"
 
-    if not _has_value(item.get("s")):
-        errors.append("object_scope_missing")
-    scope_raw = _coerce_scope_value(item.get("s"))
-    scope = _sanitize_scope(scope_raw)
-    if not scope:
-        errors.append("object_scope_empty")
-        scope = "*"
+    scope, scope_errors = _parse_scope_value(item.get("s"))
+    errors.extend(scope_errors)
 
     name = _coerce_text(item.get("n"))
     if not name:
@@ -271,11 +242,19 @@ def _command_object_to_string(
     if number is None and _has_value(item.get("c")):
         errors.append("object_number_invalid")
 
-    command = f"{action}-{scope}-{name}#{mapped_type}#{quantifier_raw}"
-    if number is not None:
-        command = f"{command}#{number}"
+    raw = _serialize_command_object(item)
 
-    return command, errors
+    return ParsedCommand(
+        action=action,
+        scope=scope,
+        target=TargetSlot(
+            name=name,
+            type_hint=mapped_type,
+            quantifier=quantifier_raw,
+            number=number,
+        ),
+        raw=raw,
+    ), errors
 
 
 def _sanitize_text_segment(value: str) -> str:
@@ -305,15 +284,6 @@ def _coerce_text(value: object) -> str:
     return value.strip() if isinstance(value, str) else ""
 
 
-def _coerce_scope_value(value: object) -> str:
-    if isinstance(value, list):
-        parts = [str(item).strip() for item in value if str(item).strip()]
-        return ",".join(parts) if parts else "*"
-    if isinstance(value, str):
-        return value.strip() or "*"
-    return "*"
-
-
 def _coerce_positive_int(value: object) -> int | None:
     if isinstance(value, int):
         return value if value > 0 else None
@@ -333,39 +303,42 @@ def _has_value(value: object) -> bool:
     return True
 
 
-def _parse_command_string(raw_command: str) -> tuple[ParsedCommand | None, list[str]]:
+def _parse_scope_value(value: object) -> tuple[ScopeSlot, list[str]]:
     errors: list[str] = []
-    if not isinstance(raw_command, str):
-        return None, ["command_not_string"]
-    raw_command = raw_command.strip()
-    if not raw_command:
-        return None, ["command_empty"]
 
-    parts = raw_command.split("-", 2)
-    if len(parts) != 3:
-        return None, ["command_not_three_segments"]
+    if not _has_value(value):
+        errors.append("object_scope_missing")
+        scope_raw = "*"
+    elif isinstance(value, list):
+        parts = [str(item).strip() for item in value if str(item).strip()]
+        if not parts:
+            errors.append("object_scope_empty")
+            scope_raw = "*"
+        else:
+            scope_raw = ",".join(parts)
+    elif isinstance(value, str):
+        scope_raw = value.strip()
+        if not scope_raw:
+            errors.append("object_scope_empty")
+            scope_raw = "*"
+    else:
+        errors.append("object_scope_invalid")
+        scope_raw = "*"
 
-    action, scope_raw, target_raw = (part.strip() for part in parts)
-    if not action or "-" in action:
-        return None, ["action_invalid"]
-
+    scope_raw = _sanitize_scope(scope_raw)
     scope, scope_errors = _parse_scope(scope_raw)
     if scope is None:
-        return None, scope_errors
-
-    target, target_errors = _parse_target(target_raw)
-    if target is None:
-        return None, target_errors
-
+        errors.extend(scope_errors)
+        return ScopeSlot(include=["*"], exclude=[]), errors
     errors.extend(scope_errors)
-    errors.extend(target_errors)
+    return scope, errors
 
-    return ParsedCommand(
-        action=action,
-        scope=scope,
-        target=target,
-        raw=raw_command,
-    ), errors
+
+def _serialize_command_object(item: dict[str, object]) -> str:
+    try:
+        return json.dumps(item, ensure_ascii=False, sort_keys=True)
+    except (TypeError, ValueError):
+        return repr(item)
 
 
 def _parse_scope(scope_raw: str) -> tuple[ScopeSlot | None, list[str]]:
@@ -394,54 +367,7 @@ def _parse_scope(scope_raw: str) -> tuple[ScopeSlot | None, list[str]]:
     return ScopeSlot(include=include, exclude=exclude), errors
 
 
-def _parse_target(target_raw: str) -> tuple[TargetSlot | None, list[str]]:
-    errors: list[str] = []
-    if not target_raw or not target_raw.strip():
-        return None, ["target_empty"]
-
-    parts = [part.strip() for part in target_raw.split("#")]
-    if len(parts) not in (3, 4):
-        return None, ["target_segment_count"]
-
-    name = parts[0].strip()
-    if not name:
-        return None, ["target_name_empty"]
-
-    type_raw = parts[1].strip()
-    mapped_type = map_type_to_category(type_raw) if type_raw else None
-    if mapped_type is None or mapped_type not in _ALLOWED_TYPE_SET:
-        mapped_type = "Unknown"
-        errors.append("target_type_invalid")
-
-    quantifier_raw = parts[2].strip().lower()
-    if quantifier_raw not in VALID_QUANTIFIERS:
-        quantifier_raw = "one"
-        errors.append("target_quantifier_invalid")
-
-    number: int | None = None
-    if len(parts) == 4:
-        number_raw = parts[3].strip()
-        if number_raw:
-            try:
-                number = int(number_raw)
-                if number <= 0:
-                    errors.append("target_number_invalid")
-                    number = None
-            except ValueError:
-                errors.append("target_number_invalid")
-
-    return TargetSlot(
-        name=name,
-        type_hint=mapped_type,
-        quantifier=quantifier_raw,
-        number=number,
-    ), errors
-
-
 def _build_unknown_command() -> ParsedCommand:
-    parsed, _ = _parse_command_string(UNKNOWN_COMMAND)
-    if parsed:
-        return parsed
     return ParsedCommand(
         action="UNKNOWN",
         scope=ScopeSlot(include=["*"], exclude=[]),

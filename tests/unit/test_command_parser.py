@@ -15,21 +15,6 @@ class TestCommandParser(unittest.TestCase):
 
     def test_parse_valid_single_command(self):
         parser = CommandParser()
-        result = parser.parse('["打开-卧室-顶灯#Light#one"]')
-
-        self.assertFalse(result.degraded)
-        self.assertEqual(len(result.commands), 1)
-        cmd = result.commands[0]
-        self.assertEqual(cmd.action, "打开")
-        self.assertEqual(cmd.scope.include, ["卧室"])
-        self.assertEqual(cmd.scope.exclude, [])
-        self.assertEqual(cmd.target.name, "顶灯")
-        self.assertEqual(cmd.target.type_hint, "Light")
-        self.assertEqual(cmd.target.quantifier, "one")
-        self.assertIsNone(cmd.target.number)
-
-    def test_parse_object_command(self):
-        parser = CommandParser()
         result = parser.parse(
             '[{"a":"打开","s":"卧室","n":"顶灯","t":"Light","q":"one"}]'
         )
@@ -48,7 +33,8 @@ class TestCommandParser(unittest.TestCase):
     def test_parse_multi_command(self):
         parser = CommandParser()
         result = parser.parse(
-            '["打开-卧室-顶灯#Light#one","关闭-客厅-灯#Light#all"]'
+            '[{"a":"打开","s":"卧室","n":"顶灯","t":"Light","q":"one"},'
+            '{"a":"关闭","s":"客厅","n":"灯","t":"Light","q":"all"}]'
         )
 
         self.assertEqual([cmd.action for cmd in result.commands], ["打开", "关闭"])
@@ -63,7 +49,8 @@ class TestCommandParser(unittest.TestCase):
     def test_drop_invalid_commands_keep_valid(self):
         parser = CommandParser()
         result = parser.parse(
-            '["打开-卧室-顶灯#Light#one","无效指令"]'
+            '[{"a":"打开","s":"卧室","n":"顶灯","t":"Light","q":"one"},'
+            '"无效指令"]'
         )
 
         self.assertTrue(result.degraded)
@@ -72,21 +59,34 @@ class TestCommandParser(unittest.TestCase):
 
     def test_fallback_when_all_invalid(self):
         parser = CommandParser()
-        result = parser.parse('["无效指令"]')
+        result = parser.parse('["无效指令", 1]')
 
         self.assertTrue(result.degraded)
         self.assertEqual(result.commands[0].raw, UNKNOWN_COMMAND)
 
     def test_scope_exclude_only(self):
         parser = CommandParser()
-        result = parser.parse('["打开-!卧室-灯#Light#except"]')
+        result = parser.parse(
+            '[{"a":"打开","s":"!卧室","n":"灯","t":"Light","q":"except"}]'
+        )
+
+        self.assertEqual(result.commands[0].scope.include, ["*"])
+        self.assertEqual(result.commands[0].scope.exclude, ["卧室"])
+
+    def test_scope_wildcard_exclude(self):
+        parser = CommandParser()
+        result = parser.parse(
+            '[{"a":"打开","s":"*,!卧室","n":"灯","t":"Light","q":"except"}]'
+        )
 
         self.assertEqual(result.commands[0].scope.include, ["*"])
         self.assertEqual(result.commands[0].scope.exclude, ["卧室"])
 
     def test_target_normalization(self):
         parser = CommandParser()
-        result = parser.parse('["打开-客厅-顶灯#BadType#maybe#x"]')
+        result = parser.parse(
+            '[{"a":"打开","s":"客厅","n":"顶灯","t":"BadType","q":"maybe","c":"x"}]'
+        )
 
         self.assertTrue(result.degraded)
         cmd = result.commands[0]
@@ -94,17 +94,11 @@ class TestCommandParser(unittest.TestCase):
         self.assertEqual(cmd.target.quantifier, "one")
         self.assertIsNone(cmd.target.number)
 
-    def test_legacy_input(self):
-        parser = CommandParser(CommandParserConfig(allow_legacy_input=True))
-        result = parser.parse("打开-卧室-顶灯#Light#one")
-
-        self.assertTrue(result.degraded)
-        self.assertEqual(result.commands[0].action, "打开")
-
     def test_only_take_first(self):
         parser = CommandParser(CommandParserConfig(only_take_first=True))
         result = parser.parse(
-            '["打开-卧室-顶灯#Light#one","关闭-客厅-灯#Light#all"]'
+            '[{"a":"打开","s":"卧室","n":"顶灯","t":"Light","q":"one"},'
+            '{"a":"关闭","s":"客厅","n":"灯","t":"Light","q":"all"}]'
         )
 
         self.assertTrue(result.degraded)

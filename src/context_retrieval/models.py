@@ -68,6 +68,7 @@ class QueryIR:
     type_hint: str | None = None
     references: list[str] = field(default_factory=list)
     confidence: float = 1.0
+    meta: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -110,3 +111,21 @@ class RetrievalResult:
     selected_capability_id: str | None = None
     question: str | None = None
     meta: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class CommandRetrieval:
+    """单条命令的检索结果。"""
+
+    command: "ParsedCommand"
+    ir: QueryIR
+    result: RetrievalResult
+
+
+@dataclass
+class MultiRetrievalResult:
+    """多命令检索结果。"""
+
+    commands: list[CommandRetrieval] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
+    degraded: bool = False
