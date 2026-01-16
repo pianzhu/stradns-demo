@@ -6,6 +6,7 @@ from command_parser import (
     CommandParser,
     CommandParserConfig,
     UNKNOWN_COMMAND,
+    parse_command_output,
 )
 from command_parser.prompt import PROMPT_REGRESSION_CASES
 
@@ -29,6 +30,27 @@ class TestCommandParser(unittest.TestCase):
         self.assertEqual(cmd.target.type_hint, "Light")
         self.assertEqual(cmd.target.quantifier, "one")
         self.assertIsNone(cmd.target.number)
+
+    def test_parse_object_array_direct(self):
+        result = parse_command_output(
+            [{"a": "打开", "s": "卧室", "n": "顶灯", "t": "Light", "q": "one"}]
+        )
+
+        self.assertFalse(result.degraded)
+        self.assertEqual(len(result.commands), 1)
+        cmd = result.commands[0]
+        self.assertEqual(cmd.action, "打开")
+        self.assertEqual(cmd.scope.include, ["卧室"])
+
+    def test_parse_object_array_order(self):
+        result = parse_command_output(
+            [
+                {"a": "打开", "s": "客厅", "n": "主灯", "t": "Light", "q": "one"},
+                {"a": "关闭", "s": "卧室", "n": "灯", "t": "Light", "q": "all"},
+            ]
+        )
+
+        self.assertEqual([cmd.action for cmd in result.commands], ["打开", "关闭"])
 
     def test_parse_multi_command(self):
         parser = CommandParser()

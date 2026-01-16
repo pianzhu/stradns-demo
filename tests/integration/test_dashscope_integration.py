@@ -516,7 +516,7 @@ class TestDashScopePipelineRetrieve(unittest.TestCase):
             total += 1
             try:
                 call_start = time.perf_counter()
-                result = retrieve(
+                cmd_results = retrieve(
                     text=query,
                     devices=self.devices,
                     llm=self.llm,
@@ -526,7 +526,7 @@ class TestDashScopePipelineRetrieve(unittest.TestCase):
                 )
                 call_cost = time.perf_counter() - call_start
 
-                if not result.commands:
+                if not cmd_results:
                     results.append((query, "MISS", expected_cap_ids, [], "no_command"))
                     _log_progress(
                         f"[Pipeline] {idx}/{len(cases)} MISS elapsed={call_cost:.2f}s "
@@ -541,15 +541,16 @@ class TestDashScopePipelineRetrieve(unittest.TestCase):
                 option_caps_all: list[str] = []
                 hint_summary: list[str] = []
 
-                for cmd_result in result.commands:
-                    sub = cmd_result.result
+                for sub in cmd_results:
+                    command_meta = sub.meta.get("command", {})
+                    quantifier = command_meta.get("quantifier")
 
                     # 候选数量受控
                     self.assertLessEqual(len(sub.candidates), PIPELINE_TOP_K)
 
                     # 结构有效性：device/group 引用必须可解析，且 capability_id 必须可映射
                     group_by_id = {group.id: group for group in sub.groups}
-                    if cmd_result.ir.quantifier in {"all", "except"} and sub.hint not in {
+                    if quantifier in {"all", "except"} and sub.hint not in {
                         "need_clarification",
                         "too_many_targets",
                     }:
@@ -612,7 +613,7 @@ class TestDashScopePipelineRetrieve(unittest.TestCase):
                     f"query={_short_text(query)} hint={results[-1][4]} "
                     f"expected={','.join(expected_cap_ids[:2])} "
                     f"top_caps={','.join(top_cap_ids_all[:3])} options={option_preview} "
-                    f"commands={len(result.commands)}"
+                    f"commands={len(cmd_results)}"
                 )
                 time.sleep(0.1)
 

@@ -4,7 +4,7 @@
 将解析后的语义信息用于设备检索与排序，输出可执行的候选结果。
 
 ## 模块概述
-- **职责:** 命令映射、范围过滤、关键词/向量检索、评分融合
+- **职责:** 命令映射、范围过滤（含 include 回退与设备名兜底）、关键词/向量检索、评分融合
 - **状态:** ✅稳定
 - **最后更新:** 2026-01-16
 
@@ -29,7 +29,7 @@
 **描述:** 将结构化命令映射为 QueryIR
 
 ### retrieve
-**描述:** 组合检索策略并返回多命令结果（MultiRetrievalResult）
+**描述:** 组合检索策略并按命令顺序返回 `list[RetrievalResult]`
 
 ### retrieve_single
 **描述:** 单命令兼容入口，返回 RetrievalResult
@@ -45,20 +45,16 @@
 | quantifier | string | 量词 |
 | type_hint | string | 设备类型 |
 | meta | object | 附加元信息（如 count） |
-
-### MultiRetrievalResult
+### RetrievalResult.meta
 | 字段 | 类型 | 说明 |
 |------|------|------|
-| commands | list | 按命令顺序的检索结果 |
-| errors | list | 命令解析错误 |
-| degraded | bool | 命令解析是否降级 |
-
-### CommandRetrieval
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| command | ParsedCommand | 命令解析结果 |
-| ir | QueryIR | 映射后的检索 IR |
-| result | RetrievalResult | 单条命令检索结果 |
+| command | object | 命令快照（action/scope/name/type/quantifier/count/raw） |
+| parser_errors | list | 命令解析错误 |
+| parser_degraded | bool | 命令解析是否降级 |
+| scope_include_fallback | int | include 过滤为空时回退标记 |
+| room_name_used | int | 设备名兜底命中数量 |
+| room_name_ambiguous | int | 设备名多房间歧义数量 |
+| room_unknown_terms | list | 命令中未知房间词 |
 
 ## 依赖
 - dashscope
@@ -69,3 +65,4 @@
 - 初始化知识库
 - 2026-01-16 修复 bulk 查询清洗与兜底策略
 - 2026-01-16 补充检索流水线与批量逻辑的函数注释
+- 2026-01-16 命令数组入口与 scope 兜底策略调整

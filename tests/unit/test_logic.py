@@ -28,32 +28,32 @@ class TestApplyScopeFilters(unittest.TestCase):
             scope_exclude={"卧室"},
             quantifier="except",
         )
-        result = apply_scope_filters(self.all_devices, ir)
+        result, _ = apply_scope_filters(self.all_devices, ir)
         result_ids = {d.id for d in result}
         self.assertIn("lamp-1", result_ids)
         self.assertIn("lamp-3", result_ids)
         self.assertNotIn("lamp-2", result_ids)
 
     def test_include_single_room(self):
-        """Scope include should not filter devices."""
+        """Scope include 应只保留命中房间设备。"""
         ir = QueryIR(
             raw="turn on living room light",
             scope_include={self.living_room_lamp.room},
         )
-        result = apply_scope_filters(self.all_devices, ir)
+        result, _ = apply_scope_filters(self.all_devices, ir)
         result_ids = {d.id for d in result}
-        self.assertEqual(result_ids, {"lamp-1", "lamp-2", "lamp-3"})
+        self.assertEqual(result_ids, {"lamp-1"})
 
-    def test_include_single_room_does_not_filter(self):
-        """Scope include should not filter devices."""
-        target_room = self.living_room_lamp.room
+    def test_include_fallback_when_empty(self):
+        """include 为空时应回退为仅排除。"""
         ir = QueryIR(
-            raw="turn on living room light",
-            scope_include={target_room},
+            raw="打开次卧灯",
+            scope_include={"次卧"},
         )
-        result = apply_scope_filters(self.all_devices, ir)
+        result, meta = apply_scope_filters(self.all_devices, ir)
         result_ids = {d.id for d in result}
         self.assertEqual(result_ids, {"lamp-1", "lamp-2", "lamp-3"})
+        self.assertEqual(meta.get("scope_include_fallback"), 1)
 
     def test_all_quantifier_no_scope(self):
         """量词"所有"无 scope 返回全部。"""
@@ -61,7 +61,7 @@ class TestApplyScopeFilters(unittest.TestCase):
             raw="关闭所有灯",
             quantifier="all",
         )
-        result = apply_scope_filters(self.all_devices, ir)
+        result, _ = apply_scope_filters(self.all_devices, ir)
         self.assertEqual(len(result), 3)
 
     def test_exclude_multiple_rooms(self):
@@ -71,14 +71,14 @@ class TestApplyScopeFilters(unittest.TestCase):
             scope_exclude={"卧室", "厨房"},
             quantifier="except",
         )
-        result = apply_scope_filters(self.all_devices, ir)
+        result, _ = apply_scope_filters(self.all_devices, ir)
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0].id, "lamp-1")
 
     def test_empty_scope_returns_all(self):
         """无 scope 限制返回全部。"""
         ir = QueryIR(raw="打开灯")
-        result = apply_scope_filters(self.all_devices, ir)
+        result, _ = apply_scope_filters(self.all_devices, ir)
         self.assertEqual(len(result), 3)
 
 

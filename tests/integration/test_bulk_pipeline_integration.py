@@ -331,7 +331,7 @@ class TestDashScopeBulkPipelineIntegration(unittest.TestCase):
                     raise ValueError("expected_capability_ids is empty")
 
                 call_start = time.perf_counter()
-                multi = retrieve(
+                cmd_results = retrieve(
                     text=query,
                     devices=self.devices,
                     llm=self.llm,
@@ -350,10 +350,9 @@ class TestDashScopeBulkPipelineIntegration(unittest.TestCase):
                 groups_preview: list[str] = []
                 batches_preview: list[str] = []
 
-                if multi.commands:
+                if cmd_results:
                     hints = []
-                    for cmd_result in multi.commands:
-                        result = cmd_result.result
+                    for result in cmd_results:
                         hints.append(result.hint or "-")
                         if result.question and not question:
                             question = result.question

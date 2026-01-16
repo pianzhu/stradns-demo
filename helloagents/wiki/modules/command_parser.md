@@ -24,7 +24,7 @@
 ## API接口
 ### parse_command_output
 **描述:** 解析原始输出为结构化命令
-**输入:** 字符串输出（JSON array<object>）
+**输入:** 字符串输出（JSON array<object>）或已解析的对象数组
 **输出:** ParseResult
 
 ## 数据模型
@@ -44,3 +44,4 @@
 - [202601142341_command-parser-object-bridge](../../history/2026-01/202601142341_command-parser-object-bridge/) - 提示词对象输出兼容与测试更新
 - [202601150335_command-pipeline-refactor](../../history/2026-01/202601150335_command-pipeline-refactor/) - 移除字符串桥接，直接解析对象数组
 - 2026-01-16 补充解析与校验辅助函数注释
+- 2026-01-16 支持对象数组直传并补齐解析用例

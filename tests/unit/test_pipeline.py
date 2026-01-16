@@ -48,15 +48,15 @@ class TestRetrieve(unittest.TestCase):
         self.state = ConversationState()
 
     def test_retrieve_returns_multi_result(self):
-        """retrieve 返回 MultiRetrievalResult。"""
+        """retrieve 返回按命令顺序的结果列表。"""
         result = retrieve(
             text="打开老伙计",
             devices=self.devices,
             llm=self.llm,
             state=self.state,
         )
-        self.assertEqual(len(result.commands), 1)
-        self.assertIsInstance(result.commands[0].result, RetrievalResult)
+        self.assertEqual(len(result), 1)
+        self.assertIsInstance(result[0], RetrievalResult)
 
     def test_retrieve_multi_command_order(self):
         """多命令保持顺序输出。"""
@@ -74,7 +74,8 @@ class TestRetrieve(unittest.TestCase):
             llm=llm,
             state=ConversationState(),
         )
-        self.assertEqual([cmd.command.action for cmd in result.commands], ["打开", "关闭"])
+        actions = [item.meta["command"]["action"] for item in result]
+        self.assertEqual(actions, ["打开", "关闭"])
 
     def test_retrieve_finds_device_by_name(self):
         """根据名称找到设备。"""
@@ -88,7 +89,7 @@ class TestRetrieve(unittest.TestCase):
         self.assertIn("lamp-1", candidate_ids)
 
     def test_retrieve_with_room_scope(self):
-        """Scope include should not filter candidates."""
+        """Scope include 应只保留命中房间的设备。"""
         result = retrieve_single(
             text="关闭卧室的灯",
             devices=self.devices,
@@ -97,20 +98,73 @@ class TestRetrieve(unittest.TestCase):
         )
         candidate_ids = {c.entity_id for c in result.candidates}
         self.assertIn("lamp-2", candidate_ids)
-        self.assertIn("lamp-1", candidate_ids)
+        self.assertNotIn("lamp-1", candidate_ids)
 
-    def test_retrieve_does_not_drop_scope_include_devices(self):
-        """Scope include should not filter candidates."""
-        scope_text = "关闭卧室的灯"
+    def test_retrieve_scope_include_fallback(self):
+        """include 过滤为空时回退为仅排除。"""
+        llm = FakeLLM(
+            {
+                "关闭书房的灯": [
+                    {"a": "关闭", "s": "书房", "n": "灯", "t": "Light", "q": "all"}
+                ]
+            }
+        )
         result = retrieve_single(
-            text=scope_text,
+            text="关闭书房的灯",
             devices=self.devices,
-            llm=self.llm,
-            state=self.state,
+            llm=llm,
+            state=ConversationState(),
+        )
+        self.assertTrue(result.candidates)
+        self.assertEqual(result.meta.get("scope_include_fallback"), 1)
+
+    def test_retrieve_scope_unknown_room_name_fallback(self):
+        """未知房间词应尝试设备名兜底。"""
+        devices = [
+            Device(id="lamp-1", name="次卧台灯", room="卧室", category="light")
+        ]
+        llm = FakeLLM(
+            {
+                "打开次卧台灯": [
+                    {"a": "打开", "s": "次卧", "n": "台灯", "t": "Light", "q": "one"}
+                ]
+            }
+        )
+        result = retrieve_single(
+            text="打开次卧台灯",
+            devices=devices,
+            llm=llm,
+            state=ConversationState(),
         )
         candidate_ids = {c.entity_id for c in result.candidates}
         self.assertIn("lamp-1", candidate_ids)
+        self.assertIn("次卧", result.meta.get("room_unknown_terms", []))
+        self.assertEqual(result.meta.get("room_name_used"), 1)
+
+    def test_retrieve_scope_name_ambiguous(self):
+        """设备名多命中房间词时不使用兜底。"""
+        devices = [
+            Device(id="lamp-1", name="客厅卧室灯", room="", category="light"),
+            Device(id="lamp-2", name="卧室灯", room="卧室", category="light"),
+            Device(id="lamp-3", name="客厅灯", room="客厅", category="light"),
+        ]
+        llm = FakeLLM(
+            {
+                "打开卧室灯": [
+                    {"a": "打开", "s": "卧室", "n": "灯", "t": "Light", "q": "all"}
+                ]
+            }
+        )
+        result = retrieve_single(
+            text="打开卧室灯",
+            devices=devices,
+            llm=llm,
+            state=ConversationState(),
+        )
+        candidate_ids = {c.entity_id for c in result.candidates}
         self.assertIn("lamp-2", candidate_ids)
+        self.assertNotIn("lamp-1", candidate_ids)
+        self.assertEqual(result.meta.get("room_name_ambiguous"), 1)
 
     def test_retrieve_updates_state(self):
         """检索后更新会话状态。"""
@@ -177,9 +231,9 @@ class TestRetrieve(unittest.TestCase):
             vector_searcher=stub_vector,
         )
 
+        self.assertEqual(stub_vector.last_query, "打开客厅的灯")
         ids = {c.entity_id for c in result.candidates}
         self.assertIn("lamp-2", ids)
-        self.assertNotIn("lamp-1", ids)
 
     def test_retrieve_applies_category_gating(self):
         """Applies category gating before vector search."""

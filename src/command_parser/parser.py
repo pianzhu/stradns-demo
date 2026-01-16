@@ -100,7 +100,7 @@ class CommandParser:
         self.metrics = ParserMetrics()
         self._logger = logger_override or logger
 
-    def parse(self, raw_output: str) -> ParseResult:
+    def parse(self, raw_output: object) -> ParseResult:
         """将 LLM 输出解析为结构化命令。"""
         return parse_command_output(
             raw_output,
@@ -111,37 +111,49 @@ class CommandParser:
 
 
 def parse_command_output(
-    raw_output: str,
+    raw_output: object,
     *,
     config: CommandParserConfig | None = None,
     logger_override: logging.Logger | None = None,
     metrics: ParserMetrics | None = None,
 ) -> ParseResult:
-    """Parse raw LLM output into validated commands."""
+    """解析 LLM 输出为结构化命令。
+
+    支持 JSON 数组文本或已解析的对象数组。
+    """
     config = config or CommandParserConfig()
     metrics = metrics or ParserMetrics()
     active_logger = logger_override or logger
 
     errors: list[str] = []
     degraded = False
-    raw_text = raw_output if isinstance(raw_output, str) else ""
-    raw_text_for_log = raw_output if isinstance(raw_output, str) else repr(raw_output)
-
-    if not isinstance(raw_output, str):
-        errors.append("output_not_string")
-    if not raw_text.strip():
-        errors.append("output_empty")
-
     commands_raw: list[object] | None = None
-    if raw_text.strip():
+    raw_text = ""
+    raw_text_for_log = repr(raw_output)
+
+    if isinstance(raw_output, list):
+        commands_raw = raw_output
         try:
-            parsed = json.loads(raw_text)
-            if isinstance(parsed, list):
-                commands_raw = parsed
-            else:
-                errors.append("json_not_array")
-        except json.JSONDecodeError:
-            errors.append("json_decode_error")
+            raw_text = json.dumps(raw_output, ensure_ascii=False)
+            raw_text_for_log = raw_text
+        except (TypeError, ValueError):
+            raw_text = ""
+    elif isinstance(raw_output, str):
+        raw_text = raw_output
+        raw_text_for_log = raw_output
+        if not raw_text.strip():
+            errors.append("output_empty")
+        else:
+            try:
+                parsed = json.loads(raw_text)
+                if isinstance(parsed, list):
+                    commands_raw = parsed
+                else:
+                    errors.append("json_not_array")
+            except json.JSONDecodeError:
+                errors.append("json_decode_error")
+    else:
+        errors.append("output_not_string")
 
     commands: list[ParsedCommand] = []
     if commands_raw is not None:

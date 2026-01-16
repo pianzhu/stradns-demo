@@ -14,6 +14,9 @@
 - 调整 tests 目录结构，单元测试迁移至 tests/unit，集成测试与夹具迁移至 tests/integration
 - 命令解析改为仅接受对象数组，检索管线支持多命令返回并新增 retrieve_single
 - 补充 src 主要函数注释以提升可读性
+- pipeline.retrieve 改为按命令返回结果列表并复用向量索引/spec lookup
+- scope include 增加硬过滤回退与设备名房间兜底，回退信息写入 meta
+- command_parser 支持对象数组直传解析并补齐测试
 
 ### 修复
 - 修复 bulk 量词场景向量检索兜底与查询文本清洗

@@ -24,13 +24,7 @@ from context_retrieval.bulk import (
 )
 from context_retrieval.category_gating import filter_by_category, map_type_to_category
 from context_retrieval.doc_enrichment import enrich_description
-from context_retrieval.models import (
-    Candidate,
-    CommandRetrieval,
-    Device,
-    MultiRetrievalResult,
-    RetrievalResult,
-)
+from context_retrieval.models import Candidate, Device, RetrievalResult
 from context_retrieval.ir_compiler import LLMClient, compile_ir
 from context_retrieval.state import ConversationState
 from context_retrieval.logic import apply_scope_filters
@@ -159,6 +153,27 @@ def _infer_category_from_name_hint(
     if len(categories) != 1:
         return None
     return next(iter(categories))
+
+
+def _command_meta(command, ir) -> dict[str, object]:
+    meta: dict[str, object] = {
+        "action": command.action,
+        "scope_include": sorted(ir.scope_include),
+        "scope_exclude": sorted(ir.scope_exclude),
+        "name": ir.name_hint,
+        "type_hint": ir.type_hint,
+        "quantifier": ir.quantifier,
+        "raw": command.raw,
+    }
+    if "count" in ir.meta:
+        meta["count"] = ir.meta["count"]
+    return meta
+
+
+def _attach_meta(result: RetrievalResult, extra: dict[str, object]) -> RetrievalResult:
+    if extra:
+        result.meta.update(extra)
+    return result
 
 
 def _is_explicit_device_name(name_hint: str | None, devices: list[Device]) -> bool:
@@ -424,6 +439,9 @@ def _retrieve_with_ir(
     state: ConversationState,
     top_k: int = 5,
     vector_searcher: VectorSearcher | None = None,
+    spec_index: dict | None = None,
+    spec_lookup: dict | None = None,
+    device_by_id: dict[str, Device] | None = None,
 ) -> RetrievalResult:
     """执行单条 QueryIR 的检索。
 
@@ -446,7 +464,10 @@ def _retrieve_with_ir(
     )
 
     # 2. Scope 预过滤
-    filtered_devices = apply_scope_filters(devices, ir)
+    filtered_devices, scope_meta = apply_scope_filters(devices, ir)
+
+    def _with_scope(result: RetrievalResult) -> RetrievalResult:
+        return _attach_meta(result, scope_meta)
 
     if not ir.name_hint:
         inferred = _infer_name_hint(ir.raw, filtered_devices)
@@ -477,10 +498,11 @@ def _retrieve_with_ir(
     )
 
     if _can_bulk_retrieve(ir, vector_searcher):
-        vector_searcher.index(devices)
-        spec_index = getattr(vector_searcher, "spec_index", {})
-        if not isinstance(spec_index, dict) or not spec_index:
-            spec_index = {}
+        active_spec_index = spec_index
+        if not isinstance(active_spec_index, dict) or not active_spec_index:
+            active_spec_index = getattr(vector_searcher, "spec_index", {})
+        if not isinstance(active_spec_index, dict) or not active_spec_index:
+            active_spec_index = {}
 
         search_text = _vector_search_text(ir)
         if _is_explicit_device_name(ir.name_hint, gated_devices) and ir.name_hint not in search_text:
@@ -489,7 +511,7 @@ def _retrieve_with_ir(
             query_text=search_text,
             devices=gated_devices,
             vector_searcher=vector_searcher,
-            spec_index=spec_index,
+            spec_index=active_spec_index,
         )
         top1_ratio = float(confidence.get("top1_ratio", 0.0))
         margin = float(confidence.get("margin", 0.0))
@@ -504,9 +526,11 @@ def _retrieve_with_ir(
         )
 
         if not options:
-            return RetrievalResult(
-                hint="no_capability_options",
-                meta={"top1_ratio": top1_ratio, "margin": margin},
+            return _with_scope(
+                RetrievalResult(
+                    hint="no_capability_options",
+                    meta={"top1_ratio": top1_ratio, "margin": margin},
+                )
             )
 
         if is_low_confidence(top1_ratio, margin):
@@ -519,54 +543,68 @@ def _retrieve_with_ir(
                 if choice_index is not None and 0 <= choice_index < len(options[:5]):
                     selected_cap_id = options[choice_index].capability_id
                 else:
-                    return RetrievalResult(
-                        hint="need_clarification",
-                        options=options[:3],
-                        question=question,
-                        meta={"top1_ratio": top1_ratio, "margin": margin},
+                    return _with_scope(
+                        RetrievalResult(
+                            hint="need_clarification",
+                            options=options[:3],
+                            question=question,
+                            meta={"top1_ratio": top1_ratio, "margin": margin},
+                        )
                     )
             else:
-                return RetrievalResult(
-                    hint="need_clarification",
-                    options=options[:3],
-                    meta={"top1_ratio": top1_ratio, "margin": margin},
+                return _with_scope(
+                    RetrievalResult(
+                        hint="need_clarification",
+                        options=options[:3],
+                        meta={"top1_ratio": top1_ratio, "margin": margin},
+                    )
                 )
         else:
             selected_cap_id = options[0].capability_id
 
-        spec_lookup = build_spec_lookup(spec_index)
-        targets = select_targets(gated_devices, selected_cap_id, spec_lookup)
+        active_spec_lookup = spec_lookup
+        if active_spec_lookup is None:
+            active_spec_lookup = build_spec_lookup(active_spec_index)
+        targets = select_targets(gated_devices, selected_cap_id, active_spec_lookup)
 
         support_count = len(targets)
         total_devices = len(gated_devices)
         coverage = support_count / total_devices if total_devices else 0.0
 
         if support_count == 0:
-            return RetrievalResult(
-                hint="no_targets",
-                options=options[:3],
-                selected_capability_id=selected_cap_id,
-                meta={
-                    "support_count": support_count,
-                    "total_devices": total_devices,
-                    "coverage": coverage,
-                },
+            return _with_scope(
+                RetrievalResult(
+                    hint="no_targets",
+                    options=options[:3],
+                    selected_capability_id=selected_cap_id,
+                    meta={
+                        "support_count": support_count,
+                        "total_devices": total_devices,
+                        "coverage": coverage,
+                    },
+                )
             )
 
         if support_count > DEFAULT_MAX_TARGETS:
-            return RetrievalResult(
-                hint="too_many_targets",
-                options=options[:3],
-                selected_capability_id=selected_cap_id,
-                meta={
-                    "support_count": support_count,
-                    "total_devices": total_devices,
-                    "coverage": coverage,
-                    "max_targets": DEFAULT_MAX_TARGETS,
-                },
+            return _with_scope(
+                RetrievalResult(
+                    hint="too_many_targets",
+                    options=options[:3],
+                    selected_capability_id=selected_cap_id,
+                    meta={
+                        "support_count": support_count,
+                        "total_devices": total_devices,
+                        "coverage": coverage,
+                        "max_targets": DEFAULT_MAX_TARGETS,
+                    },
+                )
             )
 
-        groups = group_by_command_compatibility(targets, selected_cap_id, spec_lookup)
+        groups = group_by_command_compatibility(
+            targets,
+            selected_cap_id,
+            active_spec_lookup,
+        )
         logger.info(
             "bulk_selected capability_id=%s targets=%s groups=%s coverage=%.3f",
             selected_cap_id,
@@ -575,17 +613,19 @@ def _retrieve_with_ir(
             coverage,
         )
         if len(groups) > DEFAULT_MAX_GROUPS:
-            return RetrievalResult(
-                hint="too_many_targets",
-                options=options[:3],
-                selected_capability_id=selected_cap_id,
-                meta={
-                    "support_count": support_count,
-                    "total_devices": total_devices,
-                    "coverage": coverage,
-                    "groups": len(groups),
-                    "max_groups": DEFAULT_MAX_GROUPS,
-                },
+            return _with_scope(
+                RetrievalResult(
+                    hint="too_many_targets",
+                    options=options[:3],
+                    selected_capability_id=selected_cap_id,
+                    meta={
+                        "support_count": support_count,
+                        "total_devices": total_devices,
+                        "coverage": coverage,
+                        "groups": len(groups),
+                        "max_groups": DEFAULT_MAX_GROUPS,
+                    },
+                )
             )
 
         hint = None
@@ -611,20 +651,22 @@ def _retrieve_with_ir(
             for group in groups
         ]
 
-        return RetrievalResult(
-            candidates=candidates,
-            hint=hint,
-            groups=groups,
-            batches=batches,
-            options=options[:3],
-            selected_capability_id=selected_cap_id,
-            meta={
-                "top1_ratio": top1_ratio,
-                "margin": margin,
-                "support_count": support_count,
-                "total_devices": total_devices,
-                "coverage": coverage,
-            },
+        return _with_scope(
+            RetrievalResult(
+                candidates=candidates,
+                hint=hint,
+                groups=groups,
+                batches=batches,
+                options=options[:3],
+                selected_capability_id=selected_cap_id,
+                meta={
+                    "top1_ratio": top1_ratio,
+                    "margin": margin,
+                    "support_count": support_count,
+                    "total_devices": total_devices,
+                    "coverage": coverage,
+                },
+            )
         )
 
     w_keyword = DEFAULT_KEYWORD_WEIGHT
@@ -640,8 +682,6 @@ def _retrieve_with_ir(
     # 4. Vector 召回（可选）
     vector_candidates = []
     if vector_searcher:
-        # 索引全量设备以便复用 embedding；检索时按 device_ids 过滤避免额外设备干扰。
-        vector_searcher.index(devices)
         device_ids = {d.id for d in gated_devices}
         search_text = _vector_search_text(ir)
         vector_candidates = vector_searcher.search(
@@ -663,36 +703,44 @@ def _retrieve_with_ir(
         ir.scope_include,
     )
 
-    spec_lookup = None
-    device_by_id = None
-    if vector_searcher:
-        spec_index = getattr(vector_searcher, "spec_index", None)
-        if isinstance(spec_index, dict) and spec_index:
-            spec_lookup = build_spec_lookup(spec_index)
-            device_by_id = {device.id: device for device in devices}
-            merged = _fill_missing_capability_ids(
-                merged,
-                query=ir.raw,
-                device_by_id=device_by_id,
-                spec_lookup=spec_lookup,
+    active_spec_lookup = spec_lookup
+    active_device_by_id = device_by_id
+    if vector_searcher and active_spec_lookup is None:
+        active_spec_index = spec_index
+        if not isinstance(active_spec_index, dict) or not active_spec_index:
+            active_spec_index = getattr(vector_searcher, "spec_index", None)
+        if isinstance(active_spec_index, dict) and active_spec_index:
+            active_spec_lookup = build_spec_lookup(active_spec_index)
+    if vector_searcher and active_spec_lookup:
+        if active_device_by_id is None:
+            active_device_by_id = {device.id: device for device in devices}
+        merged = _fill_missing_capability_ids(
+            merged,
+            query=ir.raw,
+            device_by_id=active_device_by_id,
+            spec_lookup=active_spec_lookup,
+        )
+        merged = [
+            candidate
+            for candidate in merged
+            if _is_supported_candidate(
+                candidate,
+                active_device_by_id,
+                active_spec_lookup,
             )
-            merged = [
-                candidate
-                for candidate in merged
-                if _is_supported_candidate(candidate, device_by_id, spec_lookup)
-            ]
+        ]
 
     merged = _dedupe_device_candidates(merged)
     if (
-        spec_lookup
-        and device_by_id
+        active_spec_lookup
+        and active_device_by_id
         and _should_force_capability_guess(ir.raw)
     ):
         merged = _apply_capability_guess(
             merged,
             query=ir.raw,
-            device_by_id=device_by_id,
-            spec_lookup=spec_lookup,
+            device_by_id=active_device_by_id,
+            spec_lookup=active_spec_lookup,
         )
     merged.sort(key=lambda c: c.total_score, reverse=True)
 
@@ -715,9 +763,11 @@ def _retrieve_with_ir(
                 state.update_mentioned(device)
                 break
 
-    return RetrievalResult(
-        candidates=selection.candidates,
-        hint=selection.hint,
+    return _with_scope(
+        RetrievalResult(
+            candidates=selection.candidates,
+            hint=selection.hint,
+        )
     )
 
 
@@ -728,15 +778,25 @@ def retrieve(
     state: ConversationState,
     top_k: int = 5,
     vector_searcher: VectorSearcher | None = None,
-) -> MultiRetrievalResult:
-    """执行上下文检索（多命令）。"""
+) -> list[RetrievalResult]:
+    """执行上下文检索（多命令），按命令顺序返回结果列表。"""
     raw_output = _generate_command_output(text, llm)
     parsed = parse_command_output(
         raw_output,
         config=CommandParserConfig(),
     )
 
-    results: list[CommandRetrieval] = []
+    spec_index: dict | None = None
+    spec_lookup: dict | None = None
+    device_by_id: dict[str, Device] | None = None
+    if vector_searcher:
+        vector_searcher.index(devices)
+        spec_index = getattr(vector_searcher, "spec_index", None)
+        if isinstance(spec_index, dict) and spec_index:
+            spec_lookup = build_spec_lookup(spec_index)
+            device_by_id = {device.id: device for device in devices}
+
+    results: list[RetrievalResult] = []
     for command in parsed.commands:
         ir = compile_ir(command, raw_text=text)
         result = _retrieve_with_ir(
@@ -746,14 +806,18 @@ def retrieve(
             state=state,
             top_k=top_k,
             vector_searcher=vector_searcher,
+            spec_index=spec_index,
+            spec_lookup=spec_lookup,
+            device_by_id=device_by_id,
         )
-        results.append(CommandRetrieval(command=command, ir=ir, result=result))
+        result.meta.setdefault("command", _command_meta(command, ir))
+        if parsed.errors:
+            result.meta.setdefault("parser_errors", list(parsed.errors))
+        if parsed.degraded:
+            result.meta.setdefault("parser_degraded", parsed.degraded)
+        results.append(result)
 
-    return MultiRetrievalResult(
-        commands=results,
-        errors=list(parsed.errors),
-        degraded=parsed.degraded,
-    )
+    return results
 
 
 def retrieve_single(
@@ -764,8 +828,8 @@ def retrieve_single(
     top_k: int = 5,
     vector_searcher: VectorSearcher | None = None,
 ) -> RetrievalResult:
-    """执行单命令检索（兼容入口）。"""
-    multi = retrieve(
+    """执行单命令检索（兼容入口），返回首条结果。"""
+    results = retrieve(
         text=text,
         devices=devices,
         llm=llm,
@@ -774,20 +838,12 @@ def retrieve_single(
         vector_searcher=vector_searcher,
     )
 
-    if not multi.commands:
+    if not results:
         return RetrievalResult(
             hint="no_command",
-            meta={
-                "parser_errors": list(multi.errors),
-                "parser_degraded": multi.degraded,
-            },
         )
 
-    if len(multi.commands) > 1:
-        logger.info("multi_command_result total=%d use_first", len(multi.commands))
+    if len(results) > 1:
+        logger.info("multi_command_result total=%d use_first", len(results))
 
-    result = multi.commands[0].result
-    if multi.errors or multi.degraded:
-        result.meta.setdefault("parser_errors", list(multi.errors))
-        result.meta.setdefault("parser_degraded", multi.degraded)
-    return result
+    return results[0]
