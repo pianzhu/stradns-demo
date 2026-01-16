@@ -21,6 +21,7 @@ _ALLOWED_TYPE_SET = set(ALLOWED_CATEGORIES)
 
 
 def _is_unknown_command(command: "ParsedCommand") -> bool:
+    """判断解析结果是否为 UNKNOWN 兜底命令。"""
     if command.raw == UNKNOWN_COMMAND:
         return True
     action = command.action.strip()
@@ -100,6 +101,7 @@ class CommandParser:
         self._logger = logger_override or logger
 
     def parse(self, raw_output: str) -> ParseResult:
+        """将 LLM 输出解析为结构化命令。"""
         return parse_command_output(
             raw_output,
             config=self.config,
@@ -201,6 +203,7 @@ def parse_command_output(
 def _parse_command_object(
     item: dict[str, object],
 ) -> tuple[ParsedCommand | None, list[str]]:
+    """解析单个命令对象并返回解析结果与校验错误。"""
     errors: list[str] = []
 
     action = _coerce_text(item.get("a"))
@@ -258,12 +261,14 @@ def _parse_command_object(
 
 
 def _sanitize_text_segment(value: str) -> str:
+    """清理片段文本的分隔符与多余空白。"""
     cleaned = _DELIMITER_SANITIZE_RE.sub(" ", value)
     cleaned = _WHITESPACE_RE.sub(" ", cleaned).strip()
     return cleaned
 
 
 def _sanitize_scope(scope_raw: str) -> str:
+    """规整 scope 文本为紧凑的包含/排除表达。"""
     parts = [part.strip() for part in scope_raw.split(",") if part.strip()]
     if not parts:
         return "*"
@@ -281,10 +286,12 @@ def _sanitize_scope(scope_raw: str) -> str:
 
 
 def _coerce_text(value: object) -> str:
+    """将值安全转换为去空白字符串。"""
     return value.strip() if isinstance(value, str) else ""
 
 
 def _coerce_positive_int(value: object) -> int | None:
+    """从字符串或整数中提取正整数。"""
     if isinstance(value, int):
         return value if value > 0 else None
     if isinstance(value, str):
@@ -296,6 +303,7 @@ def _coerce_positive_int(value: object) -> int | None:
 
 
 def _has_value(value: object) -> bool:
+    """判断字段是否存在且非空。"""
     if value is None:
         return False
     if isinstance(value, str):
@@ -304,6 +312,7 @@ def _has_value(value: object) -> bool:
 
 
 def _parse_scope_value(value: object) -> tuple[ScopeSlot, list[str]]:
+    """解析 scope 字段为 ScopeSlot 并返回校验错误。"""
     errors: list[str] = []
 
     if not _has_value(value):
@@ -335,6 +344,7 @@ def _parse_scope_value(value: object) -> tuple[ScopeSlot, list[str]]:
 
 
 def _serialize_command_object(item: dict[str, object]) -> str:
+    """序列化命令对象用于日志或调试。"""
     try:
         return json.dumps(item, ensure_ascii=False, sort_keys=True)
     except (TypeError, ValueError):
@@ -342,6 +352,7 @@ def _serialize_command_object(item: dict[str, object]) -> str:
 
 
 def _parse_scope(scope_raw: str) -> tuple[ScopeSlot | None, list[str]]:
+    """解析 scope 表达式为包含/排除列表。"""
     errors: list[str] = []
     if not scope_raw or not scope_raw.strip():
         return None, ["scope_empty"]
@@ -368,6 +379,7 @@ def _parse_scope(scope_raw: str) -> tuple[ScopeSlot | None, list[str]]:
 
 
 def _build_unknown_command() -> ParsedCommand:
+    """构造 UNKNOWN 兜底命令。"""
     return ParsedCommand(
         action="UNKNOWN",
         scope=ScopeSlot(include=["*"], exclude=[]),
@@ -386,6 +398,7 @@ def _log_parse_result(
     *,
     parsed_count: int,
 ) -> None:
+    """记录解析结果、错误与统计指标。"""
     error_text = ",".join(errors) if errors else "-"
     active_logger.info(
         "command_parser parsed=%d degraded=%s errors=%s degraded_count=%d unknown_ratio=%.3f raw=%s",
@@ -399,6 +412,7 @@ def _log_parse_result(
 
 
 def _sanitize_log_value(value: str, max_len: int) -> str:
+    """清理日志文本中的控制字符并截断长度。"""
     if not isinstance(value, str):
         value = repr(value)
     cleaned = _CONTROL_CHARS_RE.sub(" ", value)

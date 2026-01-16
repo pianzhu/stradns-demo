@@ -43,3 +43,4 @@
 - 初始化知识库
 - [202601142341_command-parser-object-bridge](../../history/2026-01/202601142341_command-parser-object-bridge/) - 提示词对象输出兼容与测试更新
 - [202601150335_command-pipeline-refactor](../../history/2026-01/202601150335_command-pipeline-refactor/) - 移除字符串桥接，直接解析对象数组
+- 2026-01-16 补充解析与校验辅助函数注释

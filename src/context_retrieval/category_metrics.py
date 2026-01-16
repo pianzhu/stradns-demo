@@ -133,6 +133,7 @@ def compare_gating_recall(
 
 
 def _item_has_category(item: dict) -> bool:
+    """判断原始设备条目是否包含类别信息。"""
     if not isinstance(item, dict):
         return False
 
@@ -153,6 +154,7 @@ def _item_has_category(item: dict) -> bool:
 
 
 def _normalize_hint(hint: str | None) -> str | None:
+    """归一化类型提示文本。"""
     if not isinstance(hint, str):
         return None
     normalized = hint.strip()
@@ -162,6 +164,7 @@ def _normalize_hint(hint: str | None) -> str | None:
 
 
 def _has_recall(expected_ids: Sequence[str], ranked_ids: Sequence[str], k: int) -> bool:
+    """判断 top-k 中是否包含任一期望设备。"""
     if not expected_ids:
         return True
     if not ranked_ids:

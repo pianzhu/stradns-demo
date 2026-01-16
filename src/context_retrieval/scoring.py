@@ -94,7 +94,7 @@ def apply_room_bonus(
     scope_include: set[str],
     bonus: float = ROOM_MATCH_BONUS,
 ) -> list[Candidate]:
-    """Apply a room match bonus to candidates."""
+    """对命中房间的候选增加加分。"""
     if not candidates or not scope_include:
         return candidates
 

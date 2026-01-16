@@ -12,6 +12,7 @@
 | 202601150209 | tests-structure | 变更 | ✅已完成 | [link](2026-01/202601150209_tests-structure/) |
 | 202601150335 | command-pipeline-refactor | 变更 | ✅已完成 | [link](2026-01/202601150335_command-pipeline-refactor/) |
 | 202601160735 | bulk-retrieval-fallback | 修复 | ✅已完成 | [link](2026-01/202601160735_bulk-retrieval-fallback/) |
+| 202601160826 | src-function-comments | 变更 | ✅已完成 | [link](2026-01/202601160826_src_function_comments/) |
 
 ---
 
@@ -25,3 +26,4 @@
 - [202601150209_tests-structure](2026-01/202601150209_tests-structure/) - 测试目录分层整理
 - [202601150335_command-pipeline-refactor](2026-01/202601150335_command-pipeline-refactor/) - 命令数组解析与检索管线重构
 - [202601160735_bulk-retrieval-fallback](2026-01/202601160735_bulk-retrieval-fallback/) - bulk 检索兜底与查询清洗修复
+- [202601160826_src_function_comments](2026-01/202601160826_src_function_comments/) - src 主要函数注释补充

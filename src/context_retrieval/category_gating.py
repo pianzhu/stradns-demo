@@ -71,6 +71,7 @@ def filter_by_category(devices: Iterable[Device], category: str | None) -> list[
 
 
 def _device_matches_category(device: Device, category_key: str) -> bool:
+    """判断设备是否匹配指定规范化类别。"""
     for raw_value in _device_category_values(device):
         mapped = map_type_to_category(raw_value)
         if not mapped:
@@ -82,6 +83,7 @@ def _device_matches_category(device: Device, category_key: str) -> bool:
 
 
 def _device_category_values(device: Device) -> list[str]:
+    """收集设备可用的类别候选值。"""
     values: list[str] = []
 
     category = getattr(device, "category", None)
@@ -105,6 +107,7 @@ def _device_category_values(device: Device) -> list[str]:
 
 
 def _compact_key(value: str | None) -> str | None:
+    """将类别字符串规整为可比较的紧凑键。"""
     if not isinstance(value, str):
         return None
     stripped = value.strip()

@@ -39,10 +39,12 @@ class BulkSelectionStats:
 
 
 def is_bulk_quantifier(quantifier: str | None) -> bool:
+    """判断量词是否表示批量选择。"""
     return quantifier in {"all", "except"}
 
 
 def device_profile_id(device: Device) -> str | None:
+    """从设备信息中解析 profile_id（兼容旧字段）。"""
     profile_id = getattr(device, "profile_id", None) or getattr(device, "profileId", None)
     if isinstance(profile_id, str) and profile_id.strip():
         return profile_id.strip()
@@ -52,6 +54,7 @@ def device_profile_id(device: Device) -> str | None:
 def build_spec_lookup(
     spec_index: dict[str, list[CapabilityDoc]],
 ) -> dict[str, dict[str, CapabilityDoc]]:
+    """构建 profile_id 到 capability 文档的索引。"""
     lookup: dict[str, dict[str, CapabilityDoc]] = {}
     for profile_id, docs in spec_index.items():
         inner: dict[str, CapabilityDoc] = {}
@@ -67,6 +70,7 @@ def device_supports_capability(
     capability_id: str,
     spec_lookup: dict[str, dict[str, CapabilityDoc]],
 ) -> bool:
+    """判断设备是否支持指定 capability。"""
     profile_id = device_profile_id(device)
     if not profile_id:
         return False
@@ -81,6 +85,7 @@ def capability_doc_for_device(
     capability_id: str,
     spec_lookup: dict[str, dict[str, CapabilityDoc]],
 ) -> CapabilityDoc | None:
+    """获取设备对应 capability 的文档。"""
     profile_id = device_profile_id(device)
     if not profile_id:
         return None
@@ -91,6 +96,7 @@ def find_capability_description(
     capability_id: str,
     spec_lookup: dict[str, dict[str, CapabilityDoc]],
 ) -> str:
+    """查找 capability 描述文本。"""
     for profile_docs in spec_lookup.values():
         doc = profile_docs.get(capability_id)
         if doc and isinstance(doc.description, str) and doc.description.strip():
@@ -108,6 +114,7 @@ def build_capability_options(
     options_search_k: int = DEFAULT_OPTIONS_SEARCH_K,
     evidence_per_capability: int = DEFAULT_EVIDENCE_PER_CAPABILITY,
 ) -> tuple[list[CapabilityOption], dict[str, Any]]:
+    """基于检索证据与覆盖率构造 capability 候选。"""
     if not devices:
         return [], {"top1_ratio": 0.0, "margin": 0.0}
 
@@ -179,6 +186,7 @@ def build_capability_options(
 
 
 def compute_confidence(options: list[CapabilityOption]) -> tuple[float, float]:
+    """计算 top1 比例与前两名差距。"""
     if not options:
         return 0.0, 0.0
 
@@ -197,6 +205,7 @@ def is_low_confidence(
     top1_ratio_threshold: float = DEFAULT_CONFIDENCE_TOP1_RATIO_THRESHOLD,
     margin_threshold: float = DEFAULT_CONFIDENCE_MARGIN_THRESHOLD,
 ) -> bool:
+    """判断置信度是否过低。"""
     return top1_ratio < top1_ratio_threshold or margin < margin_threshold
 
 
@@ -205,6 +214,7 @@ def select_targets(
     capability_id: str,
     spec_lookup: dict[str, dict[str, CapabilityDoc]],
 ) -> list[Device]:
+    """筛选出支持指定 capability 的设备。"""
     return [
         device for device in devices
         if device_supports_capability(device, capability_id, spec_lookup)
@@ -216,6 +226,7 @@ def group_by_command_compatibility(
     capability_id: str,
     spec_lookup: dict[str, dict[str, CapabilityDoc]],
 ) -> list[Group]:
+    """按命令兼容性对设备分组。"""
     buckets: dict[tuple, list[Device]] = {}
     for device in targets:
         doc = capability_doc_for_device(device, capability_id, spec_lookup)
@@ -238,6 +249,7 @@ def group_by_command_compatibility(
 
 
 def compatibility_signature(doc: CapabilityDoc) -> tuple:
+    """生成描述命令兼容性的签名。"""
     value_range = None
     if doc.value_range is not None:
         value_range = (
@@ -262,10 +274,10 @@ def compatibility_signature(doc: CapabilityDoc) -> tuple:
 
 
 def split_into_batches(device_ids: list[str], batch_size: int) -> list[list[str]]:
+    """按固定大小切分设备列表。"""
     if batch_size <= 0:
         return [list(device_ids)]
     return [
         device_ids[i : i + batch_size]
         for i in range(0, len(device_ids), batch_size)
     ]
-

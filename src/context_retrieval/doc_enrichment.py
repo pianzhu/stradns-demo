@@ -128,6 +128,7 @@ def build_enriched_doc(device: Device, spec_index: dict[str, list[CapabilityDoc]
 
 
 def _build_fallback_doc(device: Device) -> str:
+    """在缺少规格文档时生成基础描述文本。"""
     parts: list[str] = []
     for value in (device.name, device.room):
         if isinstance(value, str) and value.strip():
@@ -136,6 +137,7 @@ def _build_fallback_doc(device: Device) -> str:
 
 
 def _extract_value_descriptions(capability: dict) -> list[str]:
+    """提取能力值的说明文本。"""
     descriptions: list[str] = []
     value_list = capability.get("value_list")
     if not isinstance(value_list, list):
@@ -150,6 +152,7 @@ def _extract_value_descriptions(capability: dict) -> list[str]:
 
 
 def _extract_value_options(capability: dict) -> list[ValueOption]:
+    """提取能力值的候选选项。"""
     options: list[ValueOption] = []
     value_list = capability.get("value_list")
     if not isinstance(value_list, list):
@@ -168,6 +171,7 @@ def _extract_value_options(capability: dict) -> list[ValueOption]:
 
 
 def _extract_value_range(capability: dict) -> ValueRange | None:
+    """提取能力值的范围配置。"""
     value_range = capability.get("value_range")
     if not isinstance(value_range, dict):
         return None
@@ -190,6 +194,7 @@ def _extract_value_range(capability: dict) -> ValueRange | None:
 
 
 def _ensure_list(value: object) -> list[dict]:
+    """将输入安全转换为字典列表。"""
     if not isinstance(value, list):
         return []
     return [item for item in value if isinstance(item, dict)]

@@ -196,6 +196,7 @@ class DashScopeVectorSearcher(VectorSearcher):
         self._fingerprint = fingerprint
 
     def _build_fingerprint(self, devices: list[Device]) -> tuple[tuple[str, str], ...]:
+        """构建设备列表的指纹，用于判断索引是否复用。"""
         parts: list[tuple[str, str]] = []
         for device in devices:
             profile_id = getattr(device, "profile_id", None) or getattr(

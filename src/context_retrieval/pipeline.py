@@ -71,6 +71,7 @@ _BULK_ARBITRATION_SYSTEM_PROMPT = """你是智能家居助手的批量命令选�
 
 
 def _strip_bulk_query(raw: str, name_hint: str | None) -> str:
+    """移除批量量词与设备名，提取向量检索用文本。"""
     cleaned = raw
     if name_hint:
         cleaned = cleaned.replace(name_hint, " ")
@@ -85,6 +86,7 @@ def _strip_bulk_query(raw: str, name_hint: str | None) -> str:
 
 
 def _vector_search_text(ir) -> str:
+    """基于 QueryIR 生成向量检索的查询文本。"""
     raw = (ir.raw or "").strip()
     action_text = (ir.action or "").strip()
     if action_text and _LATIN_LETTERS_RE.search(action_text):
@@ -101,6 +103,7 @@ def _vector_search_text(ir) -> str:
 
 
 def _should_force_capability_guess(query: str) -> bool:
+    """判断是否需要强制做 capability 猜测。"""
     if not isinstance(query, str) or not query.strip():
         return False
     if not _CJK_RE.search(query):
@@ -109,6 +112,7 @@ def _should_force_capability_guess(query: str) -> bool:
 
 
 def _device_profile_id(device: Device) -> str | None:
+    """解析设备的 profile_id（兼容旧字段）。"""
     profile_id = getattr(device, "profile_id", None) or getattr(device, "profileId", None)
     if isinstance(profile_id, str) and profile_id.strip():
         return profile_id.strip()
@@ -116,6 +120,7 @@ def _device_profile_id(device: Device) -> str | None:
 
 
 def _infer_name_hint(query: str, devices: list[Device]) -> str | None:
+    """从原始请求中推断明确的设备名提示。"""
     if not isinstance(query, str) or not query.strip() or not devices:
         return None
 
@@ -139,6 +144,7 @@ def _infer_category_from_name_hint(
     name_hint: str | None,
     devices: list[Device],
 ) -> str | None:
+    """根据明确设备名推断唯一类别。"""
     if not isinstance(name_hint, str) or not name_hint.strip() or not devices:
         return None
 
@@ -156,6 +162,7 @@ def _infer_category_from_name_hint(
 
 
 def _is_explicit_device_name(name_hint: str | None, devices: list[Device]) -> bool:
+    """判断 name_hint 是否为设备清单中的明确名称。"""
     if not isinstance(name_hint, str) or not name_hint.strip():
         return False
     for device in devices:
@@ -171,6 +178,7 @@ def _guess_capability_id(
     device: Device,
     spec_lookup,
 ) -> str | None:
+    """从能力文档中猜测最匹配的 capability_id。"""
     profile_id = _device_profile_id(device)
     if not profile_id:
         return None
@@ -222,6 +230,7 @@ def _fill_missing_capability_ids(
     device_by_id: dict[str, Device],
     spec_lookup,
 ) -> list[Candidate]:
+    """为缺失 capability_id 的候选补全能力标识。"""
     if not candidates:
         return candidates
 
@@ -257,6 +266,7 @@ def _fill_missing_capability_ids(
 
 
 def _dedupe_device_candidates(candidates: list[Candidate]) -> list[Candidate]:
+    """同一设备只保留最高分候选。"""
     if not candidates:
         return candidates
 
@@ -278,6 +288,7 @@ def _apply_capability_guess(
     device_by_id: dict[str, Device],
     spec_lookup,
 ) -> list[Candidate]:
+    """在满足条件时为候选补充能力猜测标记。"""
     if not candidates:
         return candidates
 
@@ -321,6 +332,7 @@ def _is_supported_candidate(
     device_by_id: dict[str, Device],
     spec_lookup,
 ) -> bool:
+    """判断候选的 capability 是否在设备规格中存在。"""
     if candidate.entity_kind != "device":
         return False
 
@@ -349,6 +361,7 @@ def _bulk_arbitrate_choice(
     query: str,
     options,
 ) -> tuple[int | None, str | None]:
+    """低置信度时使用 LLM 在候选中仲裁或给出澄清问题。"""
     lines = [
         f"用户请求: {query}",
         "",
@@ -382,6 +395,7 @@ def _bulk_arbitrate_choice(
 
 
 def _can_bulk_retrieve(ir, vector_searcher: VectorSearcher | None) -> bool:
+    """判断当前 QueryIR 是否满足批量检索条件。"""
     if not is_bulk_quantifier(ir.quantifier):
         return False
     if vector_searcher is None:
@@ -395,6 +409,7 @@ def _can_bulk_retrieve(ir, vector_searcher: VectorSearcher | None) -> bool:
 
 
 def _generate_command_output(text: str, llm: LLMClient) -> str:
+    """调用 LLM 生成命令解析输出文本。"""
     try:
         return llm.generate_with_prompt(text, DEFAULT_SYSTEM_PROMPT)
     except Exception as exc:  # pragma: no cover - 保护主流程
