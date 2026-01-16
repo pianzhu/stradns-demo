@@ -7,6 +7,8 @@ import logging
 import os
 import re
 
+from command_parser import CommandParserConfig, parse_command_output
+from command_parser.prompt import DEFAULT_SYSTEM_PROMPT
 from context_retrieval.bulk import (
     DEFAULT_BULK_BATCH_SIZE,
     DEFAULT_COVERAGE_THRESHOLD,
@@ -22,7 +24,13 @@ from context_retrieval.bulk import (
 )
 from context_retrieval.category_gating import filter_by_category, map_type_to_category
 from context_retrieval.doc_enrichment import enrich_description
-from context_retrieval.models import Candidate, Device, RetrievalResult
+from context_retrieval.models import (
+    Candidate,
+    CommandRetrieval,
+    Device,
+    MultiRetrievalResult,
+    RetrievalResult,
+)
 from context_retrieval.ir_compiler import LLMClient, compile_ir
 from context_retrieval.state import ConversationState
 from context_retrieval.logic import apply_scope_filters
@@ -45,6 +53,9 @@ _DIGIT_RE = re.compile(r"\d")
 _CANCEL_TOKEN = "\u53d6\u6d88"
 _BULK_ARBITRATION_ENV = "ENABLE_BULK_ARBITRATION_LLM"
 
+_BULK_QUERY_TOKENS = ("所有", "全部", "全体", "所有的", "全部的")
+_BULK_QUERY_PREFIXES = ("把", "将", "请")
+
 _BULK_ARBITRATION_SYSTEM_PROMPT = """你是智能家居助手的批量命令选择器。
 
 你将得到用户的原始请求和一组闭集候选 capability 选项。你的任务是在这些候选中选择最匹配的一项，或提出一个澄清问题。
@@ -59,15 +70,34 @@ _BULK_ARBITRATION_SYSTEM_PROMPT = """你是智能家居助手的批量命令选�
 """
 
 
+def _strip_bulk_query(raw: str, name_hint: str | None) -> str:
+    cleaned = raw
+    if name_hint:
+        cleaned = cleaned.replace(name_hint, " ")
+    for token in _BULK_QUERY_TOKENS:
+        cleaned = cleaned.replace(token, " ")
+    cleaned = cleaned.strip()
+    for prefix in _BULK_QUERY_PREFIXES:
+        if cleaned.startswith(prefix):
+            cleaned = cleaned[len(prefix):].strip()
+    cleaned = re.sub(r"\s+", " ", cleaned)
+    return cleaned
+
+
 def _vector_search_text(ir) -> str:
+    raw = (ir.raw or "").strip()
     action_text = (ir.action or "").strip()
     if action_text and _LATIN_LETTERS_RE.search(action_text):
         logger.info(
             "action_invalid_fallback reason=latin_letters action=%s",
             action_text,
         )
-        return ir.raw
-    return action_text or ir.raw
+        return raw
+    if is_bulk_quantifier(ir.quantifier) and raw:
+        cleaned = _strip_bulk_query(raw, ir.name_hint)
+        if cleaned:
+            return cleaned
+    return action_text or raw
 
 
 def _should_force_capability_guess(query: str) -> bool:
@@ -123,6 +153,16 @@ def _infer_category_from_name_hint(
     if len(categories) != 1:
         return None
     return next(iter(categories))
+
+
+def _is_explicit_device_name(name_hint: str | None, devices: list[Device]) -> bool:
+    if not isinstance(name_hint, str) or not name_hint.strip():
+        return False
+    for device in devices:
+        name = getattr(device, "name", None)
+        if isinstance(name, str) and name == name_hint:
+            return True
+    return False
 
 
 def _guess_capability_id(
@@ -341,38 +381,45 @@ def _bulk_arbitrate_choice(
     return None, None
 
 
-def retrieve(
-    text: str,
+def _can_bulk_retrieve(ir, vector_searcher: VectorSearcher | None) -> bool:
+    if not is_bulk_quantifier(ir.quantifier):
+        return False
+    if vector_searcher is None:
+        logger.info("bulk_disabled reason=no_vector_searcher")
+        return False
+    spec_index = getattr(vector_searcher, "spec_index", None)
+    if not isinstance(spec_index, dict) or not spec_index:
+        logger.info("bulk_disabled reason=missing_spec_index")
+        return False
+    return True
+
+
+def _generate_command_output(text: str, llm: LLMClient) -> str:
+    try:
+        return llm.generate_with_prompt(text, DEFAULT_SYSTEM_PROMPT)
+    except Exception as exc:  # pragma: no cover - 保护主流程
+        logger.warning("command_output_failed error=%s", exc)
+        return "[]"
+
+
+def _retrieve_with_ir(
+    ir,
     devices: list[Device],
     llm: LLMClient,
     state: ConversationState,
     top_k: int = 5,
     vector_searcher: VectorSearcher | None = None,
 ) -> RetrievalResult:
-    """执行上下文检索。
+    """执行单条 QueryIR 的检索。
 
     Pipeline 流程：
-    1. IR 编译（LLM）
-    2. Scope 预过滤
-    3. Keyword 召回
-    4. Vector 召回（可选）
-    5. 融合评分
-    6. Top-K 筛选
-    7. 更新会话状态
-
-    Args:
-        text: 用户输入文本
-        devices: 设备列表
-        llm: LLM 客户端
-        state: 会话状态
-        top_k: 返回数量上限
-        vector_searcher: 可选向量检索器，若提供会参与融合
-
-    Returns:
-        RetrievalResult
+    1. Scope 预过滤
+    2. Keyword 召回
+    3. Vector 召回（可选）
+    4. 融合评分
+    5. Top-K 筛选
+    6. 更新会话状态
     """
-    # 1. IR 编译
-    ir = compile_ir(text, llm)
     logger.info(
         "query=%s action=%s type_hint=%s quantifier=%s scope_include=%s scope_exclude=%s",
         ir.raw,
@@ -414,17 +461,14 @@ def retrieve(
         len(gated_devices),
     )
 
-    if is_bulk_quantifier(ir.quantifier):
-        if not vector_searcher:
-            return RetrievalResult(hint="bulk_requires_vector")
-
+    if _can_bulk_retrieve(ir, vector_searcher):
         vector_searcher.index(devices)
-        spec_index = getattr(vector_searcher, "spec_index", None)
+        spec_index = getattr(vector_searcher, "spec_index", {})
         if not isinstance(spec_index, dict) or not spec_index:
-            return RetrievalResult(hint="bulk_requires_spec_index")
+            spec_index = {}
 
         search_text = _vector_search_text(ir)
-        if ir.name_hint and ir.name_hint not in search_text:
+        if _is_explicit_device_name(ir.name_hint, gated_devices) and ir.name_hint not in search_text:
             search_text = f"{ir.name_hint} {search_text}"
         options, confidence = build_capability_options(
             query_text=search_text,
@@ -660,3 +704,75 @@ def retrieve(
         candidates=selection.candidates,
         hint=selection.hint,
     )
+
+
+def retrieve(
+    text: str,
+    devices: list[Device],
+    llm: LLMClient,
+    state: ConversationState,
+    top_k: int = 5,
+    vector_searcher: VectorSearcher | None = None,
+) -> MultiRetrievalResult:
+    """执行上下文检索（多命令）。"""
+    raw_output = _generate_command_output(text, llm)
+    parsed = parse_command_output(
+        raw_output,
+        config=CommandParserConfig(),
+    )
+
+    results: list[CommandRetrieval] = []
+    for command in parsed.commands:
+        ir = compile_ir(command, raw_text=text)
+        result = _retrieve_with_ir(
+            ir,
+            devices=devices,
+            llm=llm,
+            state=state,
+            top_k=top_k,
+            vector_searcher=vector_searcher,
+        )
+        results.append(CommandRetrieval(command=command, ir=ir, result=result))
+
+    return MultiRetrievalResult(
+        commands=results,
+        errors=list(parsed.errors),
+        degraded=parsed.degraded,
+    )
+
+
+def retrieve_single(
+    text: str,
+    devices: list[Device],
+    llm: LLMClient,
+    state: ConversationState,
+    top_k: int = 5,
+    vector_searcher: VectorSearcher | None = None,
+) -> RetrievalResult:
+    """执行单命令检索（兼容入口）。"""
+    multi = retrieve(
+        text=text,
+        devices=devices,
+        llm=llm,
+        state=state,
+        top_k=top_k,
+        vector_searcher=vector_searcher,
+    )
+
+    if not multi.commands:
+        return RetrievalResult(
+            hint="no_command",
+            meta={
+                "parser_errors": list(multi.errors),
+                "parser_degraded": multi.degraded,
+            },
+        )
+
+    if len(multi.commands) > 1:
+        logger.info("multi_command_result total=%d use_first", len(multi.commands))
+
+    result = multi.commands[0].result
+    if multi.errors or multi.degraded:
+        result.meta.setdefault("parser_errors", list(multi.errors))
+        result.meta.setdefault("parser_degraded", multi.degraded)
+    return result
