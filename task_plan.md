@@ -18,7 +18,8 @@ Phase 1
 ### Phase 2: 数据集规格冻结（可复现）
 - [ ] 定义样本 schema（jsonl）
 - [ ] 定义 action 规范化规则（normalize_action）
-- [ ] 定义 capability doc_text 生成规则（字段顺序固定、长度上限）
+- [ ] 定义 capability doc_text 生成规则（字段顺序固定、不设长度上限）
+  - 结论：当前字段组合自然长度 ≤ 256，不再设置额外长度上限
 - [ ] 定义 train/val/test 拆分规则（按 case_id 固定种子）
 - [ ] 定义脏数据门禁与 skipped 统计口径
 - **Status:** pending
@@ -42,7 +43,6 @@ Phase 1
 
 ## Key Questions
 1. 基座模型最终选哪类以满足 x86 CPU ~500ms：bge-reranker（FlagEmbedding）还是 0.6B rerank？
-2. doc_text 的长度上限与字段裁剪规则是什么（直接影响 CPU 延迟与效果）？
 
 ## Decisions Made
 | Decision | Rationale |
