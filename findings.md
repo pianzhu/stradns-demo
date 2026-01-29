@@ -39,21 +39,147 @@
 - 通过 `device_id -> profile_id` 取候选集合。
 - label 取 `expected_capability_id`，映射为组内 `label_index`；缺失/不可映射则进入 skipped。
 
-### normalize_action（最小可行）
-- 动词归一化由 command parser 完成（标准动词表约 ≤ 15），AI 模拟数据生成与线上产出共享该规范。
-- `normalize_action` 仅做空白/符号清理与幂等兜底，不做复杂改写增强。
+### normalize_action（冻结版）
+- **仅做清理，不做语义映射**
+- 清理规则：
+  - 去除首尾空白
+  - 合并连续空白为单个空格
+  - 去除特殊符号（保留中文、字母、数字、`=`、`%`、`C`、`K`）
+- 数值格式统一：
+  - 小数最多 2 位
+  - 百分比显式携带 `%`（如 `设置音量=20%`）
+  - 温度使用 `C`（如 `设置温度=26C`）
+- **语义正确性由 AI 生成阶段保证**（通过推荐动词表引导）
+- 非标准动作原样输出，不强制归一化
 
-### capability doc_text（字段顺序固定 + 不裁剪）
-注：该段规则后续再确认，当前先保留占位描述。
-建议格式（单行）：
-`能力={description}; 参数={param_schema}; 可选={value_list_top}; 标识={capability_id}; 拆解={component/capability/command}`
+### Trigger Words 机制（冻结版）
 
-其中：
-- `param_schema`：
-  - 有 `value_range`：`范围={min}-{max}{unit}`
-  - 否则：`类型={type}`
-- `value_list_top`：最多取前 5 个 `value:description`
-注：当前字段组合在本项目中自然长度不超过 256，因此不再设置额外长度上限或裁剪规则。
+**设计目标**：解决 NLU 输出的动词（如"打开"）在不同设备上下文中语义不同的问题。
+
+**核心思路**：不在 action 侧做映射，而是在 doc_text 中增加 `触发词` 字段，让模型学习 action 与 trigger_words 的匹配关系。
+
+#### 两级配置 + 完整覆盖
+
+| 级别 | 文件 | 说明 |
+|------|------|------|
+| Category 级别 | `category_trigger_words.yaml` | 按设备类型定义通用规则（12 个 category） |
+| ProfileId 级别 | `profile_trigger_words.yaml` | 特定 profileId 的完整定义（可选） |
+
+**查找优先级**：
+```
+if profileId in profile_trigger_words:
+    # 该 profileId 有定义 → 完全使用它的，不再查 category
+    return profile_trigger_words[profileId]
+else:
+    # 该 profileId 无定义 → 使用 category 的
+    return category_trigger_words[category]
+```
+
+#### Category 列表（共 12 个）
+```
+AirConditioner, Blind, Charger, Fan, Hub, Light,
+NetworkAudio, Unknown, Switch, Television, Washer, SmartPlug
+```
+
+#### category_trigger_words.yaml 示例
+```yaml
+Light:
+  on: [打开, 开, 开灯]
+  off: [关闭, 关, 关灯]
+  setLevel: [设置亮度, 调亮度, 调光]
+  setColorTemperature: [设置色温, 调色温]
+
+Washer:
+  on: [启动, 打开, 开始]
+  off: [停止, 关闭]
+  pause: [暂停]
+  start: [启动, 开始, 洗衣服]
+  cancel: [取消, 停止]
+
+Television:
+  on: [打开, 开, 开电视]
+  off: [关闭, 关, 关电视]
+  mute: [静音]
+  unmute: [取消静音, 开声音]
+  setVolume: [设置音量, 调音量]
+
+# ... 其他 categories
+```
+
+#### profile_trigger_words.yaml 示例
+```yaml
+# 三星某型号洗衣机 - 完整定义，不再查 category
+"samsung-washer-profile-abc":
+  on: [启动, 打开, 开始洗涤, 洗衣服]
+  off: [停止, 关闭, 停]
+  pause: [暂停, 等一下, 先停]
+  cancel: [取消, 不洗了]
+```
+
+#### doc_text 格式更新
+```
+{description}[; 触发词={trigger_words}][; 参数={param_schema}][; 可选={value_list_top}]; ID={capability_id}
+```
+
+示例：
+- `电源启用; 触发词=打开,开,开灯; ID=main-switch-on`
+- `启动洗涤; 触发词=启动,打开,开始洗涤,洗衣服; ID=main-...-start`
+
+### NotAvailable 类 capability 处理
+- `*-NotAvailable` 类 capability（共 8 个）全部标记为 skipped
+- reason: `capability_not_available`
+- 不生成训练样本
+
+### capability doc_text（冻结版）
+格式（单行）：
+`{description}[; 触发词={trigger_words}][; 参数={param_schema}][; 可选={value_list_top}]; ID={capability_id}`
+
+规则：
+- `[]` 表示可选字段，为空时省略整个部分（不输出占位符）
+- `trigger_words`：从 Trigger Words 机制获取（profileId 优先，category 兜底）
+- `param_schema`：仅当存在 `value_range` 时输出
+  - 格式：`范围={min}-{max}{unit}`（unit 取数组第一个元素，无则为空）
+- `value_list_top`：仅当存在 `value_list` 时输出
+  - 最多取前 5 个，格式：`value:description`，逗号分隔
+- 当前字段组合自然长度 ≤ 256，不设额外长度上限
+
+示例：
+- `电源启用; 触发词=打开,开,开灯; ID=main-switch-on`
+- `调光器; 触发词=设置亮度,调亮度; 参数=范围=0-100%; ID=main-switchLevel-setLevel`
+- `启动洗涤; 触发词=启动,打开,开始洗涤; ID=main-...-start`
+- `空气净化器风扇模式; 触发词=设置模式,调模式; 可选=auto:自动,sleep:睡眠,low:低,medium:中,high:高; ID=main-airPurifierFanMode-setAirPurifierFanMode`
+
+### 脏数据门禁与 skipped 统计口径（冻结版）
+
+**原则**：脏数据不强行修复，输出到 `skipped.jsonl`，附带 reason。
+
+| 脏数据类型 | 触发条件 | reason 标记 |
+|-----------|----------|-------------|
+| device_id 无法映射 | `device_id` 在 `smartthings_devices.jsonl` 中找不到 | `device_not_found` |
+| profile_id 无 capabilities | 映射到的 profile 无 `capabilities` 字段 | `profile_no_capabilities` |
+| expected_capability_id 不存在 | 不在该 profile 的 capabilities 列表中 | `capability_not_in_profile` |
+| action 为空或无效 | `action` 字段为空、null 或纯空白 | `action_empty` |
+| NotAvailable 类 capability | capability_id 以 `-NotAvailable` 结尾 | `capability_not_available` |
+| category 缺失 | 设备无 category 信息，无法获取 trigger_words | `category_missing` |
+| 重复样本 | `case_hash` 重复（构造阶段去重） | `duplicate_case_hash` |
+
+**skipped.jsonl 格式**：
+```json
+{"case_id": "xxx", "device_id": "yyy", "action": "zzz", "reason": "device_not_found"}
+```
+
+**stats.json 中的 skipped 统计**：
+```json
+{
+  "skipped_total": 123,
+  "skipped_by_reason": {
+    "device_not_found": 10,
+    "capability_not_in_profile": 5,
+    "duplicate_case_hash": 100,
+    ...
+  }
+}
+```
 
 ### 输出文件（建议）
 - `datasets/stage2_rerank/train.jsonl`
